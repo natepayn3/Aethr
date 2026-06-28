@@ -1,87 +1,364 @@
 import QtQuick
+import QtQuick.Layouts
+import QtQuick.Shapes
+import QtQuick.Controls
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
+import Quickshell.Io
 
-PanelWindow {
-    id: launcherWindow
+Scope {
+    id: launcherModuleRoot
+
+    property alias launcherWindowObject: launcherWindow
+
+    // --- STREAMING THEME BRIDGES ---
+    property color themeBackground: Qt.rgba(0.06, 0.06, 0.06, 0.7) // Matches your visual dock density
+    property color themeText: "#ffffff"
+    property color themeAccent: Qt.rgba(1, 1, 1, 0.15) // Clean neutral active selection state
+    property color themeBorder: Qt.rgba(1, 1, 1, 0.05)
     
-    anchors {
-        top: true
-        bottom: true
-        left: true
-        right: true
-    }
-    
-    WlrLayershell.layer: WlrLayer.Overlay
-    exclusionMode: ExclusionMode.Ignore
-    color: "transparent" // Make window frame transparent, animate content backing instead
-    
-    visible: false
-    
-    // Explicit controls exposed to the anchor toggle
-    function toggle() {
-        if (visible) {
-            fadeOutAnim.start();
-        } else {
-            visible = true;
-            fadeInAnim.start();
+    property bool active: false
+    onActiveChanged: {
+        if (active) {
+            launcherWindow.visible = true;
         }
     }
 
-    // Root visual content wrapper to handle opacity transformations safely
-    Item {
-        id: container
-        anchors.fill: parent
-        opacity: 0.0
+    signal closeRequested()
+    onCloseRequested: launcherModuleRoot.active = false
 
-        // Subtle dimming matrix
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.25)
-        }
+    PanelWindow {
+        id: launcherWindow
+        visible: false
+        
+        WlrLayershell.layer: WlrLayer.Overlay
+        // WlrLayershell.namespace: "quickshell-launcher-preview"
+        WlrLayershell.keyboardFocus: WlrLayershell.OnDemand
+        exclusionMode: ExclusionMode.Ignore // Resolved enum context layout rule
 
-        // Dismiss overlay on background click
-        MouseArea {
-            anchors.fill: parent
-            onClicked: launcherWindow.toggle()
-        }
+        anchors { left: true; right: true; top: true; bottom: true }
+        color: "transparent"
 
-        // Main App Launcher Layout Container Block
-        Rectangle {
-            id: menuSurface
-            width: 640
-            height: 440
-            radius: 16
-            color: Qt.rgba(0.06, 0.06, 0.06, 0.9)
-            anchors.centerIn: parent
-            
-            Text {
-                anchors.centerIn: parent
-                text: "App Launcher Viewport"
-                color: "white"
-                font.family: "Google Sans Flex"
-                font.pixelSize: 18
+        property var allApps: []
+        property var filteredApps: []
+        property var localPins: []
+
+        FileView {
+            id: pinCacheReader
+            path: Quickshell.env("HOME") + "/.cache/quickshell_launcher_pins.json"
+            onTextChanged: {
+                let cleanText = text().trim();
+                if (!cleanText || cleanText === "[]") return;
+                try {
+                    let parsed = JSON.parse(cleanText);
+                    if (parsed && parsed.pins) {
+                        launcherWindow.localPins = parsed.pins;
+                        launcherWindow.updateModel();
+                    }
+                } catch(e) {}
             }
         }
-    }
 
-    // Precise transition driving animations on the content wrapper
-    NumberAnimation {
-        id: fadeInAnim
-        target: container
-        property: "opacity"
-        to: 1.0
-        duration: 180
-        easing.type: Easing.OutCubic
-    }
+        function togglePin(appPath) {
+            let currentPins = launcherWindow.localPins.slice();
+            let idx = currentPins.indexOf(appPath);
+            if (idx !== -1) {
+                currentPins.splice(idx, 1);
+            } else {
+                currentPins.push(appPath);
+            }
+            launcherWindow.localPins = currentPins;
+            launcherWindow.updateModel();
+            let jsonStr = JSON.stringify({ "pins": currentPins });
+            Quickshell.execDetached(["fish", "-c", "echo '" + jsonStr + "' > ~/.cache/quickshell_launcher_pins.json"]);
+        }
 
-    NumberAnimation {
-        id: fadeOutAnim
-        target: container
-        property: "opacity"
-        to: 0.0
-        duration: 180
-        easing.type: Easing.OutCubic
-        onStopped: launcherWindow.visible = false
+        Process {
+            id: appFetcher
+            command: ["bash", "-c", "find /usr/share/applications ~/.local/share/applications -maxdepth 2 -name '*.desktop' 2>/dev/null | awk 'BEGIN { print \"[\"; c=0 } { name=\"\"; exec=\"\"; icon=\"\"; desc=\"\"; nshow=0; while ((getline line < $0) > 0) { if (line ~ /^Name=/ && name==\"\") name = substr(line, 6); if (line ~ /^Exec=/ && exec==\"\") exec = substr(line, 6); if (line ~ /^Icon=/ && icon==\"\") icon = substr(line, 6); if (line ~ /^Comment=/ && desc==\"\") desc = substr(line, 9); if (line ~ /^NoDisplay=true/) nshow=1 } close($0); if (name != \"\" && exec != \"\" && nshow==0) { gsub(/[\"\\\\]/, \"\", name); gsub(/[\"\\\\]/, \"\", exec); gsub(/[\"\\\\]/, \"\", icon); gsub(/[\"\\\\]/, \"\", desc); if (c > 0) print \",\"; printf \"{\\\"name\\\":\\\"%s\\\", \\\"exec\\\":\\\"%s\\\", \\\"icon\\\":\\\"%s\\\", \\\"desc\\\":\\\"%s\\\", \\\"path\\\":\\\"%s\\\"}\", name, exec, icon, desc, $0; c++ } } END { print \"]\" }'"]
+            running: false
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    try {
+                        launcherWindow.allApps = JSON.parse(this.text);
+                        launcherWindow.updateModel();
+                    } catch(e) {}
+                }
+            }
+        }
+
+        function updateModel() {
+            let query = searchInput.text.trim().toLowerCase();
+            let pins = [];
+            let others = [];
+
+            for (let i = 0; i < launcherWindow.allApps.length; i++) {
+                let app = launcherWindow.allApps[i];
+                if (query !== "" && !app.name.toLowerCase().includes(query) && !app.desc.toLowerCase().includes(query)) continue;
+                if (launcherWindow.localPins.includes(app.path)) {
+                    pins.push(app);
+                } else {
+                    others.push(app);
+                }
+            }
+
+            pins.sort((a,b) => a.name.localeCompare(b.name));
+            others.sort((a,b) => a.name.localeCompare(b.name));
+            launcherWindow.filteredApps = pins.concat(others);
+            
+            appListView.currentIndex = 0;
+            appListView.positionViewAtBeginning();
+        }
+
+        function launchApp(execString) {
+            let cleanExec = execString.replace(/%[uUfFkKcCiI]/g, "").trim();
+            Hyprland.dispatch(`exec ${cleanExec}`);
+            launcherModuleRoot.closeRequested();
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                if (allApps.length === 0) appFetcher.running = true;
+                searchInput.text = "";
+                searchInput.forceActiveFocus();
+                pinCacheReader.reload();
+                updateModel();
+            }
+        }
+
+        // Click outside panel space dismiss matrix
+        MouseArea {
+            anchors.fill: parent
+            propagateComposedEvents: true
+            onPressed: (mouse) => {
+                launcherModuleRoot.closeRequested();
+                mouse.accepted = false; 
+            }
+        }
+
+        // Visual Layout Canvas Wrapper
+        Item {
+            id: launcherCardFrame
+            width: 500  
+            height: 500 
+            anchors.centerIn: parent
+            transformOrigin: Item.Center
+
+            MouseArea {
+                anchors.fill: parent
+                onPressed: (event) => event.accepted = true
+                onClicked: (event) => event.accepted = true
+            }
+
+            states: [
+                State {
+                    name: "hidden"
+                    when: !launcherModuleRoot.active
+                    PropertyChanges { target: launcherCardFrame; opacity: 0.0; scale: 0.92 }
+                },
+                State {
+                    name: "shown"
+                    when: launcherModuleRoot.active
+                    PropertyChanges { target: launcherCardFrame; opacity: 1.0; scale: 1.0 }
+                }
+            ]
+
+            transitions: [
+                Transition {
+                    from: "hidden"; to: "shown"
+                    ParallelAnimation {
+                        NumberAnimation { target: launcherCardFrame; property: "scale"; duration: 180; easing.type: Easing.OutCubic }
+                        NumberAnimation { target: launcherCardFrame; property: "opacity"; duration: 150; easing.type: Easing.OutQuad }
+                    }
+                },
+                Transition {
+                    from: "shown"; to: "hidden"
+                    SequentialAnimation {
+                        ParallelAnimation {
+                            NumberAnimation { target: launcherCardFrame; property: "scale"; duration: 150; easing.type: Easing.InCubic }
+                            NumberAnimation { target: launcherCardFrame; property: "opacity"; duration: 120; easing.type: Easing.InQuad }
+                        }
+                        ScriptAction {
+                            script: launcherWindow.visible = false
+                        }
+                    }
+                }
+            ]
+
+            // Minimal, borderless transparent card frame
+            Rectangle {
+                id: cardMainBody
+                anchors.fill: parent
+                color: launcherModuleRoot.themeBackground
+                radius: 16 
+                antialiasing: true
+            }
+
+            Item {
+                id: layoutContentWrapper
+                anchors.fill: parent
+                anchors.margins: 20 
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 12
+
+                    // Minimal Search Block
+                    TextField {
+                        id: searchInput
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 46 
+                        placeholderText: "Search apps..."
+                        font.family: "Google Sans Flex"
+                        font.pixelSize: 20 
+                        color: launcherModuleRoot.themeText
+                        placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
+                        selectByMouse: true
+                        verticalAlignment: TextInput.AlignVCenter
+                        
+                        background: Rectangle {
+                            color: Qt.rgba(0, 0, 0, 0.2)
+                            border.color: searchInput.activeFocus ? launcherModuleRoot.themeAccent : launcherModuleRoot.themeBorder
+                            border.width: 1
+                            radius: 10 
+                        }
+
+                        onTextChanged: launcherWindow.updateModel()
+
+                        Keys.onPressed: (event) => {
+                            if (event.key === Qt.Key_Down) {
+                                appListView.incrementCurrentIndex();
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_Up) {
+                                appListView.decrementCurrentIndex();
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                if (appListView.currentItem) {
+                                    launcherWindow.launchApp(appListView.currentItem.appExec);
+                                }
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_Escape) {
+                                launcherModuleRoot.closeRequested();
+                                event.accepted = true;
+                            }
+                        }
+                    }
+
+                    ScrollView {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+
+                        ListView {
+                            id: appListView
+                            spacing: 4
+                            keyNavigationEnabled: false
+                            model: launcherWindow.filteredApps
+                            
+                            delegate: ItemDelegate {
+                                id: appDelegate
+                                width: appListView.width
+                                height: 56 
+                                highlighted: appListView.currentIndex === index
+                                
+                                property string appExec: modelData.exec
+                                property bool isPinned: launcherWindow.localPins.includes(modelData.path)
+
+                                background: Rectangle {
+                                    color: appDelegate.highlighted
+                                        ? launcherModuleRoot.themeAccent
+                                        : (appDelegate.hovered ? Qt.rgba(1, 1, 1, 0.04) : "transparent")
+                                    radius: 10 
+                                }
+
+                                contentItem: RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10 
+                                    spacing: 12
+
+                                    Image {
+                                        Layout.preferredWidth: 28 
+                                        Layout.preferredHeight: 28
+                                        sourceSize.width: 56
+                                        sourceSize.height: 56
+                                        source: Quickshell.iconPath(modelData.icon !== "" ? modelData.icon : "application-x-executable")
+                                        fillMode: Image.PreserveAspectFit
+                                        asynchronous: true
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 1
+                                        Layout.alignment: Qt.AlignVCenter 
+
+                                        Text {
+                                            text: modelData.name
+                                            font.family: "Google Sans Flex"
+                                            font.pixelSize: 16
+                                            color: launcherModuleRoot.themeText
+                                            font.weight: appDelegate.isPinned ? Font.Bold : Font.Normal
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            text: modelData.desc !== "" ? modelData.desc : "Application"
+                                            font.family: "Google Sans Flex"
+                                            font.pixelSize: 14
+                                            color: Qt.rgba(1, 1, 1, 0.4)
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+
+                                    // Store the last known absolute screen position
+                                    property int lastScreenX: -1
+                                    property int lastScreenY: -1
+
+                                    onPositionChanged: (mouse) => {
+                                        // Calculate absolute movement delta to filter out scrolling shifts
+                                        let deltaX = Math.abs(mouse.screenX - lastScreenX);
+                                        let deltaY = Math.abs(mouse.screenY - lastScreenY);
+
+                                        // Only steal focus if the mouse moved more than a 2px deadzone jitter threshold
+                                        if (lastScreenX !== -1 && (deltaX > 2 || deltaY > 2)) {
+                                            if (appListView.currentIndex !== index) {
+                                                appListView.currentIndex = index;
+                                            }
+                                        }
+                                        
+                                        // Update the anchor tracking points
+                                        lastScreenX = mouse.screenX;
+                                        lastScreenY = mouse.screenY;
+                                    }
+
+                                    onExited: {
+                                        // Reset bounds cleanly when leaving the item frame entirely
+                                        lastScreenX = -1;
+                                        lastScreenY = -1;
+                                    }
+
+                                    onClicked: (mouse) => {
+                                        if (mouse.button === Qt.RightButton) {
+                                            launcherWindow.togglePin(modelData.path);
+                                        } else {
+                                            launcherWindow.launchApp(modelData.exec);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
