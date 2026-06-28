@@ -89,6 +89,12 @@ ShellRoot {
         property bool isOpen: false
         visible: isOpen || styleWrapper.opacity > 0.01
 
+        // 🎯 FIX: Restrict the click target area to the exact visual boundaries of the content
+        mask: Region {
+            // Evaluates a combination region of the card body and the wings item inside the style component
+            item: styleWrapper.isOpen ? styleWrapper : null
+        }
+
         anchor {
             window: leftHoverTrigger
             rect.x: 8 - root.wingSize 
@@ -100,7 +106,6 @@ ShellRoot {
             hoverEnabled: true
             onExited: popupWindow.isOpen = false
 
-            // Instantiate stylized wrapper and inject custom dashboard panel content
             WindowStyle {
                 id: styleWrapper
                 isOpen: popupWindow.isOpen
