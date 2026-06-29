@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Controls // Added to resolve the "Slider is not a type" type error
+import QtQuick.Controls
 import Quickshell.Io
 
 Item {
