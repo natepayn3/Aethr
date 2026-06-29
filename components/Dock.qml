@@ -49,7 +49,6 @@ PanelWindow {
 
             property int activeHoverIndex: -1
 
-            // Expanded to monitor wallpaper picker state safely during lookups
             property bool stableHover: hotspotTrigger.containsMouse ||
                                        dockHitbox.containsMouse || 
                                        (dockWindow.launcherModule && dockWindow.launcherModule.launcherWindowObject && dockWindow.launcherModule.launcherWindowObject.visible) ||
@@ -191,12 +190,15 @@ PanelWindow {
                         if (dockHitbox.activeHoverIndex === 0) {
                             dockWindow.launcherModule.active = !dockWindow.launcherModule.active;
                         } else if (dockHitbox.activeHoverIndex === 1) {
-                            // Toggles the active boolean state driving the wallpaper module's display visibility
                             if (dockWindow.wallpaperModule) {
                                 dockWindow.wallpaperModule.active = !dockWindow.wallpaperModule.active;
                             }
                         } else if (dockHitbox.activeHoverIndex === 2) {
-                            console.log("Screenshot Tool Action Triggered");
+                            // Automatically lower the dock visibility flag to prevent visual clutter during region selection
+                            dockHitbox.isPinned = false;
+                            
+                            // Native screenshot execution engine via grim, slurp, and satty
+                            Quickshell.execDetached(["bash", "-c", "sleep 0.1 && grim -g \"$(slurp)\" -t ppm - | satty --filename -"]);
                         }
                     }
                 }
