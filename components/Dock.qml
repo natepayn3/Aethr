@@ -32,7 +32,12 @@ PanelWindow {
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
     property color hoverBorder: Qt.rgba(0, 0, 0, 0.2)
 
-    // Instantiate the engine popup object overlay
+    // Overlaid control panel component handles
+    BluetoothPopup {
+        id: bluetoothOverlay
+        visible: false
+    }
+
     AudioPopup {
         id: audioOverlay
         visible: false
@@ -49,6 +54,7 @@ PanelWindow {
                                    innerCapsuleMouseTracker.containsMouse || 
                                    (dockWindow.launcherModule && dockWindow.launcherModule.launcherWindowObject && dockWindow.launcherModule.launcherWindowObject.visible) ||
                                    (dockWindow.wallpaperModule && dockWindow.wallpaperModule.active) ||
+                                   bluetoothOverlay.visible ||
                                    audioOverlay.visible
 
         property bool isPinned: false
@@ -144,9 +150,9 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 3: AUDIO OUTPUT ROUTER ---
+                // --- BUTTON 3: BLUETOOTH CONFIG ---
                 Item {
-                    id: btnAudio
+                    id: btnBluetooth
                     width: 64
                     height: 64
 
@@ -155,6 +161,33 @@ PanelWindow {
                         radius: 12
                         color: dockHitbox.activeHoverIndex === 2 ? dockWindow.themeAccent : "transparent"
                         border.color: dockHitbox.activeHoverIndex === 2 ? dockWindow.hoverBorder : "transparent"
+                        border.width: 1
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "bluetooth"
+                        font.family: "Material Symbols Outlined"
+                        font.pixelSize: 32
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 180 } }
+                    }
+                }
+
+                // --- BUTTON 4: AUDIO OUTPUT ROUTER ---
+                Item {
+                    id: btnAudio
+                    width: 64
+                    height: 64
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 12
+                        color: dockHitbox.activeHoverIndex === 3 ? dockWindow.themeAccent : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 3 ? dockWindow.hoverBorder : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -171,7 +204,7 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 4: SCREENSHOT UTILITY ---
+                // --- BUTTON 5: SCREENSHOT UTILITY ---
                 Item {
                     id: btnScreenshot
                     width: 64
@@ -180,8 +213,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: dockHitbox.activeHoverIndex === 3 ? dockWindow.themeAccent : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 3 ? dockWindow.hoverBorder : "transparent"
+                        color: dockHitbox.activeHoverIndex === 4 ? dockWindow.themeAccent : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 4 ? dockWindow.hoverBorder : "transparent"
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -210,8 +243,8 @@ PanelWindow {
                     let totalCellWidth = 80; 
                     let calculatedIndex = Math.floor(adjustedX / totalCellWidth);
                     let localX = adjustedX % totalCellWidth;
-                    // Upper bound matched to new 4-item index matrix (0 through 3)
-                    if (calculatedIndex >= 0 && calculatedIndex <= 3 && localX <= 64 && adjustedX >= 0) {
+                    
+                    if (calculatedIndex >= 0 && calculatedIndex <= 4 && localX <= 64 && adjustedX >= 0) {
                         dockHitbox.activeHoverIndex = calculatedIndex;
                     } else {
                         dockHitbox.activeHoverIndex = -1;
@@ -228,10 +261,12 @@ PanelWindow {
                             dockWindow.wallpaperModule.active = !dockWindow.wallpaperModule.active;
                         }
                     } else if (dockHitbox.activeHoverIndex === 2) {
-                        audioOverlay.visible = !audioOverlay.visible;
+                        bluetoothOverlay.visible = !bluetoothOverlay.visible;
                     } else if (dockHitbox.activeHoverIndex === 3) {
+                        audioOverlay.visible = !audioOverlay.visible;
+                    } else if (dockHitbox.activeHoverIndex === 4) {
                         dockHitbox.isPinned = false;
-                        Quickshell.execDetached(["bash", "-c", "sleep 0.1 && grim -g \"$(slurp)\" -t ppm - | satty --filename -"]);
+                        Quickshell.execDetached(["fish", "-c", "sleep 0.1; and grim -g (slurp) -t ppm - | satty --filename -"]);
                     }
                 }
             }

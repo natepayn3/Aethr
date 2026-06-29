@@ -125,20 +125,25 @@ PanelWindow {
                 if (!cleaned.startsWith("Volume:")) return;
 
                 let currentMutedState = cleaned.includes("[MUTED]");
-                let parts = cleaned.split(" ");
-                let volVal = parseFloat(parts[1]);
                 
-                if (!isNaN(volVal)) {
-                    let newVol = Math.round(volVal * 100);
-                    let volChanged = (volumeOsdWindow.systemVolume !== newVol);
-                    let muteChanged = (volumeOsdWindow.isMuted !== currentMutedState);
+                // FIXED: Using regex matching instead of parts[] extraction isolates 
+                // the numeric volume scale cleanly, safely filtering out Bluetooth codec decorators
+                let match = cleaned.match(/Volume:\s+([0-9.]+)/);
+                
+                if (match) {
+                    let volVal = parseFloat(match[1]);
+                    if (!isNaN(volVal)) {
+                        let newVol = Math.round(volVal * 100);
+                        let volChanged = (volumeOsdWindow.systemVolume !== newVol);
+                        let muteChanged = (volumeOsdWindow.isMuted !== currentMutedState);
 
-                    volumeOsdWindow.systemVolume = newVol;
-                    volumeOsdWindow.isMuted = currentMutedState;
+                        volumeOsdWindow.systemVolume = newVol;
+                        volumeOsdWindow.isMuted = currentMutedState;
 
-                    if (volumeOsdWindow.bootComplete && (volChanged || muteChanged) && !shellRoot.audioPopupActive) {
-                        volumeOsdWindow.visible = true;
-                        osdTimer.restart();
+                        if (volumeOsdWindow.bootComplete && (volChanged || muteChanged) && !shellRoot.audioPopupActive) {
+                            volumeOsdWindow.visible = true;
+                            osdTimer.restart();
+                        }
                     }
                 }
             }
