@@ -163,7 +163,7 @@ Item {
 
                 color: "transparent"
                 border.color: previewRoot.colorBorder
-                border.width: 1
+                border.width: 0
                 radius: previewRoot.radiusValue
             }
         }
@@ -317,7 +317,7 @@ Item {
                             
                             color: viewportFrame.isTargetActiveWorkspace ? Qt.rgba(previewRoot.colorAccent.r, previewRoot.colorAccent.g, previewRoot.colorAccent.b, 0.15) : Qt.rgba(0, 0, 0, 0.6)
                             border.color: viewportFrame.isTargetActiveWorkspace ? previewRoot.colorAccent : previewRoot.colorBorder
-                            border.width: 1; radius: 2; clip: true
+                            border.width: 0; radius: 2; clip: true
 
                             property var wlToplevel: {
                                 if (!modelData || !modelData.address) return null;
