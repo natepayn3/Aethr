@@ -6,6 +6,8 @@ import "components"
 
 ShellRoot {
     id: shellRoot
+    
+    property bool audioPopupActive: false
 
     // --- REFACTORED MODULAR COMPONENTS ---
     AppLauncher {
@@ -33,5 +35,8 @@ ShellRoot {
     // Slide-out telemetry metric monitor panel (Right edge)
     ResourceDock {
         id: rightResourceDock
+    }
+    VolumeOsd {
+        id: hardwareVolumePill
     }
 }
