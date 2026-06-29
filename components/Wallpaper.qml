@@ -38,7 +38,7 @@ PanelWindow {
         
         onExited: (exitCode) => {
             if (exitCode !== 0) {
-                wallpaperBackend.triggerBackendRun(currentWallpaperPath, false);
+                 wallpaperBackend.triggerBackendRun(currentWallpaperPath, false);
             }
         }
     }
@@ -133,14 +133,16 @@ PanelWindow {
     Item {
         id: carouselContainer
         width: parent.width
-        height: 600
+        
+        // Dynamically scale height based on the total viewport constraints
+        height: Math.min(parent.height * 0.55, 380)
         anchors.horizontalCenter: parent.horizontalCenter
         y: parent.height - height - ((rootShell.barPosition === "bottom") ? 46 : 10)
 
         PathView {
             id: carousel
             anchors.centerIn: parent
-            width: parent.width - 200
+            width: parent.width - (parent.width * 0.12)
             height: parent.height
             clip: false
 
@@ -156,11 +158,15 @@ PanelWindow {
             }
 
             property int modelCount: wallpaperModel.count
-            property real baseItemWidth: 300
-            property real itemGap: -100
-            property real cardSkew: 90
-            property real radiusVal: 12
-            property real expandedWidth: 880
+            
+            // --- SCALED CONFIGURATION MATRIX ---
+            // Replaces hardcoded layouts with proportional math fractions
+            property real baseItemWidth: carousel.height * 0.52
+            property real itemGap: -(baseItemWidth * 0.33)
+            property real cardSkew: baseItemWidth * 0.3
+            property real radiusVal: 10
+            property real expandedWidth: baseItemWidth * 2.8
+          
             property real itemSpacing: baseItemWidth + itemGap
             property int maxVisible: 14
             property int dynamicItemCount: Math.min(Math.max(1, modelCount), maxVisible)
@@ -206,7 +212,7 @@ PanelWindow {
             delegate: Item {
                 id: delegateRoot
                 width: isActiveTarget ? carousel.expandedWidth : carousel.baseItemWidth
-                height: carousel.height * 0.8
+                height: carousel.height * 0.85
                 
                 Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 
@@ -257,7 +263,7 @@ PanelWindow {
                     id: visualContainer
                     anchors.fill: parent
                     
-                    scale: delegateRoot.isActiveTarget ? 1.0 : 0.94
+                    scale: delegateRoot.isActiveTarget ? 1.0 : 0.95
                     Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                     MouseArea {
@@ -272,7 +278,6 @@ PanelWindow {
                         }
                     }
 
-                    // Mask geometry source layer (instantiated directly with layer caching enabled)
                     Shape {
                         id: skewMaskShape
                         anchors.fill: parent
@@ -306,9 +311,11 @@ PanelWindow {
                         source: delegateRoot.isVideo ? (delegateRoot.thumbReady ? delegateRoot.thumbUrl : "") : fileUrl
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        sourceSize: Qt.size(900, 520)
                         cache: true
                         visible: false
+                        
+                        // Fixed: Bind to the stable max width/height to prevent mid-animation cache evictions
+                        sourceSize: Qt.size(Math.floor(carousel.expandedWidth * 1.2), Math.floor(carousel.height * 1.2))
                     }
 
                     Loader {
