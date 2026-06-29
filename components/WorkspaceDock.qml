@@ -185,8 +185,24 @@ PanelWindow {
                                 font.pixelSize: parent.isActive ? 28 : 22
                                 style: Text.Outline
                                 styleColor: Qt.rgba(0, 0, 0, 0.35)
-                                color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
-                                text: isActive ? "radio_button_checked" : (isOccupied ? "adjust" : "circle")
+                                
+                                // Dynamic opacity matching the workspace state
+                                color: {
+                                    if (!dockHitbox.isPinned) return "transparent";
+                                    
+                                    let baseColor = sideDockWindow.themeText;
+                                    let alpha = 0.25; // Default: Empty workspace 
+                                    
+                                    if (parent.isActive) {
+                                        alpha = 1.0; // Active workspace [cite: 26]
+                                    } else if (parent.isOccupied) {
+                                        alpha = 0.65; // Occupied workspace 
+                                    }
+                                    
+                                    return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, alpha);
+                                }
+                                
+                                text: "counter_" + (wsId % 10)
                                 
                                 Component.onCompleted: fontCfg.applySmoothing(this)
                                 Behavior on font.pixelSize { NumberAnimation { duration: 140 } }
