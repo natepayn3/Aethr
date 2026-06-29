@@ -6,6 +6,7 @@ PanelWindow {
     id: dockWindow
     
     required property var launcherModule
+    required property var wallpaperModule
 
     WlrLayershell.namespace: "quickshell-launcher"
     WlrLayershell.keyboardFocus: WlrLayershell.None
@@ -13,8 +14,6 @@ PanelWindow {
     // --- SYSTEM THEME MATRIX ---
     property color themeText: "#ffffff"
     property color themeBorder: Qt.rgba(1, 1, 1, 0.05)
-    
-    // Fixed: Shifted to a universal neutral tone that darkens bright spaces and lifts dark ones
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
     property color hoverBorder: Qt.rgba(0, 0, 0, 0.2)
 
@@ -50,11 +49,11 @@ PanelWindow {
 
             property int activeHoverIndex: -1
 
+            // Expanded to monitor wallpaper picker state safely during lookups
             property bool stableHover: hotspotTrigger.containsMouse ||
                                        dockHitbox.containsMouse || 
-                                       (dockWindow.launcherModule && 
-                                        dockWindow.launcherModule.launcherWindowObject && 
-                                        dockWindow.launcherModule.launcherWindowObject.visible)
+                                       (dockWindow.launcherModule && dockWindow.launcherModule.launcherWindowObject && dockWindow.launcherModule.launcherWindowObject.visible) ||
+                                       (dockWindow.wallpaperModule && dockWindow.wallpaperModule.active)
 
             property bool isPinned: false
 
@@ -106,9 +105,8 @@ PanelWindow {
                             text: "apps"
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 32
-                            
                             style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.45)
+                            styleColor: Qt.rgba(0, 0, 0, 0.35)
                             color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
@@ -134,9 +132,8 @@ PanelWindow {
                             text: "wallpaper"
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 32
-                            
                             style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.45)
+                            styleColor: Qt.rgba(0, 0, 0, 0.35)
                             color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
@@ -162,9 +159,8 @@ PanelWindow {
                             text: "screenshot_region"
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 32
-                            
                             style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.45)
+                            styleColor: Qt.rgba(0, 0, 0, 0.35)
                             color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
@@ -195,7 +191,10 @@ PanelWindow {
                         if (dockHitbox.activeHoverIndex === 0) {
                             dockWindow.launcherModule.active = !dockWindow.launcherModule.active;
                         } else if (dockHitbox.activeHoverIndex === 1) {
-                            console.log("Wallpaper Picker Action Triggered");
+                            // Toggles the active boolean state driving the wallpaper module's display visibility
+                            if (dockWindow.wallpaperModule) {
+                                dockWindow.wallpaperModule.active = !dockWindow.wallpaperModule.active;
+                            }
                         } else if (dockHitbox.activeHoverIndex === 2) {
                             console.log("Screenshot Tool Action Triggered");
                         }
