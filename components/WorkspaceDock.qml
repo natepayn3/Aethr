@@ -10,6 +10,14 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-launcher"
     WlrLayershell.keyboardFocus: WlrLayershell.None
 
+    // Direct clickthrough mask binding via native QsWindow property
+    mask: dockHitbox.isPinned ? maskRegion : null
+
+    Region {
+        id: maskRegion
+        item: visualColumnContainer
+    }
+
     // --- SYSTEM THEME MATRIX ---
     property color themeText: "#ffffff"
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)

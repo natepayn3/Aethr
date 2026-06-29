@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Controls
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
@@ -12,19 +13,21 @@ Scope {
 
     property alias launcherWindowObject: launcherWindow
 
-    // --- INSTANTIATE UNIFIED FONT CONTROLLER ---
     FontConfig { id: fonts }
 
-    // --- STREAMING THEME BRIDGES ---
-    property color themeBackground: Qt.rgba(0.08, 0.08, 0.08, 0.9) 
+    // --- REALIGNED SYSTEM THEME MATRIX ---
+    // Swapped out the 90% heavy dark block for the same universal neutral tone used in your docks
+    property color themeBackground: Qt.rgba(0.4, 0.4, 0.4, 0.7) 
     property color themeText: "#ffffff"
-    property color themeAccent: Qt.rgba(1, 1, 1, 0.15) 
-    property color themeBorder: Qt.rgba(1, 1, 1, 0.05)
+    property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28) 
+    property color themeBorder: Qt.rgba(0, 0, 0, 0.15)
+    property color cardBorder: Qt.rgba(0, 0, 0, 0.2)
     
     property bool active: false
+  
     onActiveChanged: {
         if (active) {
-            launcherWindow.visible = true; 
+            launcherWindow.visible = true;
         }
     }
 
@@ -83,7 +86,7 @@ Scope {
             stdout: StdioCollector {
                 onStreamFinished: {
                     try {
-                        launcherWindow.allApps = JSON.parse(this.text); 
+                        launcherWindow.allApps = JSON.parse(this.text);
                         launcherWindow.updateModel(); 
                     } catch(e) {}
                 }
@@ -115,8 +118,6 @@ Scope {
 
         function launchApp(execString) {
             let cleanExec = execString.replace(/%[uUfFkKcCiI]/g, "").trim();
-            
-            // Reverted back to your exact, working Lua command wrapper string block
             Hyprland.dispatch(`hl.dsp.exec_cmd("${cleanExec}")`);
             launcherModuleRoot.closeRequested();
         }
@@ -172,11 +173,11 @@ Scope {
                     to: "shown" 
                     ParallelAnimation {
                         NumberAnimation { 
-                            target: launcherCardFrame; 
+                            target: launcherCardFrame;
                             property: "scale"; 
                             duration: 400; 
                             easing.type: Easing.OutBack;
-                            easing.amplitude: 2.5 // Drastically increases the size of the overshoot/bounce
+                            easing.amplitude: 2.5 
                         } 
                         NumberAnimation { target: launcherCardFrame; property: "opacity"; duration: 200; easing.type: Easing.OutQuad } 
                     }
@@ -194,12 +195,28 @@ Scope {
                 }
             ]
 
+            // --- VISUAL LAYER SYSTEM ---
+            // Separated geometry from layout so MultiEffect shadow can map bounds cleanly
             Rectangle {
                 id: cardMainBody 
                 anchors.fill: parent
                 color: launcherModuleRoot.themeBackground
+                border.color: launcherModuleRoot.cardBorder
+                border.width: 1
                 radius: 16 
                 antialiasing: true
+                visible: false // Hidden because it feeds directly into the MultiEffect source plane below
+            }
+
+            // Universal hardware shadow overlay engine to cleanly segment the launcher card over pure white applications
+            MultiEffect {
+                anchors.fill: cardMainBody
+                source: cardMainBody
+                shadowEnabled: true
+                shadowColor: Qt.rgba(0, 0, 0, 0.35)
+                shadowBlur: 0.7
+                shadowVerticalOffset: 4
+                shadowHorizontalOffset: 0
             }
 
             Item {
@@ -228,7 +245,7 @@ Scope {
                         verticalAlignment: TextInput.AlignVCenter 
                         
                         background: Rectangle { 
-                            color: Qt.rgba(0, 0, 0, 0.2)
+                            color: Qt.rgba(0, 0, 0, 0.15) // Down-tints input matrix box cleanly
                             border.color: searchInput.activeFocus ? launcherModuleRoot.themeAccent : launcherModuleRoot.themeBorder 
                             border.width: 1
                             radius: 10 
@@ -276,9 +293,12 @@ Scope {
                                 property bool isPinned: launcherWindow.localPins.includes(modelData.path)
 
                                 background: Rectangle { 
+                                    // Matched completely to dock module background design structures
                                     color: appDelegate.highlighted
                                         ? launcherModuleRoot.themeAccent 
-                                        : (appDelegate.hovered ? Qt.rgba(1, 1, 1, 0.04) : "transparent")
+                                        : (appDelegate.hovered ? Qt.rgba(1, 1, 1, 0.05) : "transparent")
+                                    border.color: appDelegate.highlighted ? launcherModuleRoot.cardBorder : "transparent"
+                                    border.width: 1
                                     radius: 10 
                                 } 
 
@@ -306,11 +326,12 @@ Scope {
                                             text: modelData.name
                                             font.family: fonts.mainFont 
                                             font.pixelSize: 16
+                                            style: Text.Outline
+                                            styleColor: Qt.rgba(0, 0, 0, 0.45) // Outline shield locks readable contrast over pure white apps
                                             color: launcherModuleRoot.themeText 
                                             font.weight: appDelegate.isPinned ? Font.Bold : Font.Normal 
                                             Layout.fillWidth: true
                                             elide: Text.ElideRight
-                                            
                                             renderType: fonts.preferredRenderType 
                                             antialiasing: fonts.useAntialiasing 
                                         }
@@ -319,29 +340,30 @@ Scope {
                                             text: modelData.desc !== "" ? modelData.desc : "Application" 
                                             font.family: fonts.mainFont
                                             font.pixelSize: 14
-                                            color: Qt.rgba(1, 1, 1, 0.4) 
+                                            style: Text.Outline
+                                            styleColor: Qt.rgba(0, 0, 0, 0.3)
+                                            color: Qt.rgba(1, 1, 1, 0.5) 
                                             Layout.fillWidth: true
                                             elide: Text.ElideRight 
-                                            
                                             renderType: fonts.preferredRenderType
                                             antialiasing: fonts.useAntialiasing 
                                         }
                                     }
-                                    // Spacer block that forces the pin icon to stick to the right edge
+
                                     Item {
                                         Layout.fillWidth: true
                                     }
 
-                                    // Pinned status icon
                                     Text {
                                         text: "keep" 
                                         font.family: fonts.iconFont
                                         font.pixelSize: 18
+                                        style: Text.Outline
+                                        styleColor: Qt.rgba(0, 0, 0, 0.4)
                                         color: launcherModuleRoot.themeText
                                         visible: appDelegate.isPinned 
                                         Layout.alignment: Qt.AlignVCenter
                                         Layout.rightMargin: 4
-
                                         renderType: fonts.preferredRenderType
                                         antialiasing: fonts.useAntialiasing
                                     }
@@ -357,33 +379,31 @@ Scope {
                                     property int lastScreenY: -1
 
                                     onPositionChanged: (mouse) => { 
-                                        // Fixed: Enforce explicit math flooring to cast Wayland floats cleanly into properties typed as int
                                         let currentX = Math.floor(mouse.screenX);
                                         let currentY = Math.floor(mouse.screenY);
 
                                         let deltaX = Math.abs(currentX - lastScreenX); 
-                                        let deltaY = Math.abs(currentY - lastScreenY); 
-
+                                        let deltaY = Math.abs(currentY - lastScreenY);
                                         if (lastScreenX !== -1 && (deltaX > 2 || deltaY > 2)) {
                                             if (appListView.currentIndex !== index) { 
-                                                appListView.currentIndex = index; 
+                                                appListView.currentIndex = index;
                                             }
                                         }
                                         
-                                        lastScreenX = currentX; 
+                                        lastScreenX = currentX;
                                         lastScreenY = currentY; 
                                     }
 
                                     onExited: {
-                                        lastScreenX = -1; 
+                                        lastScreenX = -1;
                                         lastScreenY = -1; 
                                     }
 
                                     onClicked: (mouse) => {
                                         if (mouse.button === Qt.RightButton) {
-                                            launcherWindow.togglePin(modelData.path); 
+                                            launcherWindow.togglePin(modelData.path);
                                         } else { 
-                                            launcherWindow.launchApp(modelData.exec); 
+                                            launcherWindow.launchApp(modelData.exec);
                                         }
                                     }
                                 }
