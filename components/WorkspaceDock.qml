@@ -135,7 +135,7 @@ PanelWindow {
             Rectangle {
                 id: visualColumnContainer
                 width: 58
-                height: (visualColumn.children.length * 54) + ((visualColumn.children.length - 1) * 12) + 20
+                height: visualColumn.implicitHeight + 20
                 radius: 12
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
