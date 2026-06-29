@@ -11,17 +11,24 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrLayershell.None
 
     // Direct clickthrough mask binding via native QsWindow property
-    mask: dockHitbox.isPinned ? maskRegion : null
-
-    Region {
-        id: maskRegion
-        item: visualColumnContainer
+    mask: Region {
+        Region { item: hotspotTrigger }
+        Region { item: dockHitbox.isPinned ? visualColumnContainer : null }
     }
 
-    // --- SYSTEM THEME MATRIX ---
+    // --- ENGINES & CONFIG LINKAGES ---
+    FontConfig { id: fontCfg }
+
+    // --- SYSTEM THEME MATRIX & PREVIEW LAYER COMPATIBILITY ---
     property color themeText: "#ffffff"
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
     property color hoverBorder: Qt.rgba(0, 0, 0, 0.2)
+    
+    readonly property string barPosition: "left"
+    property color colorBackground: Qt.rgba(0.06, 0.06, 0.1, 0.95)
+    property color colorBorder: Qt.rgba(1, 1, 1, 0.1)
+    property color colorAccent: Qt.rgba(0.6, 0.45, 0.9, 1.0)
+    property string shellFont: fontCfg.mainFont
 
     anchors {
         left: true
@@ -64,7 +71,6 @@ PanelWindow {
 
         let maxId = Math.max(...ids, 0);
         sideDockWindow.maxWorkspaceId = maxId;
-
         let cleanIds = [];
         for (let i = 1; i <= maxId; i++) {
             cleanIds.push(i);
@@ -114,7 +120,7 @@ PanelWindow {
             hoverEnabled: true
 
             property int activeHoverIndex: -1
-            property bool stableHover: hotspotTrigger.containsMouse || dockHitbox.containsMouse
+            property bool stableHover: hotspotTrigger.containsMouse || dockHitbox.containsMouse || previewCard.isHovered
             property bool isPinned: false
 
             onStableHoverChanged: {
@@ -129,7 +135,6 @@ PanelWindow {
             Rectangle {
                 id: visualColumnContainer
                 width: 58
-                // Fixed: The height matrix calculation stays completely static now
                 height: (visualColumn.children.length * 54) + ((visualColumn.children.length - 1) * 12) + 20
                 radius: 12
                 anchors.verticalCenter: parent.verticalCenter
@@ -156,16 +161,15 @@ PanelWindow {
                             property bool isActive: sideDockWindow.activeWorkspace === wsId && !sideDockWindow.isSpecialActive
                             property bool isOccupied: sideDockWindow.occupiedMap[wsId] === true
 
-                            // Outer container item stays a fixed 54px to keep geometry stable
                             width: 54
                             height: 54
 
-                            // Inner visual plate scales smoothly without layout shifting
                             Rectangle {
                                 width: parent.isActive ? 54 : 44
                                 height: parent.isActive ? 54 : 44
                                 radius: 10
                                 anchors.centerIn: parent
+                                
                                 color: dockHitbox.activeHoverIndex === index ? sideDockWindow.themeAccent : "transparent"
                                 border.color: dockHitbox.activeHoverIndex === index ? sideDockWindow.hoverBorder : "transparent"
                                 border.width: 1
@@ -177,13 +181,14 @@ PanelWindow {
 
                             Text {
                                 anchors.centerIn: parent
-                                font.family: "Material Symbols Outlined"
+                                font.family: fontCfg.iconFont
                                 font.pixelSize: parent.isActive ? 28 : 22
                                 style: Text.Outline
                                 styleColor: Qt.rgba(0, 0, 0, 0.35)
                                 color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
                                 text: isActive ? "radio_button_checked" : (isOccupied ? "adjust" : "circle")
                                 
+                                Component.onCompleted: fontCfg.applySmoothing(this)
                                 Behavior on font.pixelSize { NumberAnimation { duration: 140 } }
                                 Behavior on color { ColorAnimation { duration: 180 } }
                             }
@@ -209,11 +214,13 @@ PanelWindow {
                         Text {
                             anchors.centerIn: parent
                             text: "add"
-                            font.family: "Material Symbols Outlined"
+                            font.family: fontCfg.iconFont
                             font.pixelSize: 22
                             style: Text.Outline
                             styleColor: Qt.rgba(0, 0, 0, 0.35)
                             color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
+                            
+                            Component.onCompleted: fontCfg.applySmoothing(this)
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
                     }
@@ -240,13 +247,14 @@ PanelWindow {
 
                         Text {
                             anchors.centerIn: parent
-                            font.family: "Material Symbols Outlined"
+                            font.family: fontCfg.iconFont
                             font.pixelSize: sideDockWindow.isSpecialActive ? 28 : 22
                             style: Text.Outline
                             styleColor: Qt.rgba(0, 0, 0, 0.35)
                             color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
                             text: sideDockWindow.isSpecialActive ? "family_star" : "kid_star"
                             
+                            Component.onCompleted: fontCfg.applySmoothing(this)
                             Behavior on font.pixelSize { NumberAnimation { duration: 140 } }
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
@@ -260,30 +268,41 @@ PanelWindow {
                     cursorShape: dockHitbox.activeHoverIndex !== -1 ? Qt.PointingHandCursor : Qt.ArrowCursor
 
                     onPositionChanged: (mouse) => {
-                        // 54px static cell height + 12px padding step = 66px clean tracking array
-                        let totalCellHeight = 66; 
+                        let totalCellHeight = 66;
                         let calculatedIndex = Math.floor(mouse.y / totalCellHeight);
                         let localY = mouse.y % totalCellHeight;
-                        
                         let totalCount = sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1);
-
+                        
                         if (calculatedIndex >= 0 && calculatedIndex < totalCount && localY <= 54 && mouse.y >= 0) {
                             dockHitbox.activeHoverIndex = calculatedIndex;
+                            
+                            if (calculatedIndex < sideDockWindow.activeWorkspaceList.length) {
+                                previewWindow.targetWorkspace = sideDockWindow.activeWorkspaceList[calculatedIndex];
+                            } else {
+                                previewWindow.targetWorkspace = -1;
+                            }
                         } else {
                             dockHitbox.activeHoverIndex = -1;
+                            previewWindow.targetWorkspace = -1;
                         }
                     }
 
-                    onExited: dockHitbox.activeHoverIndex = -1
+                    onExited: {
+                        dockHitbox.activeHoverIndex = -1;
+                        previewWindow.targetWorkspace = -1;
+                    }
 
                     onClicked: (mouse) => {
                         if (dockHitbox.activeHoverIndex >= 0 && dockHitbox.activeHoverIndex < sideDockWindow.activeWorkspaceList.length) {
                             let targetWs = sideDockWindow.activeWorkspaceList[dockHitbox.activeHoverIndex];
+                            // Restored your working Lua dispatch syntax
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = "${targetWs}" })`);
                         } else if (dockHitbox.activeHoverIndex === sideDockWindow.activeWorkspaceList.length) {
                             let nextWs = sideDockWindow.maxWorkspaceId + 1;
+                            // Restored your working Lua dispatch syntax
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = "${nextWs}" })`);
                         } else if (dockHitbox.activeHoverIndex === (sideDockWindow.activeWorkspaceList.length + 1) && sideDockWindow.isSpecialOccupied) {
+                            // Restored your working Lua dispatch syntax
                             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("magic")`);
                         }
                     }
@@ -300,6 +319,45 @@ PanelWindow {
         onTriggered: {
             dockHitbox.isPinned = false;
             dockHitbox.activeHoverIndex = -1;
+            previewWindow.targetWorkspace = -1;
+        }
+    }
+
+    // --- INTEGRATED COMPANION PREVIEW LAYER ---
+    PanelWindow {
+        id: previewWindow
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "quickshell-workspace-preview"
+        WlrLayershell.keyboardFocus: WlrLayershell.None
+        WlrLayershell.exclusionMode: WlrLayershell.Ignore
+        
+        anchors {
+            left: true
+            top: true
+            bottom: true
+        }
+        
+        width: previewCard.active ? (68 + previewCard.width + 24) : 0
+        color: "transparent"
+        visible: targetWorkspace !== -1 && dockHitbox.isPinned
+        
+        property int targetWorkspace: -1
+        
+        mask: Region {
+            item: previewCard.active ? previewCard : null
+        }
+
+        WorkspacePreview {
+            id: previewCard
+            targetWorkspace: previewWindow.targetWorkspace
+            
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 72 
+
+            onCloseRequested: {
+                previewWindow.targetWorkspace = -1;
+            }
         }
     }
 }
