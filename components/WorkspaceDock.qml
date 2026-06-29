@@ -295,14 +295,11 @@ PanelWindow {
                     onClicked: (mouse) => {
                         if (dockHitbox.activeHoverIndex >= 0 && dockHitbox.activeHoverIndex < sideDockWindow.activeWorkspaceList.length) {
                             let targetWs = sideDockWindow.activeWorkspaceList[dockHitbox.activeHoverIndex];
-                            // Restored your working Lua dispatch syntax
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = "${targetWs}" })`);
                         } else if (dockHitbox.activeHoverIndex === sideDockWindow.activeWorkspaceList.length) {
                             let nextWs = sideDockWindow.maxWorkspaceId + 1;
-                            // Restored your working Lua dispatch syntax
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = "${nextWs}" })`);
                         } else if (dockHitbox.activeHoverIndex === (sideDockWindow.activeWorkspaceList.length + 1) && sideDockWindow.isSpecialOccupied) {
-                            // Restored your working Lua dispatch syntax
                             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("magic")`);
                         }
                     }
@@ -337,7 +334,8 @@ PanelWindow {
             bottom: true
         }
         
-        width: previewCard.active ? (68 + previewCard.width + 24) : 0
+        // Swapped from width to implicitWidth to fix deprecation warning spam
+        implicitWidth: previewCard.active ? (68 + previewCard.width + 24) : 0
         color: "transparent"
         visible: targetWorkspace !== -1 && dockHitbox.isPinned
         
