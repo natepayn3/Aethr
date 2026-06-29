@@ -49,7 +49,6 @@ Item {
                 
                 let work = user + nice + system;
                 let total = work + idle;
-                
                 let diffWork = work - cpuProc.prevTotal;
                 let diffTotal = total - cpuProc.prevIdle;
                 if (diffTotal > 0) {
@@ -171,13 +170,18 @@ Item {
         }
     }
 
+    // Added style and styleColor attributes to create the drop-shadow/high-contrast border matrix
     Text {
         text: Math.round(root.value * 100) + "%"
         font.family: "Google Sans Flex" 
         font.pixelSize: 20
         font.weight: Font.Light
-        color: Qt.rgba(1, 1, 1, 0.8)
+        style: Text.Outline
+        styleColor: Qt.rgba(0, 0, 0, 0.35)
+        color: dockHitbox.isPinned ? Qt.rgba(1, 1, 1, 0.8) : "transparent"
         anchors.centerIn: parent
+
+        Behavior on color { ColorAnimation { duration: 180 } }
     }
 
     Text {
@@ -185,9 +189,13 @@ Item {
         font.family: "Google Sans Flex"
         font.pixelSize: 12
         font.weight: Font.DemiBold
-        color: Qt.rgba(1, 1, 1, 0.5)
+        style: Text.Outline
+        styleColor: Qt.rgba(0, 0, 0, 0.35)
+        color: dockHitbox.isPinned ? Qt.rgba(1, 1, 1, 0.5) : "transparent"
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: 25
+
+        Behavior on color { ColorAnimation { duration: 180 } }
     }
 }
