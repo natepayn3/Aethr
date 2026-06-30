@@ -8,6 +8,7 @@ PanelWindow {
 
     required property var screen
     required property var broadcaster
+    property bool dndActive: false
 
     FontConfig {
         id: fc
@@ -39,6 +40,10 @@ PanelWindow {
         target: popupWindow.broadcaster
 
         function onBroadcast(summary, body) {
+            if (popupWindow.dndActive) { // 💡 Read from the local property tracking shellRoot
+                return;
+            }
+
             let itemKey = Date.now() + "_" + Math.random();
             notifModel.append({
                 "key": itemKey,
@@ -145,7 +150,6 @@ PanelWindow {
                 }
             }
 
-            // Animations
             SequentialAnimation {
                 id: addAnim
                 PropertyAction { target: bannerCard; property: "opacity"; value: 0.0 }

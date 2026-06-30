@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Shapes
+import QtQuick.Layouts
 import Quickshell.Io
 
-Column {
+Item {
     id: ringsRoot
-    spacing: 16
     width: parent.width
 
     property real sysCpu: 0.0
@@ -19,7 +19,7 @@ Column {
 
     Timer {
         interval: 3000
-        running: ringsRoot.visible;
+        running: ringsRoot.visible
         repeat: true; triggeredOnStart: true
         onTriggered: { 
             cpuStatReader.reload();
@@ -30,8 +30,8 @@ Column {
 
     component StatRingItem : Item {
         id: ringRow
-        width: 80  
-        height: 80
+        width: 84  
+        height: 84 
 
         property string label: ""
         property real value: 0.0
@@ -40,15 +40,16 @@ Column {
             anchors.fill: parent
             layer.enabled: true; layer.samples: 4
 
-            // 🎯 VECTOR OUTLINE LAYER: Active Progress Segment Drop-Shadow Only
+            // VECTOR OUTLINE LAYER: Active Progress Segment Drop-Shadow Only
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: Qt.rgba(0, 0, 0, 0.35)
-                strokeWidth: 4.5
+                strokeWidth: 5.5
                 capStyle: ShapePath.RoundCap
                 PathAngleArc { 
-                    centerX: 40; centerY: 40; radiusX: 36; radiusY: 36 
-                    startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) 
+                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37 
+                    startAngle: -90;
+                    sweepAngle: Math.max(0.1, ringRow.value * 360) 
                 }
             }
             
@@ -56,10 +57,11 @@ Column {
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: Qt.rgba(1, 1, 1, 0.06) 
-                strokeWidth: 2.5 
+                strokeWidth: 3.5 
                 PathAngleArc { 
-                    centerX: 40; centerY: 40; radiusX: 36; radiusY: 36 
-                    startAngle: -90; sweepAngle: 360 
+                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37 
+                    startAngle: -90;
+                    sweepAngle: 360 
                 }
             }
 
@@ -67,11 +69,12 @@ Column {
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: "#ffffff"
-                strokeWidth: 2.5 
+                strokeWidth: 3.5 
                 capStyle: ShapePath.RoundCap
                 PathAngleArc { 
-                    centerX: 40; centerY: 40; radiusX: 36; radiusY: 36 
-                    startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) 
+                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37 
+                    startAngle: -90;
+                    sweepAngle: Math.max(0.1, ringRow.value * 360) 
                 }
             }
         }
@@ -84,7 +87,7 @@ Column {
                 text: ringRow.label
                 color: Qt.rgba(1, 1, 1, 0.4)
                 font.family: fc.mainFont
-                font.pixelSize: 11 
+                font.pixelSize: 10 
                 font.weight: Font.Bold
                 anchors.horizontalCenter: parent.horizontalCenter
                 Component.onCompleted: {
@@ -95,7 +98,7 @@ Column {
                 text: Math.round(ringRow.value * 100) + "%"
                 color: "#ffffff"
                 font.family: fc.mainFont
-                font.pixelSize: 13 
+                font.pixelSize: 12 
                 font.weight: Font.DemiBold
                 anchors.horizontalCenter: parent.horizontalCenter
                 Component.onCompleted: {
@@ -105,20 +108,31 @@ Column {
         }
     }
 
-    Column {
-        width: parent.width
-        spacing: 14
-        anchors.right: parent.right
-        
-        StatRingItem { label: "CPU"; value: ringsRoot.sysCpu; anchors.right: parent.right }
-        StatRingItem { label: "GPU"; value: ringsRoot.sysGpu; anchors.right: parent.right }
-        StatRingItem { label: "RAM"; value: ringsRoot.sysRam; anchors.right: parent.right }
-        StatRingItem { label: "DISK"; value: ringsRoot.sysDisk; anchors.right: parent.right }
+    // --- DYNAMIC SEPARATION COLUMN TRACKER ---
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        StatRingItem { 
+            label: "CPU"; value: ringsRoot.sysCpu
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+        }
+        StatRingItem { 
+            label: "GPU"; value: ringsRoot.sysGpu
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+        }
+        StatRingItem { 
+            label: "RAM"; value: ringsRoot.sysRam
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+        }
+        StatRingItem { 
+            label: "DISK"; value: ringsRoot.sysDisk
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+        }
     }
 
     FileView {
-        id: memInfoReader;
-        path: "/proc/meminfo"
+        id: memInfoReader; path: "/proc/meminfo"
         onTextChanged: {
             let lines = text().split('\n'), total = 0, avail = 0;
             for (let i = 0; i < lines.length; i++) {
@@ -130,8 +144,7 @@ Column {
     }
 
     FileView {
-        id: cpuStatReader;
-        path: "/proc/stat"
+        id: cpuStatReader; path: "/proc/stat"
         onTextChanged: {
             let parts = text().split('\n')[0].split(/\s+/).filter(Boolean);
             if (parts.length >= 5) {

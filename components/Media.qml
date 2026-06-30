@@ -19,8 +19,8 @@ RowLayout {
     // --- THUMBNAIL ART CONTAINER WITH ROUNDED EDGES ---
     Item {
         id: artContainer
-        width: 64
-        height: 64
+        width: 75
+        height: 75
         Layout.alignment: Qt.AlignVCenter
 
         Image {
