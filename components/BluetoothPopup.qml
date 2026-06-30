@@ -8,6 +8,7 @@ import Quickshell.Io
 PanelWindow {
     id: bluetoothPopupWindow
 
+    // --- Window Configuration ---
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-launcher"
     WlrLayershell.keyboardFocus: visible ? WlrLayershell.OnDemand : WlrLayershell.None
@@ -22,6 +23,14 @@ PanelWindow {
     
     color: "transparent"
 
+    // --- Global Theme Mapping ---
+    property color colorBackground: shellConfig.colorBackground
+    property color colorBorder: shellConfig.colorBorder
+
+    // Internal flag managing the graceful scale/fade execution loop
+    property bool animateActive: false
+
+    // --- State Properties ---
     property bool isPowered: false
     property bool isScanning: false
     property bool isToggling: false
@@ -34,35 +43,75 @@ PanelWindow {
             cardContainerMouseArea.forceActiveFocus();
             stateFetcher.running = true;
             if (!deviceFetcher.running) deviceFetcher.running = true;
+            bluetoothPopupWindow.animateActive = true; // Safe visibility cascade kickoff
         } else {
             deviceFetcher.running = false;
             scanDurationTimer.stop();
+            bluetoothPopupWindow.animateActive = false;
         }
     }
 
+    // --- Fullscreen Outside Dismiss Wrapper ---
     MouseArea {
         id: outsideDismiss
         anchors.fill: parent
-        onClicked: bluetoothPopupWindow.visible = false
+        onClicked: bluetoothPopupWindow.animateActive = false // Initiates uniform collapse cycle
 
+        // --- Main Visual Panel ---
         Rectangle {
             id: bgCard
             width: 360 
             height: Math.min(mainLayout.implicitHeight + 40, 500)
-            
+            transformOrigin: Item.Center
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
             
-            color: Qt.rgba(0, 0, 0, 0.01)
-            border.width: 0
-            radius: 16
+            color: bluetoothPopupWindow.colorBackground
+            border.color: bluetoothPopupWindow.colorBorder
+            border.width: 1
+            radius: shellConfig.radiusValue
+
+            // --- DECLARATIVE STATE ENGINE ---
+            states: [
+                State {
+                    name: "hidden"
+                    when: !bluetoothPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 0.0; scale: 0.3 }
+                },
+                State {
+                    name: "shown"
+                    when: bluetoothPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 1.0; scale: 1.0 }
+                }
+            ]
+
+            transitions: [
+                Transition {
+                    from: "hidden"; to: "shown"
+                    ParallelAnimation {
+                        NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationIn; easing.type: Easing.OutBack; easing.amplitude: shellConfig.springBack }
+                        NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityIn; easing.type: Easing.OutQuad }
+                    }
+                },
+                Transition {
+                    from: "shown"; to: "hidden"
+                    SequentialAnimation {
+                        ParallelAnimation {
+                            NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
+                            NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
+                        }
+                        // Securely clip layout visibility after animation finishes
+                        ScriptAction { script: bluetoothPopupWindow.visible = false } 
+                    }
+                }
+            ]
 
             MouseArea {
                 id: cardContainerMouseArea
                 anchors.fill: parent
                 focus: true
-                Keys.onEscapePressed: bluetoothPopupWindow.visible = false
+                Keys.onEscapePressed: bluetoothPopupWindow.animateActive = false
                 onClicked: (mouse) => mouse.accepted = true
             }
 
@@ -72,6 +121,7 @@ PanelWindow {
                 anchors.margins: 22
                 spacing: 20
 
+                // --- Header Area ---
                 RowLayout {
                     Layout.fillWidth: true
 
@@ -113,6 +163,7 @@ PanelWindow {
                     }
                 }
 
+                // --- Scrollable Device Layout Block ---
                 ScrollView {
                     id: deviceScrollView
                     Layout.fillWidth: true
@@ -123,7 +174,6 @@ PanelWindow {
 
                     ColumnLayout {
                         id: repeaterLayout
-                        // Fixed: Anchoring width directly to viewport stops the structural layout collapse
                         width: deviceScrollView.availableWidth
                         spacing: 8
 
@@ -154,7 +204,7 @@ PanelWindow {
                                     ColumnLayout {
                                         Layout.fillWidth: true
                                         spacing: 1
-
+                                        
                                         Text {
                                             text: model.name !== "" ? model.name : model.mac
                                             color: "#ffffff"
@@ -249,6 +299,7 @@ PanelWindow {
                     color: Qt.rgba(1, 1, 1, 0.1)
                 }
 
+                // --- Footer / Status Row ---
                 RowLayout {
                     Layout.fillWidth: true
 
@@ -263,30 +314,31 @@ PanelWindow {
                         Layout.fillWidth: true
                     }
 
-                    MouseArea {
-                        id: switchContainer
-                        width: 44
-                        height: 24
+                    Switch {
+                        id: powerSwitch
+                        checked: bluetoothPopupWindow.isPowered
                         enabled: !bluetoothPopupWindow.isToggling
-                        cursorShape: Qt.PointingHandCursor
+                        Layout.alignment: Qt.AlignVCenter
                         onClicked: bluetoothPopupWindow.togglePower()
-
-                        Rectangle {
-                            anchors.fill: parent
+                        
+                        implicitWidth: 42
+                        implicitHeight: 24
+                        
+                        indicator: Rectangle {
+                            width: 42
+                            height: 24
                             radius: 12
-                            color: bluetoothPopupWindow.isPowered ? "#ffffff" : "transparent"
-                            border.color: "#ffffff"
+                            color: powerSwitch.checked ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
+                            border.color: powerSwitch.checked ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : Qt.rgba(1, 1, 1, 0.2)
                             border.width: 2
 
                             Rectangle {
-                                id: switchHandle
-                                x: bluetoothPopupWindow.isPowered ? parent.width - width - 4 : 4
+                                x: powerSwitch.checked ? parent.width - width - 4 : 4
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 14
                                 height: 14
                                 radius: 7
-                                color: bluetoothPopupWindow.isPowered ? "#10101a" : "#ffffff"
-                                
+                                color: "#ffffff"
                                 Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                             }
                         }
@@ -296,6 +348,7 @@ PanelWindow {
         }
     }
 
+    // --- Backend Orchestration Drivers ---
     function syncDevices() {
         if (!visible) return;
         if (isPowered) {
@@ -378,10 +431,8 @@ PanelWindow {
                 bluetoothSession.lineBuffer = lines.pop(); 
                 
                 let listNeedsSorting = false;
-
                 for (let line of lines) {
                     let cleanLine = line.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "").trim();
-                    
                     if (cleanLine.includes("Pairing successful") || cleanLine.includes("Connection successful")) {
                         bluetoothPopupWindow.syncDevices();
                         continue;
@@ -441,7 +492,6 @@ PanelWindow {
                 let textLines = this.text.split("\n");
                 let isNowPowered = textLines.some(l => l.includes("Powered: yes"));
                 let hardwareScanning = textLines.some(l => l.includes("Discovering: yes"));
-
                 if (hardwareScanning && !bluetoothPopupWindow.isScanning) {
                     bluetoothPopupWindow.isScanning = true;
                     scanDurationTimer.restart(); 

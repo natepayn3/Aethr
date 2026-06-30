@@ -20,17 +20,16 @@ Item {
     property int currentActiveWorkspace: -1
     property int workingWorkspace: -1
 
-    property real radiusValue: 12
-
     property bool isHovered: globalTrackingArea.containsMouse || contentHoverHandler.hovered
 
     property var rootWindow: Quickshell.window
 
     // --- SYSTEM THEME MATRIX ---
-    property color colorBackground: Qt.rgba(0.4, 0.4, 0.4, 0.28)
-    property color colorBorder: Qt.rgba(1, 1, 1, 0.05)
-    property color colorAccent: Qt.rgba(0.6, 0.45, 0.9, 1.0)
-    property string shellFont: "Google Sans Flex"
+    property color colorBackground: shellConfig.colorBackground
+    property color colorBorder: shellConfig.colorBorder
+    property color colorAccent: shellConfig.colorAccent
+    property string shellFont: shellConfig.shellFont
+    property real radiusValue: shellConfig.radiusValue
 
     // Dynamically expand root width to tightly match the workspace stream aspect bounds plus side paddings
     property real maxCardWidth: viewportFrame.width + 68
@@ -267,7 +266,7 @@ Item {
                     spacing: 16
                     anchors.top: parent.top
                     anchors.left: tvKnobsColumn.right
-                    anchors.leftMargin: 16
+                    anchors.leftMargin: - 16
 
                     Text {
                         id: titleLabel

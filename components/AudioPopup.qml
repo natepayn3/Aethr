@@ -8,6 +8,7 @@ import Quickshell.Io
 PanelWindow {
     id: audioPopupWindow
 
+    // --- Window Configuration ---
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-launcher"
     WlrLayershell.keyboardFocus: visible ? WlrLayershell.OnDemand : WlrLayershell.None
@@ -22,26 +23,72 @@ PanelWindow {
     
     color: "transparent"
 
+    // --- Global Theme Mapping ---
+    property color colorBackground: shellConfig.colorBackground
+    property color colorBorder: shellConfig.colorBorder
+
+    // Internal flag managing the graceful scale/fade execution loop
+    property bool animateActive: false
+
+    // --- State Properties ---
     property int systemVolume: 50
     property bool isMuted: false
 
+    // --- Fullscreen Outside Dismiss Wrapper ---
     MouseArea {
         id: outsideDismiss
         anchors.fill: parent
-        onClicked: audioPopupWindow.visible = false
+        onClicked: audioPopupWindow.animateActive = false // Initiates uniform collapse cycle
 
+        // --- Main Visual Panel ---
         Rectangle {
             id: bgCard
             width: 360
             height: mainLayout.implicitHeight + 40
-            
+            transformOrigin: Item.Center
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
             
-            color: Qt.rgba(0, 0, 0, 0.01)
-            border.width: 0
-            radius: 16
+            color: audioPopupWindow.colorBackground
+            border.color: audioPopupWindow.colorBorder
+            border.width: 1
+            radius: shellConfig.radiusValue
+
+            // --- DECLARATIVE STATE ENGINE ---
+            states: [
+                State {
+                    name: "hidden"
+                    when: !audioPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 0.0; scale: 0.3 }
+                },
+                State {
+                    name: "shown"
+                    when: audioPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 1.0; scale: 1.0 }
+                }
+            ]
+
+            transitions: [
+                Transition {
+                    from: "hidden"; to: "shown"
+                    ParallelAnimation {
+                        NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationIn; easing.type: Easing.OutBack; easing.amplitude: shellConfig.springBack }
+                        NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityIn; easing.type: Easing.OutQuad }
+                    }
+                },
+                Transition {
+                    from: "shown"; to: "hidden"
+                    SequentialAnimation {
+                        ParallelAnimation {
+                            NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
+                            NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
+                        }
+                        // Securely clip layout visibility after animation finishes
+                        ScriptAction { script: audioPopupWindow.visible = false } 
+                    }
+                }
+            ]
 
             MouseArea {
                 anchors.fill: parent
@@ -54,6 +101,7 @@ PanelWindow {
                 anchors.margins: 22
                 spacing: 20
 
+                // --- Header Row ---
                 RowLayout {
                     Layout.fillWidth: true
 
@@ -80,6 +128,7 @@ PanelWindow {
                     }
                 }
 
+                // --- Slider Control Core ---
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 18
@@ -142,6 +191,7 @@ PanelWindow {
                     color: Qt.rgba(1, 1, 1, 0.1)
                 }
 
+                // --- Routing Repeater Sink List ---
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -204,9 +254,10 @@ PanelWindow {
         }
 
         focus: true
-        Keys.onEscapePressed: audioPopupWindow.visible = false
+        Keys.onEscapePressed: audioPopupWindow.animateActive = false
     }
 
+    // --- Backend Audio Pipeline Drivers ---
     Process {
         id: audioEventStream
         command: [
@@ -248,7 +299,7 @@ PanelWindow {
                     let line = lines[i];
                     if (line.includes("Sinks:")) { parsingSinks = true; continue; }
                     if (parsingSinks && (line.includes("Sources:") || line.includes("Filters:") || line.includes("Streams:"))) { 
-                        parsingSinks = false; 
+                        parsingSinks = false;
                     }
 
                     if (parsingSinks) {
@@ -311,12 +362,14 @@ PanelWindow {
     }
 
     onVisibleChanged: {
-        shellRoot.audioPopupActive = visible; // Sync state up to root on toggle
+        shellRoot.audioPopupActive = visible;
         if (visible) {
             outsideDismiss.forceActiveFocus();
             pollTimer.start();
+            audioPopupWindow.animateActive = true; // Safe visibility cascade kickoff
         } else {
             pollTimer.stop();
+            audioPopupWindow.animateActive = false;
         }
     }
 }

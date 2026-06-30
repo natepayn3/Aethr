@@ -142,17 +142,14 @@ Scope {
 
         Item {
             id: launcherCardFrame
-            width: 500  
+            width: shellConfig.launcherWidth
             height: 500 
-            anchors.centerIn: parent
             transformOrigin: Item.Center 
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: shellConfig.panelBottomMargin
+            anchors.horizontalCenter: parent.horizontalCenter
 
-            MouseArea {
-                anchors.fill: parent
-                onPressed: (event) => event.accepted = true
-                onClicked: (event) => event.accepted = true
-            }
-
+            // --- DECLARATIVE STATE ENGINE ---
             states: [
                 State { 
                     name: "hidden"
@@ -168,26 +165,18 @@ Scope {
 
             transitions: [
                 Transition {
-                    from: "hidden"
-                    to: "shown" 
+                    from: "hidden"; to: "shown"
                     ParallelAnimation {
-                        NumberAnimation { 
-                            target: launcherCardFrame;
-                            property: "scale"; 
-                            duration: 400; 
-                            easing.type: Easing.OutBack;
-                            easing.amplitude: 2.5 
-                        } 
-                        NumberAnimation { target: launcherCardFrame; property: "opacity"; duration: 200; easing.type: Easing.OutQuad } 
+                        NumberAnimation { target: launcherCardFrame; property: "scale"; duration: shellConfig.durationIn; easing.type: Easing.OutBack; easing.amplitude: shellConfig.springBack }
+                        NumberAnimation { target: launcherCardFrame; property: "opacity"; duration: shellConfig.opacityIn; easing.type: Easing.OutQuad }
                     }
                 },
                 Transition {
-                    from: "shown"
-                    to: "hidden" 
+                    from: "shown"; to: "hidden"
                     SequentialAnimation {
                         ParallelAnimation {
-                            NumberAnimation { target: launcherCardFrame; property: "scale"; duration: 200; easing.type: Easing.InBack; easing.amplitude: 1.5 } 
-                            NumberAnimation { target: launcherCardFrame; property: "opacity"; duration: 150; easing.type: Easing.InQuad } 
+                            NumberAnimation { target: launcherCardFrame; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
+                            NumberAnimation { target: launcherCardFrame; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
                         }
                         ScriptAction { script: launcherWindow.visible = false } 
                     }
