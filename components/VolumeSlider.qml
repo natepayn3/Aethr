@@ -5,65 +5,109 @@ import Quickshell.Io
 Item {
     id: volumeSliderRoot
     width: parent.width
-    height: 32
+    height: 48
 
     property real currentVolume: 0.0
+    property string percentageText: Math.round(volumeSliderRoot.currentVolume * 100) + "%"
 
     Component.onCompleted: volFetcher.running = true
 
-    Text {
-        id: volIcon
-        text: "volume_up"
-        font.family: "Material Symbols Outlined"
-        font.pixelSize: 20
+    // --- 1. BACKGROUND TRACK (The empty part) ---
+    Rectangle {
+        id: bgTrack
+        anchors.fill: parent
+        color: Qt.rgba(1, 1, 1, 0.05)
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.03)
+        radius: height / 2
+
+        // LIGHT TEXT: Sits stationary underneath the fill bar
+        Text {
+            anchors.centerIn: parent
+            text: volumeSliderRoot.percentageText
+            color: Qt.rgba(1, 1, 1, 0.35)
+            font.family: "Google Sans Flex"
+            font.pixelSize: 13
+            font.weight: Font.Bold
+        }
+    }
+
+    // --- 2. FILL BAR (The colored part that clips) ---
+    Rectangle {
+        id: fillBar
+        height: parent.height
+        width: volumeSliderRoot.width * volumeSliderRoot.currentVolume
         color: "#ffffff"
+        radius: height / 2
+        
+        // 🎯 THE CLIPPING MAGIC
+        clip: true 
+
+        // DARK TEXT: Absolutely positioned relative to the root frame size
+        Text {
+            x: (volumeSliderRoot.width - width) / 2
+            y: (volumeSliderRoot.height - height) / 2
+            
+            text: volumeSliderRoot.percentageText
+            color: Qt.rgba(0, 0, 0, 0.85)
+            font.family: "Google Sans Flex"
+            font.pixelSize: 13
+            font.weight: Font.Bold
+        }
+    }
+
+    // --- 3. DUAL-RENDERED SYSTEM ICONS ---
+    // Background Icon (White/Dimmed when unfilled)
+    Text {
+        id: bgIcon
+        text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
+        font.family: "Material Symbols Outlined"
+        font.pixelSize: 18
+        color: Qt.rgba(1, 1, 1, 0.4)
         anchors.left: parent.left
+        anchors.leftMargin: 16
         anchors.verticalCenter: parent.verticalCenter
     }
 
-    Slider {
-        id: sliderControl
-        anchors.left: volIcon.right
-        anchors.right: parent.right
-        anchors.leftMargin: 12
-        anchors.verticalCenter: parent.verticalCenter
-        from: 0
-        to: 1
-        value: volumeSliderRoot.currentVolume
+    // Foreground Icon (Dark overlay clipped right inside the moving bar)
+    Item {
+        height: parent.height
+        width: fillBar.width
+        clip: true
 
-        onMoved: {
-            volumeSliderRoot.currentVolume = value;
-            setVolProc.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value.toFixed(2)];
-            setVolProc.running = true;
-        }
-
-        background: Rectangle {
-            x: sliderControl.leftPadding
-            y: sliderControl.topPadding + sliderControl.availableHeight / 2 - height / 2
-            width: sliderControl.availableWidth
-            height: 8
-            radius: 4
-            color: Qt.rgba(1, 1, 1, 0.12)
-
-            Rectangle {
-                width: sliderControl.visualPosition * parent.width
-                height: parent.height
-                color: "#ffffff"
-                radius: 4
-            }
-        }
-
-        handle: Rectangle {
-            x: sliderControl.leftPadding + sliderControl.visualPosition * (sliderControl.availableWidth - width)
-            y: sliderControl.topPadding + sliderControl.availableHeight / 2 - height / 2
-            width: 16
-            height: 16
-            radius: 8
-            color: "#ffffff"
+        Text {
+            text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
+            font.family: "Material Symbols Outlined"
+            font.pixelSize: 18
+            color: Qt.rgba(0, 0, 0, 0.75)
+            x: 16
+            anchors.verticalCenter: parent.verticalCenter
         }
     }
 
-    Process { id: setVolProc; running: false }
+    // --- 4. INTERACTION MOUSE LOGIC ---
+    MouseArea {
+        id: dragArea
+        anchors.fill: parent
+
+        function updateVolume(mouseX) {
+            let newPct = Math.max(0.0, Math.min(1.0, mouseX / width));
+            volumeSliderRoot.currentVolume = newPct;
+            volSetter.command = ["sh", "-c", "wpctl set-volume @DEFAULT_AUDIO_SINK@ " + newPct.toFixed(2)];
+            volSetter.running = true;
+        }
+
+        onPositionChanged: (mouse) => {
+            if (pressed) updateVolume(mouse.x);
+        }
+        
+        onClicked: (mouse) => {
+            updateVolume(mouse.x);
+        }
+    }
+
+    Process { id: volSetter; running: false } 
+    
     Process {
         id: volFetcher
         command: ["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"]
@@ -71,7 +115,9 @@ Item {
         stdout: StdioCollector {
             onStreamFinished: {
                 let parts = this.text.trim().split(" ");
-                if (parts.length >= 2) volumeSliderRoot.currentVolume = parseFloat(parts[1]);
+                if (parts.length >= 2) {
+                    volumeSliderRoot.currentVolume = parseFloat(parts[1]);
+                }
                 volFetcher.running = false;
             }
         }
