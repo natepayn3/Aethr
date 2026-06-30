@@ -20,6 +20,7 @@ PanelWindow {
 
     visible: notifModel.count > 0
 
+    anchors.top: true
     anchors.bottom: true
     anchors.right: true
     
@@ -27,7 +28,7 @@ PanelWindow {
     margins.right: 24
 
     implicitWidth: 360
-    implicitHeight: 500 
+    implicitHeight: 500
     color: "transparent"
 
     ListModel {
