@@ -12,6 +12,19 @@ Item {
 
     Component.onCompleted: volFetcher.running = true
 
+    Timer {
+        id: volPollTimer
+        interval: 150 // Snappy enough to feel instant, slow enough to sleep on CPU
+        repeat: true
+        running: !dragArea.pressed // Don't fight the user's mouse while dragging
+        triggeredOnStart: true
+        onTriggered: {
+            if (!volFetcher.running) {
+                volFetcher.running = true;
+            }
+        }
+    }
+
     FontConfig { id: fc }
 
     // --- 1. BACKGROUND MASTER TRACK CONTAINER ---
