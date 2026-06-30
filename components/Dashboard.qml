@@ -140,9 +140,10 @@ PanelWindow {
             Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-            color: Qt.rgba(0.2, 0.2, 0.2, 0.28)
-            border.width: 0
-            radius: 16
+            color: shellConfig.colorBackground
+            border.color: shellConfig.colorBorder
+            border.width: 1
+            radius: shellConfig.radiusValue
 
             HoverHandler { id: cardHover }
 
