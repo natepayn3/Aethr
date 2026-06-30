@@ -259,45 +259,58 @@ Item {
                     }
                 }
 
-                Row {
+                RowLayout {
                     id: headerRow
                     width: parent.width - tvKnobsColumn.width - 16
                     height: 20
                     spacing: 16
                     anchors.top: parent.top
                     anchors.left: tvKnobsColumn.right
-                    anchors.leftMargin: - 16
+                    anchors.leftMargin: 0
 
-                    Text {
-                        id: titleLabel
-                        text: previewRoot.workingWorkspace !== -1 ? "Workspace " + previewRoot.workingWorkspace : ""
-                        font.family: previewRoot.shellFont
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: "#ffffff"
-                        anchors.verticalCenter: parent.verticalCenter
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
-                    }
+                    // Dummy item to push content from the left
+                    Item { Layout.fillWidth: true }
 
-                    RowLayout {
-                        id: iconContainerRow
-                        height: parent.height
-                        spacing: 8
-                        anchors.verticalCenter: parent.verticalCenter
-                        
-                        Repeater {
-                            model: viewportFrame.workspaceWindows
-                            delegate: Image {
-                                visible: (modelData.class || "") !== "" && modelData.mapped
-                                source: Quickshell.iconPath(getCleanIconName(modelData.class))
-                                Layout.preferredWidth: 16
-                                Layout.preferredHeight: 16
-                                Layout.alignment: Qt.AlignVCenter
-                                fillMode: Image.PreserveAspectFit
+                    // Centered Content Wrapper
+                    Row {
+                        id: centeredContent
+                        spacing: 16
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                        Text {
+                            id: titleLabel
+                            text: previewRoot.workingWorkspace !== -1 ? "Workspace " + previewRoot.workingWorkspace : ""
+                            font.family: previewRoot.shellFont
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: "#ffffff"
+                            anchors.verticalCenter: parent.verticalCenter
+                            style: Text.Outline
+                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        }
+
+                        RowLayout {
+                            id: iconContainerRow
+                            height: parent.height
+                            spacing: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            
+                            Repeater {
+                                model: viewportFrame.workspaceWindows
+                                delegate: Image {
+                                    visible: (modelData.class || "") !== "" && modelData.mapped
+                                    source: Quickshell.iconPath(getCleanIconName(modelData.class))
+                                    Layout.preferredWidth: 16
+                                    Layout.preferredHeight: 16
+                                    Layout.alignment: Qt.AlignVCenter
+                                    fillMode: Image.PreserveAspectFit
+                                }
                             }
                         }
                     }
+
+                    // Dummy item to push content from the right
+                    Item { Layout.fillWidth: true }
                 }
 
                 Rectangle {
