@@ -10,6 +10,7 @@ ShellRoot {
     
     property bool audioPopupActive: false
     property var activeNotifications: []
+    property bool dndActive: false
 
     QtObject {
         id: notifBroadcaster
@@ -54,6 +55,8 @@ ShellRoot {
             required property var modelData
             screen: modelData
             notificationModel: notifServer.trackedNotifications.values
+            dndActive: shellRoot.dndActive
+            onDndToggled: shellRoot.dndActive = !shellRoot.dndActive
         }
     }
 
@@ -71,6 +74,7 @@ ShellRoot {
             required property var modelData
             screen: modelData
             broadcaster: notifBroadcaster
+            dndActive: shellRoot.dndActive
         }
     }
 }
