@@ -5,7 +5,7 @@ import QtQuick.Controls
 Rectangle {
     id: notifRootCard
     width: parent ? parent.width : 0
-    height: notifList.count === 0 ? 64 : (notifColumnLayout.childrenRect.height + 24)
+    height: notifList.count === 0 ? 64 : (notifColumnLayout.implicitHeight + 24)
     radius: 12
     
     color: Qt.rgba(1, 1, 1, 0.04) 
@@ -14,7 +14,7 @@ Rectangle {
 
     FontConfig { id: fc }
 
-    Column {
+    ColumnLayout {
         id: notifColumnLayout
         spacing: 12
         anchors.left: parent.left
@@ -24,7 +24,7 @@ Rectangle {
 
         // --- HEADER ROW ---
         RowLayout {
-            width: parent.width
+            Layout.fillWidth: true // Required for ColumnLayout children
             visible: notifList.count > 0
 
             Text {
@@ -76,8 +76,10 @@ Rectangle {
         // --- CONSTRAINED NOTIFICATION LIST ENGINE ---
         ListView {
             id: notifList
-            width: parent.width
-            height: Math.min(135, notifList.count * 54)
+            Layout.fillWidth: true // Required for ColumnLayout children
+            // Explicitly map preferred/implicit height for the Layout engine
+            Layout.preferredHeight: Math.min(135, notifList.count * 54)
+            height: Layout.preferredHeight 
             spacing: 6
             clip: true
             interactive: count > 2
@@ -144,7 +146,7 @@ Rectangle {
                             fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
                         }
                     }
-                             
+               
                     Text { 
                         text: modelData.body
                         color: Qt.rgba(1, 1, 1, 0.5)
