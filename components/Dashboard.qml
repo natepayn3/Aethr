@@ -52,7 +52,10 @@ PanelWindow {
 
     Timer {
         id: statePoller
-        interval: 3000; running: dashboardWindow.visible; repeat: true; triggeredOnStart: true
+        interval: 3000
+        running: dashboardWindow.visible
+        repeat: true
+        triggeredOnStart: true
         onTriggered: {
             wifiStateCheck.running = true;
             btStateCheck.running = true;
@@ -206,6 +209,11 @@ PanelWindow {
                         }
 
                         BrightnessSlider { 
+                            Layout.fillWidth: true
+                            Layout.topMargin: 0
+                        }
+
+                        BatterySlider {
                             Layout.fillWidth: true
                             Layout.topMargin: 0
                         }

@@ -143,7 +143,7 @@ Scope {
         Item {
             id: launcherCardFrame
             width: shellConfig.launcherWidth
-            height: 500 
+            height: 540 
             transformOrigin: Item.Center 
             anchors.bottom: parent.bottom
             anchors.bottomMargin: shellConfig.panelBottomMargin
@@ -219,11 +219,27 @@ Scope {
 
                 Item {
                     anchors.fill: parent
-                    anchors.margins: 20 
+                    anchors.margins: 22 
 
                     ColumnLayout {
                         anchors.fill: parent
-                        spacing: 12 
+                        spacing: 20 
+
+                        // --- Header Title Row matching Module Specifications ---
+                        RowLayout {
+                            Layout.fillWidth: true
+
+                            Text {
+                                text: "Applications"
+                                color: "#ffffff"
+                                font.family: "Google Sans Flex"
+                                font.pixelSize: 18
+                                font.weight: Font.Bold
+                                style: Text.Outline
+                                styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                Layout.fillWidth: true
+                            }
+                        }
 
                         TextField {
                             id: searchInput
