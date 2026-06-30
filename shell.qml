@@ -55,7 +55,7 @@ ShellRoot {
         Dashboard {
             required property var modelData
             screen: modelData
-            notificationModel: shellRoot.activeNotifications
+            notificationModel: notifServer.trackedNotifications.values
         }
     }
 
