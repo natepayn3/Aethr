@@ -24,14 +24,14 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         columns: 2
-        rowSpacing: 12
-        columnSpacing: 12
+        rowSpacing: 16
+        columnSpacing: 16
 
         // --- 1. WI-FI TOGGLE ---
         Rectangle {
             id: wifiContainer
             Layout.fillWidth: true
-            height: 48
+            height: 64
             color: Qt.rgba(1, 1, 1, 0.05)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.03)
@@ -97,7 +97,7 @@ Item {
         Rectangle {
             id: btContainer
             Layout.fillWidth: true
-            height: 48
+            height: 64
             color: Qt.rgba(1, 1, 1, 0.05)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.03)
@@ -161,7 +161,7 @@ Item {
         Rectangle {
             id: dndContainer
             Layout.fillWidth: true
-            height: 48
+            height: 64
             color: Qt.rgba(1, 1, 1, 0.05)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.03)
@@ -225,7 +225,7 @@ Item {
         Rectangle {
             id: caffeineContainer
             Layout.fillWidth: true
-            height: 48
+            height: 64
             color: Qt.rgba(1, 1, 1, 0.05)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.03)

@@ -79,7 +79,7 @@ Rectangle {
             Layout.fillWidth: true 
             
             // Limit the maximum display height of the list container (e.g., max 400px)
-            Layout.preferredHeight: Math.min(400, contentHeight)
+            Layout.preferredHeight: Math.min(200, contentHeight)
             height: Layout.preferredHeight 
             
             spacing: 6
