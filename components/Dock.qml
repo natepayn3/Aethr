@@ -93,7 +93,7 @@ PanelWindow {
             height: 72
             radius: shellConfig.radiusValue - 2
             anchors.horizontalCenter: parent.horizontalCenter
-           
+            
             y: dockHitbox.isPinned ? (parent.height - height - 6) : parent.height
             color: Qt.rgba(0, 0, 0, 0.01)
 
@@ -106,11 +106,12 @@ PanelWindow {
                 spacing: 16
                 anchors.centerIn: parent
 
-                // --- BUTTON 1: APP LAUNCHER ---
+                // --- BUTTON 0: APP LAUNCHER ---
                 Item {
                     id: btnLauncher
                     width: 64
                     height: 64
+                    
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
@@ -119,6 +120,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
+                    
                     Text {
                         anchors.centerIn: parent
                         text: "apps"
@@ -130,11 +132,12 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 2: WALLPAPER PICKER ---
+                // --- BUTTON 1: WALLPAPER PICKER ---
                 Item {
                     id: btnWallpaper
                     width: 64
                     height: 64
+                    
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
@@ -143,6 +146,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
+                    
                     Text {
                         anchors.centerIn: parent
                         text: "wallpaper"
@@ -154,11 +158,12 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 3: BLUETOOTH CONFIG ---
+                // --- BUTTON 2: SCREENSHOT UTILITY ---
                 Item {
-                    id: btnBluetooth
+                    id: btnScreenshot
                     width: 64
                     height: 64
+                    
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
@@ -167,9 +172,10 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
+                    
                     Text {
                         anchors.centerIn: parent
-                        text: "bluetooth"
+                        text: "screenshot_region"
                         font.family: fc.iconFont
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
@@ -178,11 +184,12 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 4: AUDIO OUTPUT ROUTER ---
+                // --- BUTTON 3: AUDIO OUTPUT ROUTER ---
                 Item {
                     id: btnAudio
                     width: 64
                     height: 64
+                    
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
@@ -191,9 +198,36 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
+                    
                     Text {
                         anchors.centerIn: parent
-                        text: "volume_up"
+                        text: "music_cast"
+                        font.family: fc.iconFont
+                        font.pixelSize: 32
+                        color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 180 } }
+                        Component.onCompleted: fc.applyOutline(this)
+                    }
+                }
+
+                // --- BUTTON 4: BLUETOOTH CONFIG ---
+                Item {
+                    id: btnBluetooth
+                    width: 64
+                    height: 64
+                    
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 12
+                        color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        border.width: 1
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+                    
+                    Text {
+                        anchors.centerIn: parent
+                        text: "bluetooth_connected"
                         font.family: fc.iconFont
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
@@ -207,30 +241,7 @@ PanelWindow {
                     id: btnWifi
                     width: 64
                     height: 64
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 12
-                        color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.themeAccent || "transparent") : "transparent"
-                        border.color: dockHitbox.activeHoverIndex === 4 ? (dockWindow.hoverBorder || "transparent") : "transparent"
-                        border.width: 1
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        text: "network_wifi"
-                        font.family: fc.iconFont
-                        font.pixelSize: 32
-                        color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this)
-                    }
-                }
-
-                // --- BUTTON 6: SCREENSHOT UTILITY ---
-                Item {
-                    id: btnScreenshot
-                    width: 64
-                    height: 64
+                    
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
@@ -239,9 +250,10 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
+                    
                     Text {
                         anchors.centerIn: parent
-                        text: "screenshot_region"
+                        text: "network_wifi_2_bar"
                         font.family: fc.iconFont
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
@@ -250,11 +262,12 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 7: POWER TRIGGER MODULE ---
+                // --- BUTTON 6: POWER TRIGGER MODULE ---
                 Item {
                     id: btnPower
                     width: 64
                     height: 64
+                    
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
@@ -263,9 +276,10 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
+                    
                     Text {
                         anchors.centerIn: parent
-                        text: "power_settings_new"
+                        text: "power"
                         font.family: fc.iconFont
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
@@ -286,7 +300,6 @@ PanelWindow {
                     let totalCellWidth = 80;
                     let calculatedIndex = Math.floor(adjustedX / totalCellWidth);
                     let localX = adjustedX % totalCellWidth;
-                    
                     if (calculatedIndex >= 0 && calculatedIndex <= 6 && localX <= 64 && adjustedX >= 0) {
                         dockHitbox.activeHoverIndex = calculatedIndex;
                     } else {
@@ -304,16 +317,20 @@ PanelWindow {
                             dockWindow.wallpaperModule.active = !dockWindow.wallpaperModule.active;
                         }
                     } else if (dockHitbox.activeHoverIndex === 2) {
-                        if (!bluetoothOverlay.visible) bluetoothOverlay.visible = true; else bluetoothOverlay.animateActive = false;
-                    } else if (dockHitbox.activeHoverIndex === 3) {
-                        if (!audioOverlay.visible) audioOverlay.visible = true; else audioOverlay.animateActive = false;
-                    } else if (dockHitbox.activeHoverIndex === 4) {
-                        if (!wifiOverlay.visible) wifiOverlay.visible = true; else wifiOverlay.animateActive = false;
-                    } else if (dockHitbox.activeHoverIndex === 5) {
                         dockHitbox.isPinned = false;
                         Quickshell.execDetached(["fish", "-c", "sleep 0.1; and grim -g (slurp) -t ppm - | satty --filename -"]);
+                    } else if (dockHitbox.activeHoverIndex === 3) {
+                        if (!audioOverlay.visible) audioOverlay.visible = true;
+                        else audioOverlay.animateActive = false;
+                    } else if (dockHitbox.activeHoverIndex === 4) {
+                        if (!bluetoothOverlay.visible) bluetoothOverlay.visible = true;
+                        else bluetoothOverlay.animateActive = false;
+                    } else if (dockHitbox.activeHoverIndex === 5) {
+                        if (!wifiOverlay.visible) wifiOverlay.visible = true;
+                        else wifiOverlay.animateActive = false;
                     } else if (dockHitbox.activeHoverIndex === 6) {
-                        if (!powerOverlay.visible) powerOverlay.visible = true; else powerOverlay.animateActive = false;
+                        if (!powerOverlay.visible) powerOverlay.visible = true;
+                        else powerOverlay.animateActive = false;
                     }
                 }
             }

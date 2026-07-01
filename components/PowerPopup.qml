@@ -49,6 +49,40 @@ PanelWindow {
             border.width: 1
             radius: shellConfig.radiusValue
 
+            // --- Standalone Left Side Power Icon ---
+            Text {
+                id: leftPowerIcon
+                text: "electrical_services"
+                font.family: fc.iconFont
+                font.pixelSize: 125
+                color: powerPopupWindow.colorBackground
+                styleColor: colorBackground
+                
+                anchors.right: parent.left
+                anchors.rightMargin: -10
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 20
+                transform: Scale { 
+                    origin.x: leftPowerIcon.width / 2
+                    xScale: -1 
+                }
+            }
+
+            // --- Standalone Right Side Power Icon ---
+            Text {
+                id: rightPowerIcon
+                text: "electrical_services"
+                font.family: fc.iconFont
+                font.pixelSize: 125
+                color: powerPopupWindow.colorBackground
+                styleColor: colorBackground
+
+                anchors.left: parent.right
+                anchors.leftMargin: -10
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 20
+            }
+
             states: [
                 State {
                     name: "hidden"
