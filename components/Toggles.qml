@@ -11,6 +11,7 @@ Item {
     property bool btActive: false
     property bool dndActive: false
     property bool caffeineActive: false
+    property bool caffeineAvailable: false
 
     signal wifiToggled()
     signal btToggled()
@@ -231,6 +232,8 @@ Item {
             border.color: Qt.rgba(1, 1, 1, 0.03)
             radius: height / 2
             clip: true
+            // Match the precise opacity behavior of your system toggles
+            opacity: togglesWrapper.caffeineAvailable ? 1.0 : 0.5
 
             Text {
                 id: caffeineText
@@ -238,18 +241,23 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                color: togglesWrapper.caffeineActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
+                // Directly mirrors the text color of the Focus toggle state
+                color: togglesWrapper.dndActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
                 
                 anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 20
 
                 states: [
                     State {
-                        name: "on"; when: togglesWrapper.caffeineActive
+                        name: "on"
+                        when: togglesWrapper.caffeineAvailable && togglesWrapper.caffeineActive
                         AnchorChanges { target: caffeineText; anchors.left: parent.left; anchors.right: undefined }
                         PropertyChanges { target: caffeineText; anchors.leftMargin: 20 }
                     },
                     State {
-                        name: "off"; when: !togglesWrapper.caffeineActive
+                        name: "off"
+                        when: !togglesWrapper.caffeineAvailable || !togglesWrapper.caffeineActive
                         AnchorChanges { target: caffeineText; anchors.left: undefined; anchors.right: parent.right }
                         PropertyChanges { target: caffeineText; anchors.rightMargin: 20 }
                     }
@@ -259,12 +267,16 @@ Item {
             }
 
             Rectangle {
+                id: caffeineKnob
                 width: parent.height - 4
                 height: parent.height - 4
                 radius: height / 2
-                color: togglesWrapper.caffeineActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                // Directly mirrors the knob background color of the Focus toggle state
+                color: togglesWrapper.dndActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
                 anchors.verticalCenter: parent.verticalCenter
-                x: togglesWrapper.caffeineActive ? parent.width - width - 2 : 2
+                
+                // Locks knob left if hypridle is completely missing from the system
+                x: (togglesWrapper.caffeineAvailable && togglesWrapper.caffeineActive) ? parent.width - width - 2 : 2
 
                 Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
 
@@ -273,15 +285,16 @@ Item {
                     text: "local_cafe"
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
-                    color: togglesWrapper.caffeineActive ? Qt.rgba(0, 0, 0, 0.75) : Qt.rgba(1, 1, 1, 0.4)
+                    // Directly mirrors the icon glyph color of the Focus toggle state
+                    color: togglesWrapper.dndActive ? Qt.rgba(0, 0, 0, 0.75) : Qt.rgba(1, 1, 1, 0.4)
                     Component.onCompleted: fc.applySmoothing(this)
                 }
             }
 
             MouseArea {
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: togglesWrapper.caffeineToggled()
+                cursorShape: togglesWrapper.caffeineAvailable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: if (togglesWrapper.caffeineAvailable) togglesWrapper.caffeineToggled()
             }
         }
     }
