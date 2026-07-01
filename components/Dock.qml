@@ -44,6 +44,7 @@ PanelWindow {
     BluetoothPopup { id: bluetoothOverlay; visible: false }
     AudioPopup { id: audioOverlay; visible: false }
     WifiPopup { id: wifiOverlay; visible: false }
+    NetworkPopup { id: networkOverlay; visible: false } // Injected target overlay module
     PowerPopup { id: powerOverlay; visible: false }
 
     MouseArea {
@@ -59,6 +60,7 @@ PanelWindow {
                                    bluetoothOverlay.visible ||
                                    audioOverlay.visible ||
                                    wifiOverlay.visible ||
+                                   networkOverlay.visible || // Track state bounds cleanly
                                    powerOverlay.visible
 
         property bool isPinned: false
@@ -66,13 +68,7 @@ PanelWindow {
         onStableHoverChanged: {
             if (stableHover) {
                 dismissTimer.stop();
-                if (dockWindow.wallpaperModule && dockWindow.wallpaperModule.active) {
-                    if (dockWindow.wallpaperModule.screen === dockWindow.screen) {
-                        isPinned = true;
-                    }
-                } else {
-                    isPinned = true;
-                }
+                isPinned = true;
             } else {
                 dismissTimer.start();
             }
@@ -120,7 +116,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+                  
                     Text {
                         anchors.centerIn: parent
                         text: "apps"
@@ -146,7 +142,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+                  
                     Text {
                         anchors.centerIn: parent
                         text: "wallpaper"
@@ -172,7 +168,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+                  
                     Text {
                         anchors.centerIn: parent
                         text: "screenshot_region"
@@ -198,7 +194,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+                  
                     Text {
                         anchors.centerIn: parent
                         text: "music_cast"
@@ -224,7 +220,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+                  
                     Text {
                         anchors.centerIn: parent
                         text: "bluetooth_connected"
@@ -250,7 +246,7 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
-                    
+                  
                     Text {
                         anchors.centerIn: parent
                         text: "network_wifi_2_bar"
@@ -262,9 +258,9 @@ PanelWindow {
                     }
                 }
 
-                // --- BUTTON 6: POWER TRIGGER MODULE ---
+                // --- BUTTON 6: NETWORK THROUGHPUT / VPN ---
                 Item {
-                    id: btnPower
+                    id: btnNetwork
                     width: 64
                     height: 64
                     
@@ -276,7 +272,33 @@ PanelWindow {
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
+                  
+                    Text {
+                        anchors.centerIn: parent
+                        text: "swap_calls" // Fluid throughput activity directional vector glyph
+                        font.family: fc.iconFont
+                        font.pixelSize: 32
+                        color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 180 } }
+                        Component.onCompleted: fc.applyOutline(this)
+                    }
+                }
+
+                // --- BUTTON 7: POWER TRIGGER MODULE ---
+                Item {
+                    id: btnPower
+                    width: 64
+                    height: 64
                     
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 12
+                        color: dockHitbox.activeHoverIndex === 7 ? (dockWindow.themeAccent || "transparent") : "transparent"
+                        border.color: dockHitbox.activeHoverIndex === 7 ? (dockWindow.hoverBorder || "transparent") : "transparent"
+                        border.width: 1
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+                  
                     Text {
                         anchors.centerIn: parent
                         text: "power"
@@ -300,7 +322,9 @@ PanelWindow {
                     let totalCellWidth = 80;
                     let calculatedIndex = Math.floor(adjustedX / totalCellWidth);
                     let localX = adjustedX % totalCellWidth;
-                    if (calculatedIndex >= 0 && calculatedIndex <= 6 && localX <= 64 && adjustedX >= 0) {
+                    
+                    // Expanded array limit threshold up to 7 elements
+                    if (calculatedIndex >= 0 && calculatedIndex <= 7 && localX <= 64 && adjustedX >= 0) {
                         dockHitbox.activeHoverIndex = calculatedIndex;
                     } else {
                         dockHitbox.activeHoverIndex = -1;
@@ -329,6 +353,9 @@ PanelWindow {
                         if (!wifiOverlay.visible) wifiOverlay.visible = true;
                         else wifiOverlay.animateActive = false;
                     } else if (dockHitbox.activeHoverIndex === 6) {
+                        if (!networkOverlay.visible) networkOverlay.visible = true;
+                        else networkOverlay.animateActive = false;
+                    } else if (dockHitbox.activeHoverIndex === 7) {
                         if (!powerOverlay.visible) powerOverlay.visible = true;
                         else powerOverlay.animateActive = false;
                     }

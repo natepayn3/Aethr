@@ -1,0 +1,472 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import Qt.labs.folderlistmodel
+import Quickshell
+import Quickshell.Wayland
+import Quickshell.Io
+
+PanelWindow {
+    id: networkPopupWindow
+
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "quickshell-launcher"
+    WlrLayershell.keyboardFocus: visible ? WlrLayershell.OnDemand : WlrLayershell.None
+    exclusionMode: ExclusionMode.Ignore
+
+    anchors {
+        bottom: true
+        top: true
+        left: true
+        right: true
+    }
+    
+    color: "transparent"
+
+    // --- State Properties ---
+    property bool animateActive: false
+    property string activeVpnName: ""
+    property string publicIpAddress: ""
+    property bool textVisible: true
+    property bool hasImportError: false
+    property bool showFileBrowser: false
+    property string currentBrowserPath: "file://" + Quickshell.env("HOME")
+
+    // --- Live Bandwidth Properties ---
+    property string downloadSpeed: "0 B/s"
+    property string uploadSpeed: "0 B/s"
+    property var lastRxBytes: 0
+    property var lastTxBytes: 0
+    property var lastTime: 0
+
+    FontConfig { id: fc }
+    ModuleConfig { id: shellConfig }
+
+    ListModel { id: vpnListModel }
+
+    Timer {
+        id: syncVpnTimer
+        interval: 3000
+        running: networkPopupWindow.visible && !showFileBrowser
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            vpnListPopulator.running = false;
+            vpnListPopulator.running = true;
+        }
+    }
+
+    // --- Bandwidth Parser Engine ---
+    Process {
+        id: bandwidthProc
+        command: ["fish", "-c", "set dev (ip route show | awk '/default/ {print $5}' | head -n1); cat /proc/net/dev | grep \"$dev\""]
+        running: networkPopupWindow.visible
+        
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let formatBytes = function(bytes) {
+                    if (bytes < 1024) return bytes.toFixed(0) + " B/s";
+                    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB/s";
+                    return (bytes / 1048576).toFixed(1) + " MB/s";
+                };
+
+                let textStr = this.text.trim();
+                if (!textStr) return;
+                
+                let rawLineParts = textStr.split(":");
+                if (rawLineParts.length < 2) return;
+                
+                let parts = rawLineParts[1].trim().split(/\s+/);
+                if (parts.length < 9) return;
+
+                let rx = parseInt(parts[0]); 
+                let tx = parseInt(parts[8]); 
+                let now = Date.now();
+
+                if (networkPopupWindow.lastTime > 0) {
+                    let elapsed = (now - networkPopupWindow.lastTime) / 1000;
+                    if (elapsed > 0) {
+                        let rxSpeed = (rx - networkPopupWindow.lastRxBytes) / elapsed;
+                        let txSpeed = (tx - networkPopupWindow.lastTxBytes) / elapsed;
+                        networkPopupWindow.downloadSpeed = formatBytes(rxSpeed);
+                        networkPopupWindow.uploadSpeed = formatBytes(txSpeed);
+                    }
+                }
+
+                networkPopupWindow.lastRxBytes = rx;
+                networkPopupWindow.lastTxBytes = tx;
+                networkPopupWindow.lastTime = now;
+                bandwidthProc.running = false;
+            }
+        }
+    }
+
+    Timer {
+        id: bandwidthTimer
+        interval: 1000
+        running: networkPopupWindow.visible
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: if (!bandwidthProc.running) bandwidthProc.running = true;
+    }
+
+    MouseArea {
+        id: outsideDismiss
+        anchors.fill: parent
+        onClicked: networkPopupWindow.animateActive = false 
+
+        Rectangle {
+            id: bgCard
+            width: shellConfig.panelWidth
+            
+            // Dynamic Height Tracker
+            height: networkPopupWindow.showFileBrowser ? 480 : (mainLayout.implicitHeight + 44)
+            
+            Behavior on height {
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
+            
+            transformOrigin: Item.Center
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: shellConfig.panelBottomMargin
+            anchors.horizontalCenter: parent.horizontalCenter
+            
+            color: shellConfig.colorBackground
+            border.color: shellConfig.colorBorder
+            border.width: 1
+            radius: shellConfig.radiusValue
+
+            states: [
+                State {
+                    name: "hidden"
+                    when: !networkPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 0.0; scale: 0.3 }
+                },
+                State {
+                    name: "shown"
+                    when: networkPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 1.0; scale: 1.0 }
+                }
+            ]
+
+            transitions: [
+                Transition {
+                    from: "hidden"; to: "shown"
+                    ParallelAnimation {
+                        NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationIn; easing.type: Easing.OutBack; easing.amplitude: shellConfig.springBack }
+                        NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityIn; easing.type: Easing.OutQuad }
+                    }
+                },
+                Transition {
+                    from: "shown"; to: "hidden"
+                    SequentialAnimation {
+                        ParallelAnimation {
+                            NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
+                            NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
+                        }
+                        ScriptAction { script: networkPopupWindow.visible = false } 
+                    }
+                }
+            ]
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: (mouse) => mouse.accepted = true
+            }
+
+            ColumnLayout {
+                id: mainLayout
+                anchors.fill: parent
+                anchors.margins: 22
+                spacing: 16
+
+                // ==================== DASHBOARD PANEL ====================
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: !networkPopupWindow.showFileBrowser
+                    spacing: 16
+                    visible: !networkPopupWindow.showFileBrowser
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text {
+                            text: "Network Manager"
+                            color: shellConfig.themeText
+                            font.family: shellConfig.shellFont
+                            font.pixelSize: 18
+                            font.weight: Font.Bold
+                            style: Text.Outline
+                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 20
+                        
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.fillWidth: true
+                            Text { text: "Download"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1, 1, 1, 0.5) }
+                            Text { text: networkPopupWindow.downloadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText }
+                        }
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.fillWidth: true
+                            Text { text: "Upload"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1, 1, 1, 0.5) }
+                            Text { text: networkPopupWindow.uploadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText }
+                        }
+                    }
+
+                    Rectangle { Layout.fillWidth: true; height: 1; color: shellConfig.colorBorder }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text { text: "VPN Profiles"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true }
+                        
+                        Button {
+                            id: importBtn
+                            flat: true
+                            implicitWidth: 120
+                            implicitHeight: 30
+                            background: Rectangle {
+                                radius: 8
+                                color: importBtn.hovered ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
+                                border.color: importBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                                border.width: 1
+                            }
+                            contentItem: Text { text: "+ Import"; font.family: shellConfig.shellFont; font.pixelSize: 12; font.bold: true; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                            onClicked: { networkPopupWindow.hasImportError = false; networkPopupWindow.showFileBrowser = true; }
+                        }
+                    }
+
+                    ListView {
+                        id: profileListView
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        implicitHeight: Math.min(vpnListModel.count * 68, 200)
+                        spacing: 8
+                        clip: true
+                        model: vpnListModel
+
+                        delegate: MouseArea {
+                            id: profileItemDelegate
+                            width: profileListView.width
+                            height: 60
+                            hoverEnabled: true
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 10
+                                color: parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : Qt.rgba(1, 1, 1, 0.04)
+                                border.color: networkPopupWindow.activeVpnName === profileName ? shellConfig.colorAccent : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
+                                border.width: 1
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 12
+
+                                Text {
+                                    text: "vpn_key"
+                                    font.family: "Material Symbols Outlined"
+                                    font.pixelSize: 18
+                                    color: networkPopupWindow.activeVpnName === profileName ? shellConfig.colorAccent : Qt.rgba(1, 1, 1, 0.4)
+                                }
+
+                                ColumnLayout {
+                                    spacing: 1
+                                    Layout.fillWidth: true
+                                    Text { text: profileName; font.family: shellConfig.shellFont; font.bold: true; font.pixelSize: 13; color: shellConfig.themeText; elide: Text.ElideRight }
+                                    Text { text: networkPopupWindow.activeVpnName === profileName ? "Connected" : "Disconnected"; font.family: shellConfig.shellFont; font.pixelSize: 11; color: Qt.rgba(1,1,1,0.5) }
+                                }
+
+                                Switch {
+                                    id: itemToggleSwitch
+                                    checked: networkPopupWindow.activeVpnName === profileName
+                                    onClicked: networkPopupWindow.toggleProfileState(profileName, checked)
+                                    
+                                    background: Rectangle {
+                                        implicitWidth: 40
+                                        implicitHeight: 20
+                                        radius: 10
+                                        color: itemToggleSwitch.checked ? shellConfig.colorAccent : Qt.rgba(1, 1, 1, 0.15)
+                                        
+                                        Rectangle {
+                                            width: 14
+                                            height: 14
+                                            radius: 7
+                                            color: shellConfig.colorBackground
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            x: itemToggleSwitch.checked ? 22 : 4
+                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                        }
+                                    }
+                                    indicator: Item {}
+                                }
+
+                                Button {
+                                    id: delBtn
+                                    flat: true
+                                    implicitWidth: 28; implicitHeight: 28
+                                    background: Rectangle { color: delBtn.hovered ? Qt.rgba(1,0,0,0.1) : "transparent"; radius: 6 }
+                                    contentItem: Text { text: "delete"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: delBtn.hovered ? "#ff5555" : Qt.rgba(1,1,1,0.4); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                    onClicked: networkPopupWindow.deleteProfile(profileName)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ==================== FILE BROWSER PANEL ====================
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: networkPopupWindow.showFileBrowser
+                    spacing: 12
+                    visible: networkPopupWindow.showFileBrowser
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text { text: "Select WireGuard Config:"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true }
+                        Button {
+                            id: cancelBtn; flat: true; implicitWidth: 70; implicitHeight: 28
+                            background: Rectangle { color: cancelBtn.hovered ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"; border.color: cancelBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"; border.width: 1; radius: 6 }
+                            contentItem: Text { text: "Cancel"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1,1,1,0.6); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                            onClicked: networkPopupWindow.showFileBrowser = false
+                        }
+                    }
+
+                    // FIXED: Aligned directory path trace breadcrumb color strictly to themeText token
+                    Text { text: networkPopupWindow.currentBrowserPath.replace("file://", ""); font.family: shellConfig.shellFont; font.pixelSize: 11; color: shellConfig.themeText; elide: Text.ElideLeft; Layout.fillWidth: true }
+
+                    Rectangle {
+                        Layout.fillWidth: true; Layout.fillHeight: true; color: Qt.rgba(0, 0, 0, 0.15); radius: 10; border.color: shellConfig.colorBorder; border.width: 1; clip: true
+
+                        Item {
+                            id: browserViewContainer; anchors.fill: parent
+                            property string pendingPath: ""
+                            property string lastPath: ""
+
+                            ListView {
+                                id: fileListView; anchors.fill: parent; anchors.margins: 6; spacing: 4; clip: true
+                                model: FolderListModel { id: folderModel; folder: networkPopupWindow.currentBrowserPath; showDirsFirst: true; showDotAndDotDot: true; nameFilters: ["*.conf"] }
+
+                                delegate: MouseArea {
+                                    id: fileDelegateItem; width: fileListView.width; height: fileName === "." ? 0 : 34; visible: fileName !== "."
+                                    hoverEnabled: true
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: 6
+                                        color: parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
+                                        border.color: parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                                        border.width: 1
+                                    }
+
+                                    RowLayout {
+                                        spacing: 8; anchors.fill: parent; anchors.leftMargin: 6
+                                        // FIXED: Pointed icon color and file label text parameters to uniform theme properties
+                                        Text { text: fileIsDir ? "folder" : "description"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: shellConfig.themeText }
+                                        Text { text: fileName; font.family: shellConfig.shellFont; font.pixelSize: 13; color: shellConfig.themeText; Layout.fillWidth: true }
+                                    }
+
+                                    onClicked: {
+                                        if (fileIsDir) {
+                                            browserViewContainer.lastPath = networkPopupWindow.currentBrowserPath;
+                                            browserViewContainer.pendingPath = fileUrl.toString();
+                                            pathFadeAnimation.start();
+                                        } else {
+                                            let urlString = fileUrl.toString();
+                                            let parsedPath = urlString.startsWith("file:///") ? urlString.substring(7) : urlString.replace("file://", "");
+                                            vpnImporter.command = ["bash", "-c", "nmcli connection import type wireguard file '" + parsedPath + "' || echo 'QS_IMPORT_FAILED' >&2"];
+                                            vpnImporter.running = true;
+                                            networkPopupWindow.showFileBrowser = false;
+                                        }
+                                    }
+                                }
+                            }
+
+                            SequentialAnimation {
+                                id: pathFadeAnimation
+                                ParallelAnimation {
+                                    PropertyAnimation { target: browserViewContainer; property: "opacity"; from: 1.0; to: 0.0; duration: 110 }
+                                    PropertyAnimation { target: browserViewContainer; property: "x"; to: (browserViewContainer.pendingPath.length > browserViewContainer.lastPath.length) ? -30 : 30; duration: 110 }
+                                }
+                                ScriptAction { script: { networkPopupWindow.currentBrowserPath = browserViewContainer.pendingPath; } }
+                                PropertyAction { target: browserViewContainer; property: "x"; value: (browserViewContainer.pendingPath.length > browserViewContainer.lastPath.length) ? 30 : -30 }
+                                ParallelAnimation {
+                                    PropertyAnimation { target: browserViewContainer; property: "opacity"; from: 0.0; to: 1.0; duration: 130 }
+                                    PropertyAnimation { target: browserViewContainer; property: "x"; to: 0; duration: 130 }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Backend Drivers ---
+    Process {
+        id: vpnListPopulator
+        command: ["nmcli", "-g", "TYPE,NAME,STATE", "connection", "show"]
+        running: false
+        stdout: StdioCollector {
+            onTextChanged: {
+                let cleanText = text.trim();
+                if (!cleanText) { vpnListModel.clear(); networkPopupWindow.activeVpnName = ""; return; }
+                let lines = cleanText.split("\n");
+                let incomingProfiles = [];
+                let currentActive = "";
+
+                for (let i = 0; i < lines.length; i++) {
+                    let parts = lines[i].trim().split(":");
+                    if (parts.length >= 2) {
+                        let type = parts[0], name = parts[1], state = parts[2] || "";
+                        if (type === "wireguard" || type === "vpn" || type === "tun") {
+                            if (state.indexOf("activated") !== -1) currentActive = name;
+                            if (incomingProfiles.indexOf(name) === -1) incomingProfiles.push(name);
+                        }
+                    }
+                }
+
+                networkPopupWindow.activeVpnName = currentActive;
+                for (let m = vpnListModel.count - 1; m >= 0; m--) {
+                    if (incomingProfiles.indexOf(vpnListModel.get(m).profileName) === -1) vpnListModel.remove(m);
+                }
+                for (let p = 0; p < incomingProfiles.length; p++) {
+                    let pName = incomingProfiles[p], found = false;
+                    for (let m = 0; m < vpnListModel.count; m++) { if (vpnListModel.get(m).profileName === pName) { found = true; break; } }
+                    if (!found) vpnListModel.append({ "profileName": pName });
+                }
+            }
+        }
+    }
+
+    Process { id: vpnStateExecutor; running: false; onExited: vpnListPopulator.running = true }
+    Process { id: vpnImporter; running: false; onExited: vpnListPopulator.running = true }
+
+    function toggleProfileState(profileName, itemChecked) {
+        vpnStateExecutor.command = itemChecked 
+            ? ["nmcli", "connection", "up", "id", profileName]
+            : ["nmcli", "connection", "down", "id", profileName];
+        vpnStateExecutor.running = true;
+    }
+
+    function deleteProfile(profileName) {
+        vpnStateExecutor.command = ["nmcli", "connection", "delete", "id", profileName];
+        vpnStateExecutor.running = true;
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            outsideDismiss.forceActiveFocus();
+            vpnListPopulator.running = true;
+            networkPopupWindow.animateActive = true;
+        } else {
+            networkPopupWindow.animateActive = false;
+        }
+    }
+}
