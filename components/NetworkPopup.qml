@@ -363,8 +363,16 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : Qt.rgba(1, 1, 1, 0.04)
-                                border.color: networkPopupWindow.activeVpnName === profileName ? shellConfig.colorAccent : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
+                                
+                                // Neutral alpha-blending that highlights the active profile without solid colors
+                                color: networkPopupWindow.activeVpnName === profileName 
+                                    ? Qt.rgba(1, 1, 1, 0.14) // Clean soft glare when connected
+                                    : (parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent")
+                                
+                                // Soft white border ring for connected profiles, subtle dark ring on hover
+                                border.color: networkPopupWindow.activeVpnName === profileName 
+                                    ? Qt.rgba(1, 1, 1, 0.35) 
+                                    : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
                                 border.width: 1
                             }
 
@@ -377,7 +385,11 @@ PanelWindow {
                                     text: "vpn_key"
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: 18
-                                    color: networkPopupWindow.activeVpnName === profileName ? shellConfig.colorAccent : Qt.rgba(1, 1, 1, 0.4)
+                                    
+                                    // Stays pure white when connected, muted translucent gray when disconnected
+                                    color: networkPopupWindow.activeVpnName === profileName 
+                                        ? "#ffffff" 
+                                        : Qt.rgba(1, 1, 1, 0.4)
                                 }
 
                                 ColumnLayout {
@@ -396,13 +408,24 @@ PanelWindow {
                                         implicitWidth: 40
                                         implicitHeight: 20
                                         radius: 10
-                                        color: itemToggleSwitch.checked ? shellConfig.colorAccent : Qt.rgba(1, 1, 1, 0.15)
                                         
+                                        // Soft white blend when checked, dark transparent frame when idle
+                                        color: itemToggleSwitch.checked 
+                                            ? Qt.rgba(1, 1, 1, 0.25) 
+                                            : Qt.rgba(1, 1, 1, 0.1)
+                                        
+                                        border.color: itemToggleSwitch.checked ? Qt.rgba(1, 1, 1, 0.2) : "transparent"
+                                        border.width: 1
+
+                                        // The Slider Knob/Thumb
                                         Rectangle {
                                             width: 14
                                             height: 14
                                             radius: 7
-                                            color: shellConfig.colorBackground
+                                            
+                                            // Crisp white when active, muted gray when disabled (no accent colors)
+                                            color: itemToggleSwitch.checked ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
+                                            
                                             anchors.verticalCenter: parent.verticalCenter
                                             x: itemToggleSwitch.checked ? 22 : 4
                                             Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -415,8 +438,24 @@ PanelWindow {
                                     id: delBtn
                                     flat: true
                                     implicitWidth: 28; implicitHeight: 28
-                                    background: Rectangle { color: delBtn.hovered ? Qt.rgba(1,0,0,0.1) : "transparent"; radius: 6 }
-                                    contentItem: Text { text: "delete"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: delBtn.hovered ? "#ff5555" : Qt.rgba(1,1,1,0.4); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                    
+                                    // Soft, translucent white highlight on hover instead of red tint
+                                    background: Rectangle { 
+                                        color: delBtn.hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                                        radius: 6 
+                                    }
+                                    
+                                    contentItem: Text { 
+                                        text: "delete"
+                                        font.family: "Material Symbols Outlined"
+                                        font.pixelSize: 16
+                                        
+                                        // Bright white on hover, muted gray when idle
+                                        color: delBtn.hovered ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
+                                        
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter 
+                                    }
                                     onClicked: networkPopupWindow.deleteProfile(profileName)
                                 }
                             }
