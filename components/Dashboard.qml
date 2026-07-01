@@ -10,6 +10,8 @@ import Quickshell.Services.Notifications
 PanelWindow {
     id: dashboardWindow
 
+    FontConfig { id: fc }
+
     property var notificationModel: notifServer.trackedNotifications
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -23,7 +25,7 @@ PanelWindow {
         right: true
     }
 
-    implicitWidth: 400
+    implicitWidth: 450
     color: "transparent"
 
     property bool wifiAvailable: false
@@ -104,6 +106,7 @@ PanelWindow {
     mask: Region {
         Region { item: hotspotTrigger }
         Region { item: dashHitbox.isPinned ? bgCard : null }
+        Region { item: dashHitbox.isPinned ? leftDashboardIcon : null }
     }
 
     MouseArea {
@@ -147,6 +150,48 @@ PanelWindow {
             border.color: shellConfig.colorBorder
             border.width: 1
             radius: shellConfig.radiusValue
+
+            // --- Standalone Top App Icon ---
+            Text {
+                id: topDashboardIcon
+                text: "drag_handle"
+                font.family: fc.iconFont
+                font.pixelSize: 50
+                color: shellConfig.themeBackground
+                styleColor: shellConfig.colorBackground
+                anchors.bottom: parent.top
+                anchors.bottomMargin: -20
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.horizontalCenterOffset: 0
+            }
+
+            // --- Standalone Left App Icon ---
+            Text {
+                id: leftDashboardIcon
+                text: "more"
+                font.family: fc.iconFont
+                font.pixelSize: 75
+                color: shellConfig.themeBackground
+                styleColor: shellConfig.colorBackground
+                anchors.right: parent.left
+                anchors.rightMargin: -2
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 0
+            }
+
+            // --- Standalone Bottom App Icon ---
+            Text {
+                id: bottomDashboardIcon
+                text: "drag_handle"
+                font.family: fc.iconFont
+                font.pixelSize: 50
+                color: shellConfig.themeBackground
+                styleColor: shellConfig.colorBackground
+                anchors.top: parent.bottom
+                anchors.topMargin: -20
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.horizontalCenterOffset: 0
+            }
 
             HoverHandler { id: cardHover }
 
