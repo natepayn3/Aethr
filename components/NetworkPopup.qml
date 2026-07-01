@@ -162,28 +162,28 @@ PanelWindow {
 
             Text {
                 id: leftNetworkIcon
-                text: "downloading"
+                text: "south"
                 font.family: fc.iconFont
-                font.pixelSize: 150
+                font.pixelSize: 125
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
              
                 anchors.right: parent.left
-                anchors.rightMargin: -5
+                anchors.rightMargin: -20
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
             }
 
             Text {
                 id: rightNetworkIcon
-                text: "arrow_upload_progress"
+                text: "north"
                 font.family: fc.iconFont
-                font.pixelSize: 150
+                font.pixelSize: 125
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right
-                anchors.leftMargin: -5
+                anchors.leftMargin: -20
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
             }
