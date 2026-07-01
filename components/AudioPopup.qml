@@ -67,7 +67,7 @@ PanelWindow {
                 anchors.right: parent.left
                 anchors.rightMargin: -30
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: 60
+                anchors.verticalCenterOffset: 0
             }
 
             // --- Standalone Right Side Speaker Icon ---
@@ -82,7 +82,7 @@ PanelWindow {
                 anchors.left: parent.right
                 anchors.leftMargin: -30
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: 60
+                anchors.verticalCenterOffset: 0
             }
 
             // --- DECLARATIVE STATE ENGINE ---

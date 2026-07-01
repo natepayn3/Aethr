@@ -61,7 +61,7 @@ PanelWindow {
                 anchors.right: parent.left
                 anchors.rightMargin: -10
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: 20
+                anchors.verticalCenterOffset: 0
                 transform: Scale { 
                     origin.x: leftPowerIcon.width / 2
                     xScale: -1 
@@ -80,7 +80,7 @@ PanelWindow {
                 anchors.left: parent.right
                 anchors.leftMargin: -10
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: 20
+                anchors.verticalCenterOffset: 0
             }
 
             states: [

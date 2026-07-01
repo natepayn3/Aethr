@@ -15,12 +15,13 @@ Scope {
 
     FontConfig { id: fc }
 
-    // --- REALIGNED SYSTEM THEME MATRIX ---
-    property color themeBackground: Qt.rgba(0.4, 0.4, 0.4, 0.7) 
-    property color themeText: "#ffffff"
-    property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28) 
-    property color themeBorder: Qt.rgba(0, 0, 0, 0.15)
-    property color cardBorder: Qt.rgba(0, 0, 0, 0.2)
+    property color themeBackground: shellConfig.colorBackground
+    property color themeText: shellConfig.themeText
+    property color themeAccent: shellConfig.themeAccent 
+    property color themeBorder: shellConfig.colorBorder
+    property color cardBorder: shellConfig.colorBorder
+    property color colorBackground: shellConfig.colorBackground
+    property color colorBorder: shellConfig.colorBorder
     
     property bool active: false
   
@@ -148,6 +149,36 @@ Scope {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: shellConfig.panelBottomMargin
             anchors.horizontalCenter: parent.horizontalCenter
+
+            // --- Standalone Left Side Speaker Icon ---
+            Text {
+                id: leftSpeakerIcon
+                text: "terminal"
+                font.family: fc.iconFont
+                font.pixelSize: 175
+                color: launcherModuleRoot.themeBackground
+                styleColor: colorBackground
+                
+                anchors.right: parent.left
+                anchors.rightMargin: -7
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 0
+            }
+
+            // --- Standalone Right Side Speaker Icon ---
+            Text {
+                id: rightSpeakerIcon
+                text: "terminal"
+                font.family: fc.iconFont
+                font.pixelSize: 175
+                color: launcherModuleRoot.themeBackground
+                styleColor: colorBackground
+
+                anchors.left: parent.right
+                anchors.leftMargin: -7
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 0
+            }
 
             // --- DECLARATIVE STATE ENGINE ---
             states: [

@@ -72,6 +72,37 @@ PanelWindow {
             border.width: 1
             radius: shellConfig.radiusValue
 
+            // --- Standalone Left Side Bluetooth Icon ---
+            Text {
+                id: leftBluetoothIcon
+                text: "bluetooth_searching"
+                font.family: fc.iconFont
+                font.pixelSize: 150
+                color: bluetoothPopupWindow.colorBackground
+                styleColor: colorBackground
+                
+                anchors.right: parent.left
+                anchors.rightMargin: -15
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 0
+                rotation: -180
+            }
+
+            // --- Standalone Right Side Bluetooth Icon ---
+            Text {
+                id: rightBluetoothIcon
+                text: "bluetooth_searching"
+                font.family: fc.iconFont
+                font.pixelSize: 150
+                color: bluetoothPopupWindow.colorBackground
+                styleColor: colorBackground
+
+                anchors.left: parent.right
+                anchors.leftMargin: -15
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 0
+            }
+
             // --- DECLARATIVE STATE ENGINE ---
             states: [
                 State {
