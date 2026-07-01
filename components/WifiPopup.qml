@@ -52,6 +52,7 @@ PanelWindow {
     // --- Fullscreen Outside Dismiss Area ---
     MouseArea {
         id: outsideDismiss
+ 
         anchors.fill: parent
         onClicked: wifiPopupWindow.animateActive = false // Trigger close animation instead of hard exit
 
@@ -59,7 +60,17 @@ PanelWindow {
         Rectangle {
             id: bgCard
             width: shellConfig.panelWidth
+            
+            // Core Change: Bind height dynamically but wrap it in a smooth structural Behavior
             height: Math.min(mainLayout.implicitHeight + 40, 500)
+            
+            Behavior on height {
+                NumberAnimation {
+                    duration: shellConfig.durationOut // Uses the 200ms layout metric for snappy adjustments
+                    easing.type: Easing.OutCubic
+                }
+            }
+         
             transformOrigin: Item.Center
             anchors.bottom: parent.bottom
             anchors.bottomMargin: shellConfig.panelBottomMargin
@@ -68,6 +79,7 @@ PanelWindow {
             color: colorBackground
             border.color: colorBorder
             border.width: 1
+      
             radius: shellConfig.radiusValue
 
             // --- DECLARATIVE STATE ENGINE ---
@@ -75,6 +87,7 @@ PanelWindow {
                 State {
                     name: "hidden"
                     when: !wifiPopupWindow.animateActive
+    
                     PropertyChanges { target: bgCard; opacity: 0.0; scale: 0.3 }
                 },
                 State {
@@ -99,8 +112,8 @@ PanelWindow {
                             NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
                             NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
                         }
-                        // Hide the actual window framework ONLY after the card shrinks down
                         ScriptAction { script: wifiPopupWindow.visible = false } 
+    
                     }
                 }
             ]
@@ -108,6 +121,7 @@ PanelWindow {
             MouseArea {
                 anchors.fill: parent
                 onClicked: (mouse) => mouse.accepted = true
+     
             }
 
             ColumnLayout {
@@ -122,19 +136,23 @@ PanelWindow {
 
                     Text {
                         text: "Wi-Fi Networks"
-                        color: "#ffffff"
-                        font.family: "Google Sans Flex"
+       
+                        color: shellConfig.themeText
+                        font.family: shellConfig.shellFont
                         font.pixelSize: 18
                         font.weight: Font.Bold
+     
                         style: Text.Outline
                         styleColor: Qt.rgba(0, 0, 0, 0.35)
                         Layout.fillWidth: true
                     }
 
+       
                     Switch {
                         id: powerSwitch
                         checked: wifiPopupWindow.isPowered && wifiPopupWindow.hasHardware
                         enabled: wifiPopupWindow.hasHardware
+         
                         opacity: wifiPopupWindow.hasHardware ? 1.0 : 0.4
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: wifiPopupWindow.togglePowerState()
@@ -143,20 +161,23 @@ PanelWindow {
                         implicitHeight: 24
                         
                         indicator: Rectangle {
+                        
                             width: 42
                             height: 24
                             radius: 12
-                            color: powerSwitch.checked ? wifiPopupWindow.themeAccent : "transparent"
-                            border.color: powerSwitch.checked ? wifiPopupWindow.themeAccent : Qt.rgba(1, 1, 1, 0.2)
+                            color: powerSwitch.checked ? shellConfig.themeAccent : "transparent"
+                            border.color: powerSwitch.checked ? shellConfig.themeAccent : Qt.rgba(1, 1, 1, 0.2)
                             border.width: 2
 
                             Rectangle {
                                 x: powerSwitch.checked ? parent.width - width - 4 : 4
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 14
+                            
                                 height: 14
                                 radius: 7
-                                color: "#ffffff"
+                                color: shellConfig.themeText
+                             
                                 Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                             }
                         }
@@ -173,231 +194,298 @@ PanelWindow {
                         text: !wifiPopupWindow.hasHardware ? "signal_wifi_off" : (wifiPopupWindow.isScanning ? "refresh" : "network_wifi")
                         font.family: "Material Symbols Outlined"
                         font.pixelSize: 22
-                        color: Qt.rgba(1, 1, 1, 0.9)
+                        color: shellConfig.themeText
+              
                         style: Text.Outline
                         styleColor: Qt.rgba(0, 0, 0, 0.35)
                         
                         RotationAnimator on rotation {
+          
                             running: wifiPopupWindow.isScanning && wifiPopupWindow.hasHardware
                             from: 0
                             to: 360
+                     
                             loops: Animation.Infinite
                             duration: 1200
                         }
                     }
 
+                   
                     Text {
                         text: wifiPopupWindow.activeStatusText
-                        font.family: "Google Sans Flex"
+                        font.family: shellConfig.shellFont
                         font.pixelSize: 13
-                        color: "#ffffff"
+                     
+                        color: shellConfig.themeText
                         opacity: 0.8
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
+ 
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: Qt.rgba(1, 1, 1, 0.1)
+                    color: shellConfig.colorBorder
+  
                 }
 
                 // --- Network ListView Panel ---
-                Item {
+                ListView {
+                    id: networkListView
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.preferredHeight: contentHeight
                     visible: wifiPopupWindow.isPowered && wifiPopupWindow.hasHardware
+                    clip: true
+                    model: wifiModel
+                    spacing: 8
 
-                    ListView {
-                        id: networkListView
-                        anchors.fill: parent
-                        clip: true
-                        model: wifiModel
-                        spacing: 8
-
-                        delegate: Item {
-                            id: delegateRoot
-                            property bool isExpanded: wifiPopupWindow.expandedSsid === model.ssid
-                            property bool isKnown: wifiPopupWindow.knownNetworks[model.ssid] === true
-                            property bool isConnecting: wifiPopupWindow.connectingSsid === model.ssid
-                            property bool isFailed: wifiPopupWindow.failedSsid === model.ssid
+                    delegate: Item {
+           
+                        id: delegateRoot
+                        property bool isExpanded: wifiPopupWindow.expandedSsid === model.ssid
+                        property bool isKnown: wifiPopupWindow.knownNetworks[model.ssid] === true
+                
+                        property bool isConnecting: wifiPopupWindow.connectingSsid === model.ssid
+                        property bool isFailed: wifiPopupWindow.failedSsid === model.ssid
                             
-                            width: networkListView.width
-                            height: isExpanded ? 96 : 44
-                            Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                      
+                        width: networkListView.width
+                        height: isExpanded ? 96 : 44
+                        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: 12
-                                clip: true
-                                color: model.connected 
-                                    ? wifiPopupWindow.themeAccent 
-                                    : (itemMouse.containsMouse || isExpanded ? Qt.rgba(0.4, 0.4, 0.4, 0.15) : "transparent")
-                                border.color: itemMouse.containsMouse || isExpanded ? wifiPopupWindow.hoverBorder : "transparent"
-                                border.width: 1
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 12
+  
+                            clip: true
+                            color: model.connected 
+                                ? shellConfig.themeAccent
+                                : (itemMouse.containsMouse || isExpanded ? shellConfig.colorBorder : "transparent")
+                            border.color: itemMouse.containsMouse || isExpanded ? shellConfig.hoverBorder : "transparent"
+                            border.width: 1
+                        }
+
+                        ColumnLayout {
+      
+                            anchors.fill: parent
+                            spacing: 0
+
+                            Item {
+       
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 44
+
+                                 
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 14
+              
+                                    anchors.rightMargin: 14
+                                    spacing: 8
+
+                                
+                                    Text {
+                                        text: model.ssid
+                                        color: shellConfig.themeText
+ 
+                                        font.family: shellConfig.shellFont
+                                        font.pixelSize: 14
+         
+                                        font.weight: model.connected ? Font.Bold : Font.Normal
+                                        opacity: model.connected ? 1.0 : 0.8
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+        
+                                        style: Text.Outline
+                                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+               
+                                    }
+
+                                    Text {
+                                  
+                                        text: {
+                                            if (model.signalStrength > 75) return model.isSecure ? "network_wifi_locked" : "network_wifi";
+                                            if (model.signalStrength > 50) return model.isSecure ? "network_wifi_3_bar_locked" : "network_wifi_3_bar";
+                                            if (model.signalStrength > 25) return model.isSecure ? "network_wifi_2_bar_locked" : "network_wifi_2_bar";
+                                            return model.isSecure ? "network_wifi_1_bar_locked" : "network_wifi_1_bar";
+                                        }
+                                        font.family: "Material Symbols Outlined"
+                                            
+                                        font.pixelSize: 20
+                                        color: shellConfig.themeText
+                                        opacity: model.connected ? 1.0 : 0.7
+                                        style: Text.Outline
+                                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+     
+                                    }
+                                }
+
+                             
+                                MouseArea {
+                                    id: itemMouse
+                                    anchors.fill: parent
+          
+                                    hoverEnabled: true
+                                    enabled: !isConnecting
+                            
+                                    onClicked: {
+                                        if (wifiPopupWindow.expandedSsid === model.ssid) {
+                                       
+                                            wifiPopupWindow.expandedSsid = "";
+                                            wifiPopupWindow.failedSsid = "";
+                                        } else {
+                                            wifiPopupWindow.expandedSsid = model.ssid;
+                                        }
+                                    }
+                                }
+                        
                             }
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                spacing: 0
+                            Item {
+                                Layout.fillWidth: true
+                      
+                                Layout.preferredHeight: 44
+                                visible: isExpanded
+                                opacity: isExpanded ? 1.0 : 0.0
+                                Behavior on opacity { NumberAnimation { duration: 150 } }
 
-                                Item {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 44
+                                RowLayout {
+                
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 14
+                                  
+                                    anchors.rightMargin: 14
+                                    anchors.bottomMargin: 6
+                                    spacing: 8
 
+           
                                     RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 14
-                                        anchors.rightMargin: 14
+                                        Layout.fillWidth: true
+                         
+                                        visible: model.connected
                                         spacing: 8
 
-                                        Text {
-                                            text: model.ssid
-                                            color: "#ffffff"
-                                            font.family: "Google Sans Flex"
-                                            font.pixelSize: 14
-                                            font.weight: model.connected ? Font.DemiBold : Font.Normal
-                                            opacity: model.connected ? 1.0 : 0.8
-                                            elide: Text.ElideRight
+                                        Button {
+                                            id: disconnectBtn
+                                            text: "Disconnect"
                                             Layout.fillWidth: true
-                                            style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                            onClicked: disconnectProc.disconnect(model.ssid)
+                                            contentItem: Text { text: disconnectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                            background: Rectangle { radius: 8; color: disconnectBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: disconnectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
-
-                                        Text {
-                                            text: {
-                                                if (model.signalStrength > 75) return model.isSecure ? "network_wifi_locked" : "network_wifi";
-                                                if (model.signalStrength > 50) return model.isSecure ? "network_wifi_3_bar_locked" : "network_wifi_3_bar";
-                                                if (model.signalStrength > 25) return model.isSecure ? "network_wifi_2_bar_locked" : "network_wifi_2_bar";
-                                                return model.isSecure ? "network_wifi_1_bar_locked" : "network_wifi_1_bar";
-                                            }
-                                            font.family: "Material Symbols Outlined"
-                                            font.pixelSize: 20
-                                            color: "#ffffff"
-                                            opacity: model.connected ? 1.0 : 0.7
-                                            style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                        Button {
+                                            id: forgetActiveBtn
+                                            text: "Forget"
+                                            Layout.fillWidth: true
+                                            onClicked: forgetProc.forget(model.ssid)
+                                            contentItem: Text { text: forgetActiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                            background: Rectangle { radius: 8; color: forgetActiveBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: forgetActiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                     }
 
-                                    MouseArea {
-                                        id: itemMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        enabled: !isConnecting
-                                        onClicked: {
-                                            if (wifiPopupWindow.expandedSsid === model.ssid) {
-                                                wifiPopupWindow.expandedSsid = "";
-                                                wifiPopupWindow.failedSsid = "";
-                                            } else {
-                                                wifiPopupWindow.expandedSsid = model.ssid;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 44
-                                    visible: isExpanded
-                                    opacity: isExpanded ? 1.0 : 0.0
-                                    Behavior on opacity { NumberAnimation { duration: 150 } }
-
+                       
                                     RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 14
-                                        anchors.rightMargin: 14
-                                        anchors.bottomMargin: 6
+                                        Layout.fillWidth: true
+                                     
+                                        visible: !model.connected && (isKnown || !model.isSecure)
                                         spacing: 8
 
-                                        RowLayout {
+                                        Button {
+                                            id: connectBtn
+                                            text: isConnecting ? "Connecting..." : (isFailed ? "Retry Connection" : "Connect")
                                             Layout.fillWidth: true
-                                            visible: model.connected
-                                            spacing: 8
-
-                                            Button {
-                                                text: "Disconnect"
-                                                Layout.fillWidth: true
-                                                onClicked: disconnectProc.disconnect(model.ssid)
-                                            }
-                                            Button {
-                                                text: "Forget"
-                                                Layout.fillWidth: true
-                                                onClicked: forgetProc.forget(model.ssid)
-                                            }
+                                            enabled: !isConnecting
+                                            onClicked: connectNetworkProc.connectTo(model.ssid, "", isKnown)
+                                            contentItem: Text { text: connectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: connectBtn.enabled ? 1.0 : 0.4 }
+                                            background: Rectangle { radius: 8; color: connectBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: connectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
-
-                                        RowLayout {
-                                            Layout.fillWidth: true
-                                            visible: !model.connected && (isKnown || !model.isSecure)
-                                            spacing: 8
-
-                                            Button {
-                                                text: isConnecting ? "Connecting..." : (isFailed ? "Retry Connection" : "Connect")
-                                                Layout.fillWidth: true
-                                                enabled: !isConnecting
-                                                onClicked: connectNetworkProc.connectTo(model.ssid, "", isKnown)
-                                            }
-                                            Button {
-                                                text: "Forget"
-                                                visible: isKnown
-                                                Layout.preferredWidth: 90
-                                                enabled: !isConnecting
-                                                onClicked: forgetProc.forget(model.ssid)
-                                            }
+                                        Button {
+                                            id: forgetInactiveBtn
+                                            text: "Forget"
+                                            visible: isKnown
+                                            Layout.preferredWidth: 90
+                                            enabled: !isConnecting
+                                            onClicked: forgetProc.forget(model.ssid)
+                                            contentItem: Text { text: forgetInactiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: forgetInactiveBtn.enabled ? 1.0 : 0.4 }
+                                            background: Rectangle { radius: 8; color: forgetInactiveBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: forgetInactiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
+                                    }
 
-                                        RowLayout {
+                          
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        
+                                        visible: !model.connected && !isKnown && model.isSecure
+                                        spacing: 8
+
+                                        Rectangle {
+ 
                                             Layout.fillWidth: true
-                                            visible: !model.connected && !isKnown && model.isSecure
-                                            spacing: 8
+                                            Layout.fillHeight: true
+   
+                                            radius: 8
+                                            color: Qt.rgba(0, 0, 0, 0.2)
+  
+                                            border.color: isFailed ? "#ff5555" : shellConfig.colorBorder
+                                            border.width: 1
 
-                                            Rectangle {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-                                                radius: 8
-                                                color: Qt.rgba(0, 0, 0, 0.2)
-                                                border.color: isFailed ? "#ff5555" : Qt.rgba(255, 255, 255, 0.1)
-                                                border.width: 1
+                                              
+                                            TextInput {
+                                                id: passInput
+                                            
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 10
+                                      
+                                                anchors.rightMargin: 10
+                                                verticalAlignment: TextInput.AlignVCenter
+                                
+                                                color: shellConfig.themeText
+                                                font.pixelSize: 13
+                          
+                                                echoMode: TextInput.Password
+                                                enabled: !isConnecting
+                    
+                                                
+                                                onAccepted: if (!isConnecting) connectNetworkProc.connectTo(model.ssid, passInput.text, false)
+           
+                                                onTextEdited: if (isFailed) wifiPopupWindow.failedSsid = ""
 
-                                                TextInput {
-                                                    id: passInput
-                                                    anchors.fill: parent
-                                                    anchors.leftMargin: 10
-                                                    anchors.rightMargin: 10
-                                                    verticalAlignment: TextInput.AlignVCenter
-                                                    color: "#ffffff"
+                                                Text {
+ 
+                                                    text: "Password..."
+                                          
+                                                    color: Qt.rgba(255, 255, 255, 0.35)
                                                     font.pixelSize: 13
-                                                    echoMode: TextInput.Password
-                                                    enabled: !isConnecting
-                                                    
-                                                    onAccepted: if (!isConnecting) connectNetworkProc.connectTo(model.ssid, passInput.text, false)
-                                                    onTextEdited: if (isFailed) wifiPopupWindow.failedSsid = ""
-
-                                                    Text {
-                                                        text: "Enter WPA Key..."
-                                                        color: Qt.rgba(255, 255, 255, 0.35)
-                                                        font.pixelSize: 13
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                        visible: passInput.text === "" && !passInput.activeFocus
-                                                    }
+                         
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    visible: passInput.text === "" && !passInput.activeFocus
+       
                                                 }
                                             }
-
-                                            Button {
-                                                text: isConnecting ? "Wait..." : "Join"
-                                                Layout.preferredWidth: 80
-                                                enabled: !isConnecting
-                                                onClicked: connectNetworkProc.connectTo(model.ssid, passInput.text, false)
-                                            }
+       
                                         }
+
+                                        Button {
+                                            id: joinBtn
+                                            text: isConnecting ? "Wait..." : "Join"
+                                            Layout.preferredWidth: 80
+                                            enabled: !isConnecting
+                                            onClicked: connectNetworkProc.connectTo(model.ssid, passInput.text, false)
+                                            contentItem: Text { text: joinBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: joinBtn.enabled ? 1.0 : 0.4 }
+                                            background: Rectangle { radius: 8; color: joinBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: joinBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
+                                        }
+     
                                     }
                                 }
+                             
                             }
                         }
                     }
                 }
+         
             }
         }
 
@@ -426,6 +514,7 @@ PanelWindow {
         triggeredOnStart: true
         onTriggered: {
             if (!togglePowerProc.running && !connectNetworkProc.running && !wifiPopupWindow.isScanning && !disconnectProc.running && wifiPopupWindow.expandedSsid === "") {
+          
                 fetchStatusProc.running = false;
                 fetchStatusProc.running = true;
             }
@@ -506,8 +595,10 @@ PanelWindow {
                 for (let i = 0; i < lines.length; i++) {
                     let line = lines[i].trim();
                     if (line === "") continue;
+                    
                     let parts = line.split(":");
                     if (parts.length < 5) continue;
+                    
                     let isActive = parts[0].indexOf("yes") !== -1;
                     let bars = parts[1].trim();
                     let signal = parseInt(parts[2].trim()) || 0;
