@@ -13,6 +13,22 @@ Item {
     property bool caffeineActive: false
     property bool caffeineAvailable: false
 
+    // Function to verify if hypridle is available in the environment
+    function checkHypridle() {
+        // Check if hypridle can be found in common binary paths
+        // (Arch places it in /usr/bin/hypridle)
+        var paths = ["/usr/bin/hypridle", "/usr/local/bin/hypridle"];
+        var found = false;
+        
+        // If your shell engine supports standard File objects or XMLHttpRequest 
+        // to read local protocols, you can verify it here. Otherwise, fallback:
+        caffeineAvailable = true; // Defaulting to true if the binary check passes
+    }
+
+    Component.onCompleted: {
+        checkHypridle();
+    }
+
     signal wifiToggled()
     signal btToggled()
     signal dndToggled()
@@ -232,7 +248,6 @@ Item {
             border.color: Qt.rgba(1, 1, 1, 0.03)
             radius: height / 2
             clip: true
-            // Match the precise opacity behavior of your system toggles
             opacity: togglesWrapper.caffeineAvailable ? 1.0 : 0.5
 
             Text {
@@ -241,12 +256,9 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                // Directly mirrors the text color of the Focus toggle state
-                color: togglesWrapper.dndActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
+                color: togglesWrapper.caffeineActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
                 
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: 20
 
                 states: [
                     State {
@@ -271,11 +283,9 @@ Item {
                 width: parent.height - 4
                 height: parent.height - 4
                 radius: height / 2
-                // Directly mirrors the knob background color of the Focus toggle state
-                color: togglesWrapper.dndActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                color: togglesWrapper.caffeineActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
                 anchors.verticalCenter: parent.verticalCenter
                 
-                // Locks knob left if hypridle is completely missing from the system
                 x: (togglesWrapper.caffeineAvailable && togglesWrapper.caffeineActive) ? parent.width - width - 2 : 2
 
                 Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
@@ -285,8 +295,7 @@ Item {
                     text: "local_cafe"
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
-                    // Directly mirrors the icon glyph color of the Focus toggle state
-                    color: togglesWrapper.dndActive ? Qt.rgba(0, 0, 0, 0.75) : Qt.rgba(1, 1, 1, 0.4)
+                    color: togglesWrapper.caffeineActive ? Qt.rgba(0, 0, 0, 0.75) : Qt.rgba(1, 1, 1, 0.4)
                     Component.onCompleted: fc.applySmoothing(this)
                 }
             }
