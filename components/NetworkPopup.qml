@@ -25,6 +25,9 @@ PanelWindow {
     
     color: "transparent"
 
+    property color colorBackground: shellConfig.colorBackground
+    property color colorBorder: shellConfig.colorBorder
+
     // --- State Properties ---
     property bool animateActive: false
     property string activeVpnName: ""
