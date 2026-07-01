@@ -12,6 +12,7 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-launcher"
+    // Handles top-level keyboard routing allocations on demand
     WlrLayershell.keyboardFocus: visible ? WlrLayershell.OnDemand : WlrLayershell.None
     exclusionMode: ExclusionMode.Ignore
 
@@ -40,7 +41,6 @@ PanelWindow {
     property var lastTxBytes: 0
     property var lastTime: 0
     
-    // Smooth text and vector delta dampening properties
     property real lastCombinedSpeed: -1.0
     property var lastTextUpdateTime: 0
     
@@ -104,7 +104,6 @@ PanelWindow {
                         let rxSpeed = (rx - networkPopupWindow.lastRxBytes) / elapsed;
                         let txSpeed = (tx - networkPopupWindow.lastTxBytes) / elapsed;
                         
-                        // ⏱️ Text Readout Throttle: Evaluates text data strings once every 1000ms at most
                         if (now - networkPopupWindow.lastTextUpdateTime >= 1000) {
                             networkPopupWindow.downloadSpeed = formatBytes(rxSpeed);
                             networkPopupWindow.uploadSpeed = formatBytes(txSpeed);
@@ -134,6 +133,10 @@ PanelWindow {
         id: outsideDismiss
         anchors.fill: parent
         onClicked: networkPopupWindow.animateActive = false 
+
+        // FIXED: Focus and Escape keys are attached to the MouseArea item scopes
+        focus: true
+        Keys.onEscapePressed: networkPopupWindow.animateActive = false
 
         Rectangle {
             id: bgCard
@@ -219,74 +222,28 @@ PanelWindow {
                         }
                     }
 
-                    // --- Fixed Columns with Symmetric Centering Spacer Blocks ---
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 0
                         
-                        // Push content evenly from the left boundary
                         Item { Layout.fillWidth: true }
                         
                         ColumnLayout {
                             spacing: 2
-                            Layout.preferredWidth: 110 
-                            Text { 
-                                text: "Download"
-                                font.family: shellConfig.shellFont
-                                font.pixelSize: 14
-                                color: Qt.rgba(1, 1, 1, 0.5)
-                                horizontalAlignment: Text.AlignHCenter
-                                Layout.fillWidth: true
-                                // Added outline to subheader text
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
-                            }
-                            Text { 
-                                text: networkPopupWindow.downloadSpeed
-                                font.family: shellConfig.shellFont
-                                font.pixelSize: 18
-                                font.weight: Font.Bold
-                                color: shellConfig.themeText
-                                horizontalAlignment: Text.AlignHCenter
-                                Layout.fillWidth: true
-                                // Added outline to live numerical values
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
-                            }
+                            Layout.preferredWidth: 110
+                            Text { text: "Download"; font.family: shellConfig.shellFont; font.pixelSize: 14; color: Qt.rgba(1, 1, 1, 0.5); horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
+                            Text { text: networkPopupWindow.downloadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         }
                         
-                        // Enforces a fixed separation gap between the data wells
                         Item { Layout.fillWidth: true; Layout.minimumWidth: 40 }
                         
                         ColumnLayout {
                             spacing: 2
                             Layout.preferredWidth: 110
-                            Text { 
-                                text: "Upload"
-                                font.family: shellConfig.shellFont
-                                font.pixelSize: 14
-                                color: Qt.rgba(1, 1, 1, 0.5)
-                                horizontalAlignment: Text.AlignHCenter
-                                Layout.fillWidth: true
-                                // Added outline to subheader text
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
-                            }
-                            Text { 
-                                text: networkPopupWindow.uploadSpeed
-                                font.family: shellConfig.shellFont
-                                font.pixelSize: 18
-                                font.weight: Font.Bold
-                                color: shellConfig.themeText
-                                horizontalAlignment: Text.AlignHCenter
-                                Layout.fillWidth: true
-                                // Added outline to live numerical values
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
-                            }
+                            Text { text: "Upload"; font.family: shellConfig.shellFont; font.pixelSize: 14; color: Qt.rgba(1, 1, 1, 0.5); horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
+                            Text { text: networkPopupWindow.uploadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         }
                         
-                        // Push content evenly from the right boundary
                         Item { Layout.fillWidth: true }
                     }
 
@@ -339,17 +296,7 @@ PanelWindow {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { 
-                            text: "VPN Profiles"
-                            font.family: shellConfig.shellFont
-                            font.pixelSize: 14
-                            font.bold: true
-                            color: shellConfig.themeText
-                            Layout.fillWidth: true 
-                            // Added outline to the section header
-                            style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.35)
-                        }
+                        Text { text: "VPN Profiles"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         
                         Button {
                             id: importBtn
@@ -362,18 +309,7 @@ PanelWindow {
                                 border.color: importBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
                                 border.width: 1
                             }
-                            contentItem: Text { 
-                                text: "+ Import"
-                                font.family: shellConfig.shellFont
-                                font.pixelSize: 12
-                                font.bold: true
-                                color: shellConfig.themeText
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter 
-                                // Added outline to the action button label text
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
-                            }
+                            contentItem: Text { text: "+ Import"; font.family: shellConfig.shellFont; font.pixelSize: 12; font.bold: true; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                             onClicked: { networkPopupWindow.hasImportError = false; networkPopupWindow.showFileBrowser = true; }
                         }
                     }
@@ -466,43 +402,16 @@ PanelWindow {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { 
-                            text: "Select WireGuard Config:"
-                            font.family: shellConfig.shellFont
-                            font.pixelSize: 14
-                            font.bold: true
-                            color: shellConfig.themeText
-                            Layout.fillWidth: true 
-                            style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.35)
-                        }
+                        Text { text: "Select WireGuard Config:"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         Button {
                             id: cancelBtn; flat: true; implicitWidth: 70; implicitHeight: 28
                             background: Rectangle { color: cancelBtn.hovered ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"; border.color: cancelBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"; border.width: 1; radius: 6 }
-                            contentItem: Text { 
-                                text: "Cancel"
-                                font.family: shellConfig.shellFont
-                                font.pixelSize: 12
-                                color: Qt.rgba(1,1,1,0.6)
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter 
-                                style: Text.Outline
-                                styleColor: Qt.rgba(0, 0, 0, 0.35)
-                            }
+                            contentItem: Text { text: "Cancel"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1,1,1,0.6); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                             onClicked: networkPopupWindow.showFileBrowser = false
                         }
                     }
 
-                    Text { 
-                        text: networkPopupWindow.currentBrowserPath.replace("file://", "")
-                        font.family: shellConfig.shellFont
-                        font.pixelSize: 11
-                        color: shellConfig.themeText
-                        elide: Text.ElideLeft
-                        Layout.fillWidth: true 
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
-                    }
+                    Text { text: networkPopupWindow.currentBrowserPath.replace("file://", ""); font.family: shellConfig.shellFont; font.pixelSize: 11; color: shellConfig.themeText; elide: Text.ElideLeft; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
 
                     Rectangle {
                         Layout.fillWidth: true; Layout.fillHeight: true; color: Qt.rgba(0, 0, 0, 0.15); radius: 10; border.color: shellConfig.colorBorder; border.width: 1; clip: true
@@ -534,23 +443,8 @@ PanelWindow {
 
                                     RowLayout {
                                         spacing: 8; anchors.fill: parent; anchors.leftMargin: 6
-                                        Text { 
-                                            text: fileIsDir ? "folder" : "description"
-                                            font.family: "Material Symbols Outlined"
-                                            font.pixelSize: 16
-                                            color: shellConfig.themeText 
-                                            style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
-                                        }
-                                        Text { 
-                                            text: fileName
-                                            font.family: shellConfig.shellFont
-                                            font.pixelSize: 13
-                                            color: shellConfig.themeText
-                                            Layout.fillWidth: true 
-                                            style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
-                                        }
+                                        Text { text: fileIsDir ? "folder" : "description"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: shellConfig.themeText; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
+                                        Text { text: fileName; font.family: shellConfig.shellFont; font.pixelSize: 13; color: shellConfig.themeText; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                                     }
 
                                     onClicked: {
