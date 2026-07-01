@@ -17,7 +17,7 @@ PanelWindow {
     property int totalItemCount: SystemTray.items.values.length
     
     implicitWidth: totalItemCount === 0 ? 244 : (totalItemCount * 64) + ((totalItemCount - 1) * 16) + 48
-    implicitHeight: 120 // Raised slightly to prevent tooltip clipping bounds
+    implicitHeight: 120 // Maintains boundary height for tooltips
     color: "transparent"
     exclusiveZone: 0
 
@@ -37,7 +37,8 @@ PanelWindow {
         hoverEnabled: true
 
         property bool isPinned: false
-        property bool stableHover: containsMouse
+        // Track hover across both the edge hotspot and the active capsule/window area
+        property bool stableHover: hotspotTrigger.containsMouse || innerCapsuleMouseTracker.containsMouse
 
         onStableHoverChanged: {
             if (stableHover) {
@@ -48,6 +49,16 @@ PanelWindow {
             }
         }
 
+        // Edge hotspot matching Dock's profile: 16px tall pinned to the very top edge
+        MouseArea {
+            id: hotspotTrigger
+            width: parent.width - 4
+            height: 16
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            hoverEnabled: true
+        }
+
         // --- Visual Capsule Container ---
         Rectangle {
             id: inputStabilizerCapsule
@@ -55,7 +66,7 @@ PanelWindow {
             height: 72
             radius: shellConfig.radiusValue - 2
             anchors.horizontalCenter: parent.horizontalCenter
-            
+ 
             y: trayHitbox.isPinned ? 6 : -height
             color: shellConfig.colorBackground
             border.color: trayHitbox.isPinned ? shellConfig.colorBorder : "transparent"
@@ -94,7 +105,7 @@ PanelWindow {
                     delegate: Item {
                         width: 64
                         height: 64
-                        
+            
                         Rectangle {
                             anchors.fill: parent
                             radius: 12
@@ -103,16 +114,12 @@ PanelWindow {
                             border.width: 1
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
-                      
+      
                         Image {
                             anchors.centerIn: parent
                             width: 32
                             height: 32
-                            
-                            source: modelData.iconPath 
-                                ? "file://" + modelData.iconPath 
-                                : "image://icon/" + (modelData.icon || "image-missing")
-                                    
+                            source: modelData.iconPath ? "file://" + modelData.iconPath : "image://icon/" + (modelData.icon || "image-missing")
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
                             opacity: trayHitbox.isPinned ? 0.9 : 0.0
@@ -123,16 +130,12 @@ PanelWindow {
                         Rectangle {
                             id: tooltipBubble
                             visible: trayWindow.activeHoverIndex === index && modelData.title !== ""
-                            
-                            // Dynamically sizes container width to gracefully wrap the application name layout string
                             width: tooltipText.contentWidth + 16
                             height: 26
                             radius: 6
-                            
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.top: parent.bottom
                             anchors.topMargin: 12
-                            
                             color: shellConfig.colorBackground || "#1e1e2e"
                             border.color: shellConfig.colorBorder || "#313244"
                             border.width: 1
@@ -167,6 +170,13 @@ PanelWindow {
                         }
                     }
                 }
+            }
+
+            // Mouse proxy layer mirroring Dock's interaction mechanics 
+            MouseArea {
+                id: innerCapsuleMouseTracker
+                anchors.fill: parent
+                hoverEnabled: true
             }
         }
     }
