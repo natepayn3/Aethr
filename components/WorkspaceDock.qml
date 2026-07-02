@@ -140,7 +140,7 @@ PanelWindow {
             Rectangle {
                 id: visualColumnContainer
                 width: 58
-                height: visualColumn.implicitHeight + 20
+                height: visualColumn.implicitHeight + 24
                 radius: 12 
      
                 anchors.verticalCenter: parent.verticalCenter
@@ -178,7 +178,8 @@ PanelWindow {
                                 radius: 10
                                 anchors.centerIn: parent
                                 
-                                color: dockHitbox.activeHoverIndex === index ? sideDockWindow.themeAccent : "transparent"
+                                color: parent.isActive ? sideDockWindow.themeAccent : 
+                                    (dockHitbox.activeHoverIndex === index ? sideDockWindow.themeAccent : "transparent")
                                 border.color: dockHitbox.activeHoverIndex === index ? sideDockWindow.hoverBorder : "transparent"
                                 border.width: 1
                                 
@@ -192,7 +193,6 @@ PanelWindow {
                                 font.family: fontCfg.iconFont 
                                 font.pixelSize: parent.isActive ? 28 : 22
                       
-                                // Dynamic opacity matching the workspace state
                                 color: {
                                     if (!dockHitbox.isPinned) return "transparent";
                                     
@@ -283,6 +283,33 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
                     }
+
+                    // --- OVERVIEW TOGGLE BUTTON ---
+                    Item {
+                        width: 54
+                        height: 54
+
+                        Rectangle {
+                            width: 44
+                            height: 44
+                            radius: 10
+                            anchors.centerIn: parent
+                            
+                            // Track global shellRoot state safely across global module frameworks
+                            color: shellRoot.isOverviewActive ? sideDockWindow.themeAccent : 
+                                (dockHitbox.activeHoverIndex === (sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1)) ? sideDockWindow.themeAccent : "transparent")
+                            border.color: dockHitbox.activeHoverIndex === (sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1)) ? sideDockWindow.hoverBorder : "transparent"
+                            border.width: 1
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "border_all"
+                            font.family: fontCfg.iconFont 
+                            font.pixelSize: 22
+                            color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
+                        }
+                    }
                 }
 
                 // --- CONTIGUOUS MOUSE GRID TARGET OVERLAY ---
@@ -292,10 +319,12 @@ PanelWindow {
                     cursorShape: dockHitbox.activeHoverIndex !== -1 ? Qt.PointingHandCursor : Qt.ArrowCursor
 
                     onPositionChanged: (mouse) => {
-                        let totalCellHeight = 66;
+                        let totalCellHeight = 66; // 54px cell + 12px layout spacing
                         let calculatedIndex = Math.floor(mouse.y / totalCellHeight);
                         let localY = mouse.y % totalCellHeight;
-                        let totalCount = sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1);
+                        
+                        let totalCount = sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1) + 1;
+                        
                         if (calculatedIndex >= 0 && calculatedIndex < totalCount && localY <= 54 && mouse.y >= 0) {
                             dockHitbox.activeHoverIndex = calculatedIndex;
                             if (calculatedIndex < sideDockWindow.activeWorkspaceList.length) {
@@ -315,14 +344,23 @@ PanelWindow {
                     }
 
                     onClicked: (mouse) => {
-                        if (dockHitbox.activeHoverIndex >= 0 && dockHitbox.activeHoverIndex < sideDockWindow.activeWorkspaceList.length) {
+                        let addIndex = sideDockWindow.activeWorkspaceList.length;
+                        let specialIndex = sideDockWindow.isSpecialOccupied ? (addIndex + 1) : -1;
+                        let overviewIndex = sideDockWindow.isSpecialOccupied ? (addIndex + 2) : (addIndex + 1);
+
+                        if (dockHitbox.activeHoverIndex >= 0 && dockHitbox.activeHoverIndex < addIndex) {
                             let targetWs = sideDockWindow.activeWorkspaceList[dockHitbox.activeHoverIndex];
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = "${targetWs}" })`);
-                        } else if (dockHitbox.activeHoverIndex === sideDockWindow.activeWorkspaceList.length) {
+                            
+                        } else if (dockHitbox.activeHoverIndex === addIndex) {
                             let nextWs = sideDockWindow.maxWorkspaceId + 1;
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = "${nextWs}" })`);
-                        } else if (dockHitbox.activeHoverIndex === (sideDockWindow.activeWorkspaceList.length + 1) && sideDockWindow.isSpecialOccupied) {
+                            
+                        } else if (specialIndex !== -1 && dockHitbox.activeHoverIndex === specialIndex) {
                             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("magic")`);
+                            
+                        } else if (dockHitbox.activeHoverIndex === overviewIndex) {
+                            shellRoot.isOverviewActive = !shellRoot.isOverviewActive;
                         }
                     }
                 }
