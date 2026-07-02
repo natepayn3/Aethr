@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.SystemTray
+import "../configs"
 
 PanelWindow {
     id: trayWindow
