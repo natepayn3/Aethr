@@ -16,6 +16,7 @@ ShellRoot {
     property bool audioPopupActive: false
     property var activeNotifications: []
     property bool dndActive: false
+    property bool isOverviewActive: false
 
     QtObject {
         id: notifBroadcaster
@@ -32,7 +33,7 @@ ShellRoot {
     }
 
     NotificationServer {
-        id: notifServer
+        id: notifServeraa
         bodySupported: true
         actionsSupported: false
         
@@ -86,6 +87,13 @@ ShellRoot {
             screen: modelData
             broadcaster: notifBroadcaster
             dndActive: shellRoot.dndActive
+        }
+    }
+    Variants {
+        model: Quickshell.screens
+        WorkspaceOverview {
+            required property var modelData
+            screen: modelData
         }
     }
 }
