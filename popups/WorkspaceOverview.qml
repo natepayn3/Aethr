@@ -262,7 +262,7 @@ PanelWindow {
                             RowLayout {
                                 id: headerRow
                                 width: parent.width - tvKnobsColumn.width - 16
-                                height: 24 // Increased height slightly to accommodate dynamic expansion
+                                height: 24 
                                 spacing: 16
                                 anchors.top: parent.top
                                 anchors.left: tvKnobsColumn.right
@@ -282,7 +282,6 @@ PanelWindow {
                                         id: titleLabel
                                         text: "Workspace " + currentWsId
                                         font.family: overviewWindow.shellFont
-                                        // FIXED: Boost font pixel size natively when card is active
                                         font.pixelSize: tileWrapper.isTargetActive ? 16 : 13
                                         font.bold: true
                                         color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.textMuted
@@ -304,7 +303,6 @@ PanelWindow {
                                                 visible: (modelData.class || "") !== "" && modelData.mapped
                                                 source: Quickshell.iconPath(getCleanIconName(modelData.class))
                                                 
-                                                // FIXED: Boost icon dimensions natively when active
                                                 Layout.preferredWidth: tileWrapper.isTargetActive ? 20 : 16
                                                 Layout.preferredHeight: tileWrapper.isTargetActive ? 20 : 16
                                                 Layout.alignment: Qt.AlignVCenter
@@ -464,10 +462,12 @@ PanelWindow {
                             }
                         }
 
+                        // Set the pointing hand shape directly on the main interactive surface[cite: 1]
                         MouseArea {
                             id: tileMouseArea
                             anchors.fill: parent
                             hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 Hyprland.dispatch(`hl.dsp.focus({ workspace = "${currentWsId}" })`);
                                 shellRoot.isOverviewActive = false;
