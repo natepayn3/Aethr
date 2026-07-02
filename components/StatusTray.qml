@@ -144,12 +144,13 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
 
-                        // Fix: Reverted to use native source bindings driven by Quickshell.iconPath
                         IconImage {
                             anchors.centerIn: parent
                             width: 32
                             height: 32
-                            source: modelData.iconPath ? "file://" + modelData.iconPath : Quickshell.iconPath(modelData.icon || "image-missing")
+                            // Cleanly strips "image://icon/" prefix if an application sends it
+                            source: modelData.iconPath ? "file://" + modelData.iconPath : 
+                                    Quickshell.iconPath((modelData.icon || "image-missing").replace("image://icon/", ""))
                             asynchronous: true
                             opacity: trayHitbox.isPinned ? 0.9 : 0.0
                             Behavior on opacity { NumberAnimation { duration: 180 } }
