@@ -295,8 +295,8 @@ PanelWindow {
                             radius: 10
                             anchors.centerIn: parent
                             
-                            // Track global shellRoot state safely across global module frameworks
-                            color: shellRoot.isOverviewActive ? sideDockWindow.themeAccent : 
+                            // Track global active monitor string state safely across global module frameworks[cite: 7]
+                            color: shellRoot.activeOverviewMonitor !== "" ? sideDockWindow.themeAccent : 
                                 (dockHitbox.activeHoverIndex === (sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1)) ? sideDockWindow.themeAccent : "transparent")
                             border.color: dockHitbox.activeHoverIndex === (sideDockWindow.activeWorkspaceList.length + (sideDockWindow.isSpecialOccupied ? 2 : 1)) ? sideDockWindow.hoverBorder : "transparent"
                             border.width: 1
@@ -360,7 +360,17 @@ PanelWindow {
                             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("magic")`);
                             
                         } else if (dockHitbox.activeHoverIndex === overviewIndex) {
-                            shellRoot.isOverviewActive = !shellRoot.isOverviewActive;
+                            if (shellRoot.activeOverviewMonitor !== "") {
+                                shellRoot.activeOverviewMonitor = "";
+                            } else {
+                                // Safe evaluation path to prevent undefined activeMonitor property crashes
+                                let monitor = Hyprland.activeMonitor;
+                                if (monitor && monitor.name) {
+                                    shellRoot.activeOverviewMonitor = monitor.name;
+                                } else if (Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.monitor) {
+                                    shellRoot.activeOverviewMonitor = Hyprland.focusedWorkspace.monitor.name;
+                                }
+                            }
                         }
                     }
                 }
