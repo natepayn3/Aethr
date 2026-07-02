@@ -158,7 +158,7 @@ PanelWindow {
                 text: "drag_handle"
                 font.family: fc.iconFont
                 font.pixelSize: 50
-                color: shellConfig.themeBackground
+                color: shellConfig.colorBackground
                 styleColor: shellConfig.colorBackground
                 anchors.bottom: parent.top
                 anchors.bottomMargin: -20
@@ -172,7 +172,7 @@ PanelWindow {
                 text: "more"
                 font.family: fc.iconFont
                 font.pixelSize: 75
-                color: shellConfig.themeBackground
+                color: shellConfig.colorBackground
                 styleColor: shellConfig.colorBackground
                 anchors.right: parent.left
                 anchors.rightMargin: -2
@@ -186,7 +186,7 @@ PanelWindow {
                 text: "drag_handle"
                 font.family: fc.iconFont
                 font.pixelSize: 50
-                color: shellConfig.themeBackground
+                color: shellConfig.colorBackground
                 styleColor: shellConfig.colorBackground
                 anchors.top: parent.bottom
                 anchors.topMargin: -20
