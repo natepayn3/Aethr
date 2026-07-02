@@ -151,7 +151,7 @@ PanelWindow {
                             anchor.gravity: Edges.Bottom | Edges.Right
                             
                             // 3. Add your exact structural offset (e.g., shifting down by 10px)
-                            anchor.rect.x: 30
+                            anchor.rect.x: 32
                             anchor.rect.y: 30
 
                             onOpened: trayWindow.menuActive = true
