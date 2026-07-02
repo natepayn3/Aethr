@@ -35,6 +35,8 @@ PanelWindow {
     property int inputVolume: 50
     property bool isInputMuted: false
 
+    FontConfig { id: fc }
+
     MouseArea {
         id: outsideDismiss
         anchors.fill: parent
@@ -49,8 +51,8 @@ PanelWindow {
             anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
            
-            color: audioPopupWindow.colorBackground
-            border.color: audioPopupWindow.colorBorder
+            color: fc.trackBackground
+            border.color: fc.borderMuted
             border.width: 1
             radius: shellConfig.radiusValue
 
@@ -59,7 +61,7 @@ PanelWindow {
                 text: "speaker_2"
                 font.family: fc.iconFont
                 font.pixelSize: 200
-                color: audioPopupWindow.colorBackground
+                color: fc.trackBackground
                 styleColor: colorBackground
              
                 anchors.right: parent.left
@@ -73,7 +75,7 @@ PanelWindow {
                 text: "speaker_2"
                 font.family: fc.iconFont
                 font.pixelSize: 200
-                color: audioPopupWindow.colorBackground
+                color: fc.trackBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right
@@ -133,23 +135,27 @@ PanelWindow {
                     Text {
                         text: "Audio Output"
                         color: "#ffffff"
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        
+                        Component.onCompleted: {
+                            fc.applyOutline(this, fc.overlayBackground)
+                        }
                         Layout.fillWidth: true
                     }
 
                     Text {
                         text: audioPopupWindow.isMuted ? "Muted" : audioPopupWindow.systemVolume + "%"
                         color: "#ffffff"
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         horizontalAlignment: Text.AlignRight
+
+                        Component.onCompleted: {
+                            fc.applyOutline(this, fc.overlayBackground)
+                        }
                     }
                 }
 
@@ -161,9 +167,11 @@ PanelWindow {
                         text: audioPopupWindow.isMuted ? "volume_off" : "volume_up"
                         font.family: fc.iconFont
                         font.pixelSize: 28
-                        color: Qt.rgba(1, 1, 1, 0.9)
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        color: "#ffffff"
+
+                        Component.onCompleted: {
+                            fc.applyOutline(this, fc.overlayBackground)
+                        }
 
                         MouseArea {
                             anchors.fill: parent
@@ -203,7 +211,7 @@ PanelWindow {
                             Rectangle {
                                 width: volumeSlider.visualPosition * parent.width
                                 height: parent.height
-                                color: audioPopupWindow.isMuted ? "#666666" : Qt.rgba(1, 1, 1, 0.85)
+                                color: audioPopupWindow.isMuted ? fc.overlayForeground : "#ffffff"
                                 radius: 3
                             }
                         }
@@ -214,7 +222,7 @@ PanelWindow {
                             implicitWidth: 16
                             implicitHeight: 16
                             radius: 8
-                            color: audioPopupWindow.isMuted ? "#999999" : "#ffffff"
+                            color: volumeOsdWindow.isMuted ? fc.overlayForeground : "#ffffff"
                         }
                     }
                 }
@@ -239,8 +247,8 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
-                                border.color: parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                                color: parent.containsMouse ? fc.themeAccent : "transparent"
+                                border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
                             }
 
@@ -252,14 +260,16 @@ PanelWindow {
                                 Text {
                                     text: model.sinkName
                                     color: "#ffffff"
-                                    font.family: "Google Sans Flex"
+                                    font.family: fc.mainFont
                                     font.pixelSize: 14
                                     font.weight: model.isDefault ? Font.DemiBold : Font.Normal
                                     opacity: model.isDefault ? 1.0 : 0.7
-                                    style: Text.Outline
-                                    styleColor: Qt.rgba(0, 0, 0, 0.35)
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
+
+                                    Component.onCompleted: {
+                                        fc.applyOutline(this, fc.overlayBackground)
+                                    }
                                 }
 
                                 Text {
@@ -268,9 +278,11 @@ PanelWindow {
                                     font.pixelSize: 18
                                     color: "#ffffff"
                                     opacity: 0.95
-                                    style: Text.Outline
-                                    styleColor: Qt.rgba(0, 0, 0, 0.35)
                                     visible: model.isDefault
+
+                                    Component.onCompleted: {
+                                        fc.applyOutline(this, fc.overlayBackground)
+                                    }
                                 }
                             }
                         }
@@ -280,7 +292,7 @@ PanelWindow {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: Qt.rgba(1, 1, 1, 0.1)
+                    color: fc.borderMuted
                 }
 
                 // ==================== AUDIO INPUT SECTION ====================
@@ -290,23 +302,27 @@ PanelWindow {
                     Text {
                         text: "Audio Input"
                         color: "#ffffff"
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         Layout.fillWidth: true
+
+                        Component.onCompleted: {
+                            fc.applyOutline(this, fc.overlayBackground)
+                        }
                     }
 
                     Text {
                         text: audioPopupWindow.isInputMuted ? "Muted" : audioPopupWindow.inputVolume + "%"
                         color: "#ffffff"
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
                         horizontalAlignment: Text.AlignRight
+
+                        Component.onCompleted: {
+                            fc.applyOutline(this, fc.overlayBackground)
+                        }
                     }
                 }
 
@@ -318,9 +334,11 @@ PanelWindow {
                         text: audioPopupWindow.isInputMuted ? "mic_off" : "mic"
                         font.family: fc.iconFont
                         font.pixelSize: 28
-                        color: Qt.rgba(1, 1, 1, 0.9)
-                        style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        color: "#ffffff"
+
+                        Component.onCompleted: {
+                            fc.applyOutline(this, fc.overlayBackground)
+                        }
 
                         MouseArea {
                             anchors.fill: parent
@@ -360,7 +378,7 @@ PanelWindow {
                             Rectangle {
                                 width: micSlider.visualPosition * parent.width
                                 height: parent.height
-                                color: audioPopupWindow.isInputMuted ? "#666666" : Qt.rgba(1, 1, 1, 0.85)
+                                color: audioPopupWindow.isInputMuted ? fc.overlayForeground : "#ffffff"
                                 radius: 3
                             }
                         }
@@ -371,7 +389,7 @@ PanelWindow {
                             implicitWidth: 16
                             implicitHeight: 16
                             radius: 8
-                            color: audioPopupWindow.isInputMuted ? "#999999" : "#ffffff"
+                            color: audioPopupWindow.isInputMuted ? fc.overlayForeground : "#ffffff"
                         }
                     }
                 }
@@ -396,8 +414,8 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
-                                border.color: parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                                color: parent.containsMouse ? fc.themeAccent : "transparent"
+                                border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
                             }
 
@@ -409,14 +427,16 @@ PanelWindow {
                                 Text {
                                     text: model.sourceName
                                     color: "#ffffff"
-                                    font.family: "Google Sans Flex"
+                                    font.family: fc.mainFont
                                     font.pixelSize: 14
                                     font.weight: model.isDefault ? Font.DemiBold : Font.Normal
                                     opacity: model.isDefault ? 1.0 : 0.7
-                                    style: Text.Outline
-                                    styleColor: Qt.rgba(0, 0, 0, 0.35)
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
+
+                                    Component.onCompleted: {
+                                        fc.applyOutline(this, fc.overlayBackground)
+                                    }
                                 }
 
                                 Text {
@@ -425,9 +445,11 @@ PanelWindow {
                                     font.pixelSize: 18
                                     color: "#ffffff"
                                     opacity: 0.95
-                                    style: Text.Outline
-                                    styleColor: Qt.rgba(0, 0, 0, 0.35)
                                     visible: model.isDefault
+
+                                    Component.onCompleted: {
+                                        fc.applyOutline(this, fc.overlayBackground)
+                                    }
                                 }
                             }
                         }
@@ -451,13 +473,13 @@ PanelWindow {
         stdout: SplitParser {
             onRead: data => {
                 let cleaned = data.trim();
-                if (!cleaned.startsWith("Volume:")) return;
-                let currentMutedState = cleaned.includes("[MUTED]");
-                let parts = cleaned.split(" ");
-                let volVal = parseFloat(parts[1]);
-                if (!isNaN(volVal) && !volumeSlider.pressed) {
-                    audioPopupWindow.systemVolume = Math.round(volVal * 100);
-                    audioPopupWindow.isMuted = currentMutedState;
+                let match = cleaned.match(/Volume:\s+([0-9.]+)/);
+                if (match && !volumeSlider.pressed) {
+                    let volVal = parseFloat(match[1]);
+                    if (!isNaN(volVal)) {
+                        audioPopupWindow.systemVolume = Math.round(volVal * 100);
+                        audioPopupWindow.isMuted = cleaned.includes("[MUTED]");
+                    }
                 }
             }
         }
@@ -473,13 +495,13 @@ PanelWindow {
         stdout: SplitParser {
             onRead: data => {
                 let cleaned = data.trim();
-                if (!cleaned.startsWith("Volume:")) return;
-                let currentMutedState = cleaned.includes("[MUTED]");
-                let parts = cleaned.split(" ");
-                let volVal = parseFloat(parts[1]);
-                if (!isNaN(volVal) && !micSlider.pressed) {
-                    audioPopupWindow.inputVolume = Math.round(volVal * 100);
-                    audioPopupWindow.isInputMuted = currentMutedState;
+                let match = cleaned.match(/Volume:\s+([0-9.]+)/);
+                if (match && !micSlider.pressed) {
+                    let volVal = parseFloat(match[1]);
+                    if (!isNaN(volVal)) {
+                        audioPopupWindow.inputVolume = Math.round(volVal * 100);
+                        audioPopupWindow.isInputMuted = cleaned.includes("[MUTED]");
+                    }
                 }
             }
         }
@@ -499,7 +521,6 @@ PanelWindow {
                 let seenSinkIds = {};
                 let seenSourceIds = {};
                 let targetBlock = 0;
-                
                 let hasDefaultSink = false;
                 let hasDefaultSource = false;
 
@@ -511,7 +532,6 @@ PanelWindow {
                         targetBlock = 0;
                     }
 
-                    // If the line contains branch/leaf layout elements, it's a nested sub-node or client stream
                     if (line.includes("├─") || line.includes("└─")) {
                         continue;
                     }
@@ -522,7 +542,6 @@ PanelWindow {
                         let id = match[2].trim();
                         let rawName = match[3].trim();
                         
-                        // Clean off bracket properties (vol, muted) safely before checking content
                         let cleanName = rawName.split("[")[0].replace(/[├─└─│]/g, "").trim();
                         if (cleanName === "") continue;
 
@@ -532,7 +551,6 @@ PanelWindow {
                             
                             let finalDef = isDef && !hasDefaultSink;
                             if (finalDef) hasDefaultSink = true;
-
                             sinkModel.append({ isDefault: finalDef, sinkTarget: id, sinkName: cleanName });
                         } else if (targetBlock === 2) {
                             if (seenSourceIds[id]) continue;
@@ -540,7 +558,6 @@ PanelWindow {
                             
                             let finalDef = isDef && !hasDefaultSource;
                             if (finalDef) hasDefaultSource = true;
-
                             sourceModel.append({ isDefault: finalDef, sourceTarget: id, sourceName: cleanName });
                         }
                     }

@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+import "../configs"
 
 PanelWindow {
     id: bluetoothPopupWindow
@@ -51,6 +52,8 @@ PanelWindow {
         }
     }
 
+    FontConfig { id: fc }
+
     // --- Fullscreen Outside Dismiss Wrapper ---
     MouseArea {
         id: outsideDismiss
@@ -67,8 +70,8 @@ PanelWindow {
             anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
             
-            color: bluetoothPopupWindow.colorBackground
-            border.color: bluetoothPopupWindow.colorBorder
+            color: fc.trackBackground
+            border.color: fc.borderMuted
             border.width: 1
             radius: shellConfig.radiusValue
 
@@ -78,7 +81,7 @@ PanelWindow {
                 text: "bluetooth_searching"
                 font.family: fc.iconFont
                 font.pixelSize: 150
-                color: bluetoothPopupWindow.colorBackground
+                color: fc.trackBackground
                 styleColor: colorBackground
                 
                 anchors.right: parent.left
@@ -94,7 +97,7 @@ PanelWindow {
                 text: "bluetooth_searching"
                 font.family: fc.iconFont
                 font.pixelSize: 150
-                color: bluetoothPopupWindow.colorBackground
+                color: fc.trackBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right
@@ -159,11 +162,11 @@ PanelWindow {
                     Text {
                         text: "Bluetooth Devices"
                         color: "#ffffff"
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 18
                         font.weight: Font.Bold
                         style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        styleColor: fc.overlayBackground
                         Layout.fillWidth: true
                     }
 
@@ -184,12 +187,12 @@ PanelWindow {
                         Text {
                             anchors.centerIn: parent
                             text: "radar"
-                            font.family: "Material Symbols Outlined"
+                            font.family: fc.iconFont
                             font.pixelSize: 22
                             color: "#ffffff"
                             opacity: bluetoothPopupWindow.isScanning ? 1.0 : 0.6
                             style: Text.Outline
-                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                            styleColor: fc.overlayBackground
                         }
                     }
                 }
@@ -239,11 +242,11 @@ PanelWindow {
                                         Text {
                                             text: model.name !== "" ? model.name : model.mac
                                             color: "#ffffff"
-                                            font.family: "Google Sans Flex"
+                                            font.family: fc.mainFont
                                             font.pixelSize: 14
                                             font.weight: model.connected ? Font.Bold : Font.Normal
                                             style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                            styleColor: fc.overlayBackground
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
                                         }
@@ -252,10 +255,10 @@ PanelWindow {
                                             text: model.connected ? "Connected" : (model.paired ? "Paired" : model.mac)
                                             color: "#ffffff"
                                             opacity: model.connected ? 0.9 : 0.5
-                                            font.family: "Google Sans Flex"
+                                            font.family: fc.mainFont
                                             font.pixelSize: 11
                                             style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                            styleColor: fc.overlayBackground
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
                                         }
@@ -284,11 +287,11 @@ PanelWindow {
                                         Text {
                                             anchors.centerIn: parent
                                             text: !model.paired ? "link" : (model.connected ? "link_off" : "cable")
-                                            font.family: "Material Symbols Outlined"
+                                            font.family: fc.iconFont
                                             font.pixelSize: 18
                                             color: "#ffffff"
                                             style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                            styleColor: fc.overlayBackground
                                         }
                                     }
 
@@ -310,12 +313,12 @@ PanelWindow {
                                         Text {
                                             anchors.centerIn: parent
                                             text: "delete"
-                                            font.family: "Material Symbols Outlined"
+                                            font.family: fc.iconFont
                                             font.pixelSize: 18
                                             color: "#ffffff"
                                             opacity: 0.8
                                             style: Text.Outline
-                                            styleColor: Qt.rgba(0, 0, 0, 0.35)
+                                            styleColor: fc.overlayBackground
                                         }
                                     }
                                 }
@@ -327,7 +330,7 @@ PanelWindow {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: Qt.rgba(1, 1, 1, 0.1)
+                    color: fc.borderMuted
                 }
 
                 // --- Footer / Status Row ---
@@ -336,12 +339,12 @@ PanelWindow {
 
                     Text {
                         text: bluetoothPopupWindow.activeStatusText
-                        font.family: "Google Sans Flex"
+                        font.family: fc.mainFont
                         font.pixelSize: 14
                         color: "#ffffff"
                         opacity: 0.8
                         style: Text.Outline
-                        styleColor: Qt.rgba(0, 0, 0, 0.35)
+                        styleColor: fc.overlayBackground
                         Layout.fillWidth: true
                     }
 
@@ -359,8 +362,8 @@ PanelWindow {
                             width: 42
                             height: 24
                             radius: 12
-                            color: powerSwitch.checked ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
-                            border.color: powerSwitch.checked ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : Qt.rgba(1, 1, 1, 0.2)
+                            color: powerSwitch.checked ? fc.overlayBackground : "transparent"
+                            border.color: powerSwitch.checked ? fc.overlayBackground : Qt.rgba(1, 1, 1, 0.2)
                             border.width: 2
 
                             Rectangle {
