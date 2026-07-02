@@ -304,7 +304,7 @@ PanelWindow {
 
                         Text {
                             anchors.centerIn: parent
-                            text: "border_all"
+                            text: "select_window_2"
                             font.family: fontCfg.iconFont 
                             font.pixelSize: 22
                             color: dockHitbox.isPinned ? Qt.rgba(sideDockWindow.themeText.r, sideDockWindow.themeText.g, sideDockWindow.themeText.b, 0.9) : "transparent"
