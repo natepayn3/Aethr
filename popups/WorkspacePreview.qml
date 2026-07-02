@@ -240,8 +240,6 @@ Item {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         rotation: -45
-
-                        Component.onCompleted: fc.applyOutline(this)
                     }
 
                     Text {
@@ -257,8 +255,6 @@ Item {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         rotation: 45
-
-                        Component.onCompleted: fc.applyOutline(this)
                     }
 
                     Text {
@@ -269,8 +265,6 @@ Item {
                         }
                         color: fc.textMuted
                         anchors.horizontalCenter: parent.horizontalCenter
-
-                        Component.onCompleted: fc.applyOutline(this)
                     }
                 }
 
