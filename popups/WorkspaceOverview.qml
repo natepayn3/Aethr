@@ -24,15 +24,12 @@ PanelWindow {
         right: true
     }
 
-    // FIXED: Bind directly to the global shell root property to prevent sync desaturation
     property bool isOverviewActive: shellRoot.isOverviewActive
     visible: isOverviewActive
 
     // --- NATIVE IPC ROUTING MATRIX ---
     IpcHandler {
         target: "overview"
-        
-        // FIXED: Mutate the global state wrapper handler path
         function toggle(): void {
             shellRoot.isOverviewActive = !shellRoot.isOverviewActive;
         }
@@ -46,6 +43,12 @@ PanelWindow {
             overviewWindow.WlrLayershell.keyboardFocus = WlrLayershell.OnDemand;
             overviewContent.focus = true;
             clientQueryProcess.running = true; 
+            
+            // DYNAMIC CURSOR INITIALIZATION: Snap index tracking cleanly onto your focused workspace context immediately
+            let initialIdx = overviewWindow.activeWorkspaceList.indexOf(Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1);
+            if (initialIdx !== -1) {
+                overviewWindow.activeWorkspace = overviewWindow.activeWorkspaceList[initialIdx];
+            }
         } else {
             overviewWindow.WlrLayershell.keyboardFocus = WlrLayershell.None;
             clientQueryProcess.running = false;
@@ -63,7 +66,7 @@ PanelWindow {
         return ids.sort((a, b) => a - b);
     }
     
-    readonly property int activeWorkspace: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
+    property int activeWorkspace: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
 
     property color colorBackground: shellConfig.colorBackground
     property color colorBorder: shellConfig.colorBorder
@@ -96,20 +99,64 @@ PanelWindow {
         }
     }
 
+    function getCleanIconName(className) {
+        if (!className) return "application-x-executable";
+        let lowerClass = className.toLowerCase().trim();
+        if (lowerClass.includes("chrome")) return "google-chrome";
+        if (lowerClass.includes("kitty")) return "kitty";
+        if (lowerClass.includes("terminal")) return "utilities-terminal";
+        if (lowerClass.includes("codium")) return "vscodium";
+        if (lowerClass.includes("code")) return "vscode";
+        if (lowerClass.includes("signal")) return "signal-desktop";
+        return lowerClass;
+    }
+
     Item {
         id: overviewContent
         anchors.fill: parent
         focus: true
 
-        // FIXED: Clear structural state globally on escape key intercept
+        // --- MATRIX KEYBOARD NAVIGATION CONTROLLER ENGINE ---
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_Escape) {
                 shellRoot.isOverviewActive = false;
                 event.accepted = true;
+                return;
+            }
+
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Select) {
+                Hyprland.dispatch(`hl.dsp.focus({ workspace = "${overviewWindow.activeWorkspace}" })`);
+                shellRoot.isOverviewActive = false;
+                event.accepted = true;
+                return;
+            }
+
+            let currentIndex = overviewWindow.activeWorkspaceList.indexOf(overviewWindow.activeWorkspace);
+            if (currentIndex === -1) return;
+
+            let cols = 4;
+            let totalItems = overviewWindow.activeWorkspaceList.length;
+            let nextIndex = currentIndex;
+
+            if (event.key === Qt.Key_Left) {
+                if (currentIndex > 0) nextIndex = currentIndex - 1;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Right) {
+                if (currentIndex < totalItems - 1) nextIndex = currentIndex + 1;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Up) {
+                if (currentIndex - cols >= 0) nextIndex = currentIndex - cols;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Down) {
+                if (currentIndex + cols < totalItems) nextIndex = currentIndex + cols;
+                event.accepted = true;
+            }
+
+            if (nextIndex !== currentIndex) {
+                overviewWindow.activeWorkspace = overviewWindow.activeWorkspaceList[nextIndex];
             }
         }
 
-        // FIXED: Clear structural state globally on background layer tap
         TapHandler {
             onTapped: { shellRoot.isOverviewActive = false; }
         }
@@ -119,184 +166,302 @@ PanelWindow {
             id: overviewGrid
             anchors.centerIn: parent
             columns: 4
-            spacing: 28
+            spacing: 64
 
             Repeater {
                 model: overviewWindow.activeWorkspaceList
 
-                delegate: Rectangle {
-                    id: workspaceTile
+                delegate: Item {
+                    id: tileWrapper
                     property int currentWsId: modelData
                     property bool isTargetActive: overviewWindow.activeWorkspace === currentWsId
 
-                    // --- PORTED DYNAMIC VIEWPORT DIMENSION ENGINE ---
-                    width: Math.round(viewportFrame.width + 28)
-                    height: 260
-                    radius: 12
-                    
-                    color: overviewWindow.colorBackground
-                    border.color: isTargetActive ? fontCfg.textPrimary : fontCfg.borderMuted
-                    border.width: isTargetActive ? 2 : 1
+                    width: Math.round(viewportFrame.width + 74)
+                    height: 300
 
-                    scale: tileMouseArea.containsMouse ? 1.02 : 1.0
-                    Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                    Behavior on border.color { ColorAnimation { duration: 180 } }
-
-                    Text {
-                        id: titleLabel
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.margins: 14
-                        text: "Workspace " + currentWsId
-                        font.family: fontCfg.mainFont
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: workspaceTile.isTargetActive ? fontCfg.textPrimary : fontCfg.textMuted
-                        z: 3
-                    }
-
-                    Item {
-                        id: viewportFrame
-                        anchors.top: titleLabel.bottom
-                        anchors.bottom: parent.bottom
-                        anchors.margins: 14
-                        anchors.topMargin: 8
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        clip: true
-                        z: 2
-
-                        property var workspaceWindows: overviewWindow.liveClientJson.filter(w => w.workspace.id === workspaceTile.currentWsId)
-
-                        property var calculatedBounds: {
-                            if (!workspaceWindows || workspaceWindows.length === 0) {
-                                let mWidth = 1920, mHeight = 1080, mX = 0, mY = 0;
-                                let wsObj = Hyprland.workspaces.values.find(w => w.id === workspaceTile.currentWsId);
-                                let targetMonitor = wsObj ? wsObj.monitor : Hyprland.activeMonitor;
-                                if (targetMonitor) {
-                                    let scale = targetMonitor.scale > 0 ? targetMonitor.scale : 1.0;
-                                    mWidth = Math.round(targetMonitor.width / scale);
-                                    mHeight = Math.round(targetMonitor.height / scale);
-                                    mX = targetMonitor.x;
-                                    mY = targetMonitor.y;
-                                }
-                                return { "w": mWidth, "h": mHeight, "isVertical": mHeight > mWidth, "originX": mX, "originY": mY };
-                            }
-
-                            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                            for (let i = 0; i < workspaceWindows.length; i++) {
-                                let win = workspaceWindows[i];
-                                if (!win.at || !win.size) continue;
-                                if (win.at[0] < minX) minX = win.at[0];
-                                if (win.at[1] < minY) minY = win.at[1];
-                                if ((win.at[0] + win.size[0]) > maxX) maxX = win.at[0] + win.size[0];
-                                if ((win.at[1] + win.size[1]) > maxY) maxY = win.at[1] + win.size[1];
-                            }
-
-                            let spanX = maxX - minX;
-                            let spanY = maxY - minY;
-                            let verticalDetected = spanY > spanX;
-                            
-                            let normW = verticalDetected ? 1080 : 1920;
-                            let normH = verticalDetected ? 1920 : 1080;
-                            
-                            if (spanX > 0 && Math.abs(spanX - normW) > 100) normW = spanX;
-                            if (spanY > 0 && Math.abs(spanY - normH) > 100) normH = spanY;
-                            return { "w": normW, "h": normH, "isVertical": verticalDetected, "originX": minX, "originY": minY };
-                        }
-
-                        width: Math.round(height * (calculatedBounds.w / calculatedBounds.h))
+                    Rectangle {
+                        id: workspaceTile
+                        anchors.fill: parent
+                        radius: overviewWindow.radiusValue
                         
-                        property real scaleX: width / calculatedBounds.w
-                        property real scaleY: height / calculatedBounds.h
+                        z: tileWrapper.isTargetActive ? 3 : 2
 
-                        Rectangle {
-                            anchors.fill: parent
+                        color: overviewWindow.colorBackground
+                        border.color: fontCfg.borderMuted
+                        border.width: 0
+
+                        scale: tileWrapper.isTargetActive ? 1.18 : (tileMouseArea.containsMouse ? 1.02 : 1.0)
+                        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+                        // --- TV ANTENNA ICON ---
+                        Text {
+                            id: antennaIcon
+                            text: "network_ping"
+                            font {
+                                family: fontCfg.iconFont
+                                pixelSize: 54
+                            }
                             color: fontCfg.overlayBackground
-                            radius: 4
+                            styleColor: overviewWindow.colorBackground
                             z: 1
+                            
+                            anchors.bottom: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottomMargin: -19
+                            
+                            Component.onCompleted: fontCfg.applySmoothing(this)
                         }
 
-                        Repeater {
-                            model: viewportFrame.workspaceWindows
-                            delegate: Rectangle {
-                                id: windowDelegate
-                            
-                                x: Math.round((modelData.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
-                                y: Math.round((modelData.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
-                                width: Math.max(4, Math.round(modelData.size[0] * viewportFrame.scaleX))
-                                height: Math.max(4, Math.round(modelData.size[1] * viewportFrame.scaleY))
-                                visible: modelData.mapped
-                                z: 2
-                                
-                                color: workspaceTile.isTargetActive ? 
-                                    Qt.rgba(fontCfg.textPrimary.r, fontCfg.textPrimary.g, fontCfg.textPrimary.b, 0.15) : fontCfg.overlayBackground
-                                border.color: workspaceTile.isTargetActive ? fontCfg.textPrimary : fontCfg.borderMuted
-                                border.width: 1
-                                radius: 4
+                        Item {
+                            anchors.fill: parent
+                            anchors.margins: 14
 
-                                property var wlToplevel: {
-                                    if (!modelData || !modelData.address) return null;
-                                    let targetAddr = modelData.address.trim().toLowerCase();
-                                    let match = Hyprland.toplevels.values.find(t => {
-                                        if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
-                                        return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
-                                    });
-                                    if (match && match.wayland) return match.wayland;
-                                    return null;
+                            // --- TV KNOBS (INSIDE WINDOW, LEFT SIDE) ---
+                            Column {
+                                id: tvKnobsColumn
+                                anchors.left: parent.left
+                                anchors.leftMargin: 4
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 24
+                                spacing: 14
+
+                                Text {
+                                    text: "clock_loader_10"
+                                    font { family: fontCfg.iconFont; pixelSize: 30 }
+                                    color: fontCfg.textMuted
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: 30
+                                    height: 30
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    rotation: -45
+                                    Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
                                 }
 
-                                Loader {
-                                    anchors.fill: parent
-                                    anchors.margins: 1
-                                    active: windowDelegate.wlToplevel !== null
-                                    asynchronous: true 
-                                    
-                                    opacity: status === Loader.Ready ? 1.0 : 0.0
-                                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                                Text {
+                                    text: "clock_loader_10"
+                                    font { family: fontCfg.iconFont; pixelSize: 30 }
+                                    color: fontCfg.textMuted
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: 30
+                                    height: 30
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    rotation: 45
+                                    Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                                }
 
-                                    sourceComponent: Component {
-                                        ScreencopyView {
-                                            captureSource: windowDelegate.wlToplevel
-                                            live: true
-                                            paintCursor: false
+                                Text {
+                                    text: "density_small"
+                                    font { family: fontCfg.iconFont; pixelSize: 30 }
+                                    color: fontCfg.textMuted
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                                }
+                            }
+
+                            // --- HEADER ROW (TITLE + RUNNING APPS) ---
+                            RowLayout {
+                                id: headerRow
+                                width: parent.width - tvKnobsColumn.width - 16
+                                height: 20
+                                spacing: 16
+                                anchors.top: parent.top
+                                anchors.left: tvKnobsColumn.right
+                                anchors.leftMargin: 0
+
+                                Item { Layout.fillWidth: true }
+
+                                Row {
+                                    id: centeredContent
+                                    spacing: 16
+                                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                                    Text {
+                                        id: titleLabel
+                                        text: "Workspace " + currentWsId
+                                        font.family: overviewWindow.shellFont
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.textMuted
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
+                                    }
+
+                                    RowLayout {
+                                        id: iconContainerRow
+                                        height: parent.height
+                                        spacing: 8
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    
+                                        Repeater {
+                                            model: viewportFrame.workspaceWindows
+                                            delegate: Image {
+                                                visible: (modelData.class || "") !== "" && modelData.mapped
+                                                source: Quickshell.iconPath(getCleanIconName(modelData.class))
+                                                Layout.preferredWidth: 16
+                                                Layout.preferredHeight: 16
+                                                Layout.alignment: Qt.AlignVCenter
+                                                fillMode: Image.PreserveAspectFit
+                                            }
                                         }
                                     }
                                 }
 
-                                Rectangle {
-                                    anchors.top: parent.top
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    height: Math.min(16, parent.height * 0.3)
-                                    color: workspaceTile.isTargetActive ? fontCfg.textPrimary : "#cc11111b"
-                                    visible: parent.height > 24 && parent.width > 40
-                                    radius: 2
+                                Item { Layout.fillWidth: true }
+                            }
 
-                                    Text {
-                                        text: (modelData.class || "")
-                                        font.family: fontCfg.mainFont
-                                        font.pixelSize: 8
-                                        font.bold: true 
-                                        color: workspaceTile.isTargetActive ? "#000000" : fontCfg.textPrimary
-                                        anchors.centerIn: parent
-                                        width: parent.width - 4
-                                        elide: Text.ElideRight
-                                        horizontalAlignment: Text.AlignHCenter
+                            Rectangle {
+                                id: headerDivider
+                                width: parent.width - tvKnobsColumn.width - 16
+                                height: 1
+                                color: overviewWindow.colorBorder
+                                anchors.top: headerRow.bottom
+                                anchors.topMargin: 4
+                                anchors.left: tvKnobsColumn.right
+                                anchors.leftMargin: 16
+                            }
+
+                            // --- VIEWPORT STREAM ENGINE ---
+                            Item {
+                                id: viewportFrame
+                                anchors.left: tvKnobsColumn.right
+                                anchors.leftMargin: 16
+                                anchors.top: headerDivider.bottom
+                                anchors.topMargin: 8
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 2
+                                clip: true
+
+                                property var workspaceWindows: overviewWindow.liveClientJson.filter(w => w.workspace.id === tileWrapper.currentWsId)
+
+                                property var calculatedBounds: {
+                                    if (!workspaceWindows || workspaceWindows.length === 0) {
+                                        let mWidth = 1920, mHeight = 1080, mX = 0, mY = 0;
+                                        let wsObj = Hyprland.workspaces.values.find(w => w.id === tileWrapper.currentWsId);
+                                        let targetMonitor = wsObj ? wsObj.monitor : Hyprland.activeMonitor;
+                                        if (targetMonitor) {
+                                            let scale = targetMonitor.scale > 0 ? targetMonitor.scale : 1.0;
+                                            mWidth = Math.round(targetMonitor.width / scale);
+                                            mHeight = Math.round(targetMonitor.height / scale);
+                                            mX = targetMonitor.x;
+                                            mY = targetMonitor.y;
+                                        }
+                                        return { "w": mWidth, "h": mHeight, "isVertical": mHeight > mWidth, "originX": mX, "originY": mY };
+                                    }
+
+                                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                                    for (let i = 0; i < workspaceWindows.length; i++) {
+                                        let win = workspaceWindows[i];
+                                        if (!win.at || !win.size) continue;
+                                        if (win.at[0] < minX) minX = win.at[0];
+                                        if (win.at[1] < minY) minY = win.at[1];
+                                        if ((win.at[0] + win.size[0]) > maxX) maxX = win.at[0] + win.size[0];
+                                        if ((win.at[1] + win.size[1]) > maxY) maxY = win.at[1] + win.size[1];
+                                    }
+
+                                    let spanX = maxX - minX;
+                                    let spanY = maxY - minY;
+                                    let verticalDetected = spanY > spanX;
+                                    
+                                    let normW = verticalDetected ? 1080 : 1920;
+                                    let normH = verticalDetected ? 1920 : 1080;
+                                    
+                                    if (spanX > 0 && Math.abs(spanX - normW) > 100) normW = spanX;
+                                    if (spanY > 0 && Math.abs(spanY - normH) > 100) normH = spanY;
+                                    return { "w": normW, "h": normH, "isVertical": verticalDetected, "originX": minX, "originY": minY };
+                                }
+
+                                width: Math.round(height * (calculatedBounds.w / calculatedBounds.h))
+                                
+                                property real scaleX: width / calculatedBounds.w
+                                property real scaleY: height / calculatedBounds.h
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: fontCfg.overlayBackground
+                                    radius: 4
+                                    z: 1
+                                }
+
+                                Repeater {
+                                    model: viewportFrame.workspaceWindows
+                                    delegate: Rectangle {
+                                        id: windowDelegate
+                                    
+                                        x: Math.round((modelData.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
+                                        y: Math.round((modelData.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
+                                        width: Math.max(4, Math.round(modelData.size[0] * viewportFrame.scaleX))
+                                        height: Math.max(4, Math.round(modelData.size[1] * viewportFrame.scaleY))
+                                        visible: modelData.mapped
+                                        z: 2
+                                        
+                                        color: tileWrapper.isTargetActive ? 
+                                            Qt.rgba(fontCfg.textPrimary.r, fontCfg.textPrimary.g, fontCfg.textPrimary.b, 0.15) : fontCfg.overlayBackground
+                                        border.color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.borderMuted
+                                        border.width: 0
+                                        radius: 4
+
+                                        property var wlToplevel: {
+                                            if (!modelData || !modelData.address) return null;
+                                            let targetAddr = modelData.address.trim().toLowerCase();
+                                            let match = Hyprland.toplevels.values.find(t => {
+                                                if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
+                                                return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
+                                            });
+                                            if (match && match.wayland) return match.wayland;
+                                            return null;
+                                        }
+
+                                        Loader {
+                                            anchors.fill: parent
+                                            anchors.margins: 1
+                                            active: windowDelegate.wlToplevel !== null
+                                            asynchronous: true 
+                                            
+                                            opacity: status === Loader.Ready ? 1.0 : 0.0
+                                            Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                                            sourceComponent: Component {
+                                                ScreencopyView {
+                                                    captureSource: windowDelegate.wlToplevel
+                                                    live: true
+                                                    paintCursor: false
+                                                }
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                            height: Math.min(16, parent.height * 0.3)
+                                            color: tileWrapper.isTargetActive ? fontCfg.textPrimary : "#cc11111b"
+                                            visible: parent.height > 24 && parent.width > 40
+                                            radius: 2
+
+                                            Text {
+                                                text: (modelData.class || "")
+                                                font.family: fontCfg.mainFont
+                                                font.pixelSize: 8
+                                                font.bold: true 
+                                                color: tileWrapper.isTargetActive ? "#000000" : fontCfg.textPrimary
+                                                anchors.centerIn: parent
+                                                width: parent.width - 4
+                                                elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    MouseArea {
-                        id: tileMouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        
-                        // FIXED: Drop overlay cleanly globally when target workspace card is clicked
-                        onClicked: {
-                            Hyprland.dispatch(`hl.dsp.focus({ workspace = "${currentWsId}" })`);
-                            shellRoot.isOverviewActive = false;
+                        MouseArea {
+                            id: tileMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: {
+                                Hyprland.dispatch(`hl.dsp.focus({ workspace = "${currentWsId}" })`);
+                                shellRoot.isOverviewActive = false;
+                            }
                         }
                     }
                 }
