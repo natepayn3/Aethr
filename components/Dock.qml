@@ -1,6 +1,8 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import "../configs"
+import "../popups"
 
 PanelWindow {
     id: dockWindow
