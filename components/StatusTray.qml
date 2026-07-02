@@ -23,6 +23,9 @@ PanelWindow {
     color: "transparent"
     exclusiveZone: 0
 
+    // Global tracking flag to freeze dismiss cycles when a menu is active
+    property bool menuActive: false
+
     FontConfig { id: fc }
     ModuleConfig { id: shellConfig }
 
@@ -43,9 +46,8 @@ PanelWindow {
         height: 120
     }
 
-    // Swapping the item reference directly forces Quickshell to update the mask layout
     mask: Region {
-        item: trayHitbox.isPinned ? pinnedMaskSurface : minimalMaskSurface
+        item: trayWindow.menuActive || trayHitbox.isPinned ? pinnedMaskSurface : minimalMaskSurface
     }
 
     property color themeText: shellConfig.themeText
@@ -61,8 +63,8 @@ PanelWindow {
         hoverEnabled: true
 
         property bool isPinned: false
-        // FIX: Evaluates the entire container hitbox so sibling hovers don't trip the timer
-        property bool stableHover: trayHitbox.containsMouse
+        // FIX: Retains pinned state if mouse is inside OR a native context menu is currently drawn
+        property bool stableHover: trayHitbox.containsMouse || trayWindow.menuActive
 
         onStableHoverChanged: {
             if (stableHover) {
@@ -89,11 +91,11 @@ PanelWindow {
             radius: shellConfig.radiusValue - 2
             anchors.horizontalCenter: parent.horizontalCenter
  
-            y: trayHitbox.isPinned ? 6 : -height
+            y: (trayHitbox.isPinned || trayWindow.menuActive) ? 6 : -height
             color: fc.trackBackground
-            border.color: trayHitbox.isPinned ? fc.borderMuted : "transparent"
+            border.color: (trayHitbox.isPinned || trayWindow.menuActive) ? fc.borderMuted : "transparent"
             border.width: 1
-            opacity: trayHitbox.isPinned ? 1.0 : 0.0
+            opacity: (trayHitbox.isPinned || trayWindow.menuActive) ? 1.0 : 0.0
 
             Behavior on y { 
                 NumberAnimation { duration: 180; easing.type: Easing.OutCubic } 
@@ -131,10 +133,34 @@ PanelWindow {
                 Repeater {
                     model: SystemTray.items.values
                     delegate: Item {
+                        id: trayItemDelegate
                         width: 64
                         height: 64
                         z: trayWindow.activeHoverIndex === index ? 10 : 1
             
+                        // Bind the platform menu directly to the item's geometry
+                        QsMenuAnchor {
+                            id: itemMenuAnchor
+                            menu: modelData.menu
+                            
+                            // 1. Target the delegate item wrapper directly instead of the window
+                            anchor.item: trayItemDelegate 
+                            
+                            // 2. Align to the bottom edge of the icon bounds
+                            anchor.edges: Edges.Bottom | Edges.Left 
+                            anchor.gravity: Edges.Bottom | Edges.Right
+                            
+                            // 3. Add your exact structural offset (e.g., shifting down by 10px)
+                            anchor.rect.x: 30
+                            anchor.rect.y: 30
+
+                            onOpened: trayWindow.menuActive = true
+                            onClosed: {
+                                trayWindow.menuActive = false;
+                                trayWindow.activeHoverIndex = -1;
+                            }
+                        }                        
+
                         Rectangle {
                             anchors.fill: parent
                             radius: 12
@@ -148,17 +174,16 @@ PanelWindow {
                             anchors.centerIn: parent
                             width: 32
                             height: 32
-                            // Cleanly strips "image://icon/" prefix if an application sends it
                             source: modelData.iconPath ? "file://" + modelData.iconPath : 
                                     Quickshell.iconPath((modelData.icon || "image-missing").replace("image://icon/", ""))
                             asynchronous: true
-                            opacity: trayHitbox.isPinned ? 0.9 : 0.0
+                            opacity: (trayHitbox.isPinned || trayWindow.menuActive) ? 0.9 : 0.0
                             Behavior on opacity { NumberAnimation { duration: 180 } }
                         }
 
                         Rectangle {
                             id: tooltipBubble
-                            visible: trayWindow.activeHoverIndex === index && modelData.title !== ""
+                            visible: trayWindow.activeHoverIndex === index && modelData.title !== "" && !trayWindow.menuActive
                             width: tooltipText.contentWidth + 16
                             height: 26
                             radius: 6
@@ -191,14 +216,30 @@ PanelWindow {
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
                             cursorShape: Qt.PointingHandCursor
 
-                            onEntered: trayWindow.activeHoverIndex = index
-                            onExited: trayWindow.activeHoverIndex = -1
+                            onEntered: {
+                                if (!trayWindow.menuActive) {
+                                    trayWindow.activeHoverIndex = index;
+                                }
+                            }
+                            onExited: {
+                                if (!trayWindow.menuActive) {
+                                    trayWindow.activeHoverIndex = -1;
+                                }
+                            }
 
                             onClicked: (mouse) => {
                                 if (mouse.button === Qt.RightButton) {
-                                    modelData.secondaryActivate();
+                                    if (modelData.hasMenu) {
+                                        itemMenuAnchor.open();
+                                    } else {
+                                        modelData.secondaryActivate();
+                                    }
                                 } else {
-                                    modelData.activate();
+                                    if (modelData.hasMenu && !modelData.hasOwnProperty('activate')) {
+                                        itemMenuAnchor.open();
+                                    } else {
+                                        modelData.activate();
+                                    }
                                 }
                             }
                         }
@@ -214,8 +255,10 @@ PanelWindow {
         running: false
         repeat: false
         onTriggered: {
-            trayHitbox.isPinned = false;
-            trayWindow.activeHoverIndex = -1;
+            if (!trayWindow.menuActive) {
+                trayHitbox.isPinned = false;
+                trayWindow.activeHoverIndex = -1;
+            }
         }
     }
 }
