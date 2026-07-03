@@ -413,8 +413,9 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.14) : (parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent")
-                                border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.35) : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
+                                // Inline comment: Toned down active opacity to fix toggle contrast against the highlighted container
+                                color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.05) : (parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent")
+                                border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.2) : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
                                 border.width: 1
                             }
 
@@ -424,7 +425,8 @@ PanelWindow {
                                 spacing: 12
 
                                 Text {
-                                    text: "vpn_key"
+                                    // Inline comment: Dynamic material symbol swap based on connection state
+                                    text: networkPopupWindow.activeVpnName === profileName ? "vpn_key" : "vpn_key_off"
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: 18
                                     color: networkPopupWindow.activeVpnName === profileName ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
@@ -442,25 +444,31 @@ PanelWindow {
                                     checked: networkPopupWindow.activeVpnName === profileName
                                     onClicked: networkPopupWindow.toggleProfileState(profileName, checked)
                                     
-                                    background: Rectangle {
-                                        implicitWidth: 40
-                                        implicitHeight: 20
-                                        radius: 10
-                                        color: itemToggleSwitch.checked ? Qt.rgba(1, 1, 1, 0.25) : Qt.rgba(1, 1, 1, 0.1)
-                                        border.color: itemToggleSwitch.checked ? Qt.rgba(1, 1, 1, 0.2) : "transparent"
-                                        border.width: 1
+                                    implicitWidth: 42
+                                    implicitHeight: 24
+                                    
+                                    indicator: Rectangle {
+                                        width: 42
+                                        height: 24
+                                        radius: 12
+                                        // Inline comment: Softer background fill when active
+                                        color: itemToggleSwitch.checked ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
+                                        // Inline comment: Directly extract RGB from primary text and drop alpha to 0.5 for a faded text-colored outline
+                                        border.color: Qt.rgba(fc.textPrimary.r, fc.textPrimary.g, fc.textPrimary.b, 0.5)
+                                        border.width: 2
 
                                         Rectangle {
+                                            x: itemToggleSwitch.checked ? parent.width - width - 4 : 4
+                                            anchors.verticalCenter: parent.verticalCenter
                                             width: 14
                                             height: 14
                                             radius: 7
-                                            color: itemToggleSwitch.checked ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            x: itemToggleSwitch.checked ? 22 : 4
-                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                            color: fc.textPrimary
+                                            
+                                            // Inline comment: Smooth quad sliding animation
+                                            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                                         }
                                     }
-                                    indicator: Item {}
                                 }
 
                                 Button {
