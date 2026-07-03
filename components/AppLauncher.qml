@@ -209,7 +209,7 @@ print(json.dumps(apps))
 
         onVisibleChanged: {
             if (visible) {
-                if (allApps.length === 0) appFetcher.running = true;
+                appFetcher.running = true; // Trigger every time it opens
                 searchInput.text = ""; 
                 searchInput.forceActiveFocus();
                 pinCacheReader.reload();
