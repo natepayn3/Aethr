@@ -362,8 +362,10 @@ PanelWindow {
                             width: 42
                             height: 24
                             radius: 12
-                            color: powerSwitch.checked ? fc.overlayBackground : "transparent"
-                            border.color: powerSwitch.checked ? fc.overlayBackground : Qt.rgba(1, 1, 1, 0.2)
+                            // Inline comment: Track background fill matched to your shell config theme rules
+                            color: powerSwitch.checked ? shellConfig.themeAccent : "transparent"
+                            // Inline comment: Constant text-colored outline dropped to 50% opacity across both toggle positions
+                            border.color: Qt.rgba(fc.textPrimary.r, fc.textPrimary.g, fc.textPrimary.b, 0.5)
                             border.width: 2
 
                             Rectangle {
@@ -372,7 +374,9 @@ PanelWindow {
                                 width: 14
                                 height: 14
                                 radius: 7
-                                color: "#ffffff"
+                                color: fc.textPrimary
+                                
+                                // Inline comment: Fluid quad transition handling knob translation
                                 Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                             }
                         }
