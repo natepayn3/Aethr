@@ -58,7 +58,9 @@ PanelWindow {
 
         property bool stableHover: hotspotTrigger.containsMouse ||
                                    innerCapsuleMouseTracker.containsMouse ||
-                                   (dockWindow.launcherModule && dockWindow.launcherModule.launcherWindowObject && dockWindow.launcherModule.launcherWindowObject.visible) ||
+                                   (dockWindow.launcherModule && 
+                                    dockWindow.launcherModule.active && 
+                                    dockWindow.launcherModule.targetScreen === dockWindow.screen) ||
                                    bluetoothOverlay.visible ||
                                    audioOverlay.visible ||
                                    wifiOverlay.visible ||
@@ -83,7 +85,7 @@ PanelWindow {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             hoverEnabled: true
-         }
+        }
 
         Rectangle {
             id: inputStabilizerCapsule
@@ -335,7 +337,11 @@ PanelWindow {
 
                 onClicked: (mouse) => {
                     if (dockHitbox.activeHoverIndex === 0) {
-                        dockWindow.launcherModule.active = !dockWindow.launcherModule.active;
+                        if (dockWindow.launcherModule.active) {
+                            dockWindow.launcherModule.active = false;
+                        } else {
+                            dockWindow.launcherModule.presentOnScreen(dockWindow.screen);
+                        }
                     } else if (dockHitbox.activeHoverIndex === 1) {
                         if (dockWindow.wallpaperModule) {
                             dockWindow.wallpaperModule.active = !dockWindow.wallpaperModule.active;

@@ -25,10 +25,19 @@ Scope {
     property color colorBorder: shellConfig.colorBorder
     
     property bool active: false
+    property var targetScreen: null
+
+    function presentOnScreen(scr) {
+        targetScreen = scr;
+        launcherWindow.screen = scr;
+        active = true;
+    }
   
     onActiveChanged: {
         if (active) {
             launcherWindow.visible = true;
+        } else {
+            targetScreen = null;
         }
     }
 
@@ -148,7 +157,6 @@ for folder in ["/usr/share/applications", os.path.expanduser("~/.local/share/app
                                 break
                         if found: break
 
-        # Using escaped hex characters to completely avoid parsing side-effects in IDEs
         apps.append({
             "name": name.replace("\\x22", "").replace("\\\\", ""),
             "exec": exec_cmd.replace("\\x22", "").replace("\\\\", ""),
@@ -351,6 +359,7 @@ print(json.dumps(apps))
                                 }
                                 Layout.fillWidth: true
                             }
+
                             Item {
                                 Layout.fillWidth: true
                             }
@@ -374,7 +383,6 @@ print(json.dumps(apps))
                             Layout.fillWidth: true 
                             Layout.preferredHeight: 46 
                             placeholderText: "Search apps..."
-                            
                             font.family: fc.mainFont
                             font.pixelSize: 20 
                             color: launcherModuleRoot.themeText
@@ -449,7 +457,6 @@ print(json.dumps(apps))
                                             Layout.preferredHeight: 28
                                             sourceSize.width: 56 
                                             sourceSize.height: 56
-                                            
                                             source: modelData.icon ? modelData.icon : "file:///usr/share/icons/hicolor/scalable/apps/utilities-terminal.svg"
                                             fillMode: Image.PreserveAspectFit
                                             asynchronous: true
@@ -481,7 +488,7 @@ print(json.dumps(apps))
                                                 color: fc.textMuted
                                                 Layout.fillWidth: true
                                                 elide: Text.ElideRight
-                                                                                              
+                                                                                                    
                                                 Component.onCompleted: {
                                                     fc.applyOutline(this, fc.overlayBackground)
                                                 }
@@ -496,7 +503,7 @@ print(json.dumps(apps))
                                             visible: appDelegate.isPinned 
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.rightMargin: 4
-                                                                                 
+                                                                                                
                                             Component.onCompleted: {
                                                 fc.applyOutline(this, fc.overlayBackground)
                                             }
@@ -520,7 +527,7 @@ print(json.dumps(apps))
                                             let deltaY = Math.abs(currentY - lastScreenY);
                                             if (lastScreenX !== -1 && (deltaX > 2 || deltaY > 2)) {
                                                 if (appListView.currentIndex !== index) { 
-                                                   appListView.currentIndex = index;
+                                                    appListView.currentIndex = index;
                                                 }
                                             }
                                             
