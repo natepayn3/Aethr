@@ -33,7 +33,7 @@ Item {
 
     FontConfig { id: fc }
 
-    // Synced properties to match standard stable horizontal bounds of WorkspaceOverview
+    // Synced layout dimensions to mirror WorkspaceOverview
     property bool isVerticalWorkspace: viewportFrame.calculatedBounds.isVertical
     property real maxCardWidth: viewportFrame.width + 74
     property real maxCardHeight: isVerticalWorkspace ? 440 : 300
@@ -136,13 +136,13 @@ Item {
 
         Item {
             id: borderClippingMask
-            anchors.fill: parent
+            anchors.fill: cardMainBody
             clip: false 
             z: 4
 
             Rectangle {
                 id: borderFrame
-                anchors.fill: cardMainBody
+                anchors.fill: parent
                 color: "transparent"
                 border.color: previewRoot.colorBorder
                 border.width: 0
@@ -256,8 +256,8 @@ Item {
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
-                                    visible: (modelData.class || "") !== "" && modelData.mapped
-                                    source: Quickshell.iconPath(getCleanIconName(modelData.class))
+                                    visible: modelData.lastIpcObject && (modelData.lastIpcObject.class || "") !== ""
+                                    source: Quickshell.iconPath(getCleanIconName(modelData.lastIpcObject ? modelData.lastIpcObject.class : ""))
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
                                     Layout.alignment: Qt.AlignVCenter
@@ -298,10 +298,9 @@ Item {
                     clip: true
                     z: 10
 
-                    // Filters directly matching window metadata structure from Overview's client json strategy
                     property var workspaceWindows: Hyprland.toplevels.values.filter(w => {
                         return w.workspace && w.workspace.id === previewRoot.workingWorkspace;
-                    }).map(w => w.lastIpcObject).filter(w => w !== undefined)
+                    })
 
                     property var calculatedBounds: {
                         if (previewRoot.workingWorkspace === -1 || !workspaceWindows || workspaceWindows.length === 0) {
@@ -320,8 +319,8 @@ Item {
 
                         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                         for (let i = 0; i < workspaceWindows.length; i++) {
-                            let win = workspaceWindows[i];
-                            if (!win.at || !win.size) continue;
+                            let win = workspaceWindows[i].lastIpcObject;
+                            if (!win || !win.at || !win.size) continue;
 
                             if (win.at[0] < minX) minX = win.at[0];
                             if (win.at[1] < minY) minY = win.at[1];
@@ -358,11 +357,11 @@ Item {
                         delegate: Rectangle {
                             id: windowDelegate
                         
-                            x: Math.round((modelData.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
-                            y: Math.round((modelData.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
-                            width: Math.max(4, Math.round(modelData.size[0] * viewportFrame.scaleX))
-                            height: Math.max(4, Math.round(modelData.size[1] * viewportFrame.scaleY))
-                            visible: modelData.mapped
+                            x: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX) : 0
+                            y: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY) : 0
+                            width: modelData.lastIpcObject && modelData.lastIpcObject.size ? Math.max(4, Math.round(modelData.lastIpcObject.size[0] * viewportFrame.scaleX)) : 4
+                            height: modelData.lastIpcObject && modelData.lastIpcObject.size ? Math.max(4, Math.round(modelData.lastIpcObject.size[1] * viewportFrame.scaleY)) : 4
+                            visible: modelData.lastIpcObject ? true : false
                             z: 2
                             
                             color: fc.overlayBackground
@@ -370,16 +369,7 @@ Item {
                             border.width: 0
                             radius: 4
 
-                            property var wlToplevel: {
-                                if (!modelData || !modelData.address) return null;
-                                let targetAddr = modelData.address.trim().toLowerCase();
-                                let match = Hyprland.toplevels.values.find(t => {
-                                    if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
-                                    return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
-                                });
-                                if (match && match.wayland) return match.wayland;
-                                return null;
-                            }
+                            property var wlToplevel: modelData.wayland ? modelData.wayland : null
 
                             Loader {
                                 anchors.fill: parent
@@ -407,7 +397,7 @@ Item {
                                 radius: 2
 
                                 Text {
-                                    text: (modelData.class || "")
+                                    text: modelData.lastIpcObject ? (modelData.lastIpcObject.class || "") : ""
                                     font.family: fc.mainFont
                                     font.pixelSize: 8;
                                     font.bold: true 
