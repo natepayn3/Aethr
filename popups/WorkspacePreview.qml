@@ -33,7 +33,6 @@ Item {
 
     FontConfig { id: fc }
 
-    // Synced layout dimensions to mirror WorkspaceOverview
     property bool isVerticalWorkspace: viewportFrame.calculatedBounds.isVertical
     property real maxCardWidth: viewportFrame.width + 74
     property real maxCardHeight: isVerticalWorkspace ? 440 : 300
@@ -73,6 +72,10 @@ Item {
         repeat: false
         onTriggered: {
             if (previewRoot.targetWorkspace !== -1) {
+                // Fix: Actively poll IPC state updates so layout variables bound to collections evaluate properly
+                Hyprland.refreshToplevels();
+                Hyprland.refreshWorkspaces();
+                
                 previewRoot.workingWorkspace = previewRoot.targetWorkspace;
                 previewRoot.active = true;
             }
