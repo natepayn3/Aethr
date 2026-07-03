@@ -16,7 +16,6 @@ Item {
     property bool active: false
     
     property int stagedWorkspace: -1
-    property var liveClientJson: []
 
     property int currentActiveWorkspace: -1
     property int workingWorkspace: -1
@@ -34,7 +33,6 @@ Item {
 
     FontConfig { id: fc }
 
-    // Dynamically expand root width to tightly match the workspace stream aspect bounds plus side paddings
     property real maxCardWidth: viewportFrame.width + 74
     property real maxCardHeight: viewportFrame.calculatedBounds.isVertical ? 500 : 270
 
@@ -73,52 +71,16 @@ Item {
         repeat: false
         onTriggered: {
             if (previewRoot.targetWorkspace !== -1) {
-                Hyprland.refreshToplevels();
-                Hyprland.refreshWorkspaces();
-                
                 previewRoot.workingWorkspace = previewRoot.targetWorkspace;
-                clientQueryProcess.running = true;
                 previewRoot.active = true;
-            }
-        }
-    }
-
-    Timer {
-        id: jsonRefreshTimer
-        interval: 100
-        running: false
-        onTriggered: clientQueryProcess.running = true
-    }
-
-    Connections {
-        target: Hyprland
-        ignoreUnknownSignals: true
-        function onRawEvent(event) { 
-             if (previewRoot.active) jsonRefreshTimer.restart();
-        }
-    }
-
-    Process {
-        id: clientQueryProcess
-        command: ["hyprctl", "clients", "-j"]
-        running: false
-        stdout: StdioCollector {
-            onTextChanged: {
-                let cleanText = text.trim();
-                if (!cleanText || cleanText === "[]") return;
-                try { previewRoot.liveClientJson = JSON.parse(cleanText);
-                } catch(e) {}
             }
         }
     }
 
     function getCleanIconName(className) {
         if (!className) return "application-x-executable";
-        
-        // Clean up any image://icon/ protocols if they are being passed in
         let scrubbed = className.replace("image://icon/", "").toLowerCase().trim();
         
-        // Intercept desktop entry dot notation names
         if (scrubbed.includes("remmina")) return "remmina";
         if (scrubbed.includes("chrome")) return "google-chrome";
         if (scrubbed.includes("kitty")) return "kitty";
@@ -154,7 +116,6 @@ Item {
             radius: previewRoot.radiusValue
         }
 
-        // --- TV ANTENNA ICON ---
         Text {
             id: antennaIcon
             text: "network_ping"
@@ -222,7 +183,6 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 14
 
-                // --- TV KNOBS (INSIDE WINDOW, LEFT SIDE) ---
                 Column {
                     id: tvKnobsColumn
                     anchors.left: parent.left
@@ -281,10 +241,8 @@ Item {
                     anchors.left: tvKnobsColumn.right
                     anchors.leftMargin: 0
 
-                    // Dummy item to push content from the left
                     Item { Layout.fillWidth: true }
 
-                    // Centered Content Wrapper
                     Row {
                         id: centeredContent
                         spacing: 16
@@ -311,8 +269,9 @@ Item {
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
-                                    visible: (modelData.class || "") !== "" && modelData.mapped
-                                    source: Quickshell.iconPath(getCleanIconName(modelData.class))
+                                    // Use native model object wrapper mappings cleanly
+                                    visible: (modelData.wayland.appId || "") !== ""
+                                    source: Quickshell.iconPath(getCleanIconName(modelData.wayland.appId))
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
                                     Layout.alignment: Qt.AlignVCenter
@@ -326,7 +285,6 @@ Item {
                         }
                     }
 
-                    // Dummy item to push content from the right
                     Item { Layout.fillWidth: true }
                 }
 
@@ -353,7 +311,10 @@ Item {
                     radius: 4
                     clip: true
 
-                    property var workspaceWindows: previewRoot.liveClientJson.filter(w => w.workspace.id === previewRoot.workingWorkspace)
+                    // Native Filter Block: Extracts client states cleanly out of C++ memory arrays
+                    property var workspaceWindows: Hyprland.toplevels.values.filter(w => {
+                        return w.workspace && w.workspace.id === previewRoot.workingWorkspace;
+                    })
                     property bool isTargetActiveWorkspace: !!(Hyprland.activeWorkspace && (previewRoot.workingWorkspace === Hyprland.activeWorkspace.id))
 
                     property var calculatedBounds: {
@@ -377,11 +338,15 @@ Item {
                         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                         for (let i = 0; i < workspaceWindows.length; i++) {
                             let win = workspaceWindows[i];
-                            if (!win.at || !win.size) continue;
-                            if (win.at[0] < minX) minX = win.at[0];
-                            if (win.at[1] < minY) minY = win.at[1];
-                            if ((win.at[0] + win.size[0]) > maxX) maxX = win.at[0] + win.size[0];
-                            if ((win.at[1] + win.size[1]) > maxY) maxY = win.at[1] + win.size[1];
+                            // Translate last saved ipc configuration limits natively
+                            if (!win.lastIpcObject || !win.lastIpcObject.at || !win.lastIpcObject.size) continue;
+                            let at = win.lastIpcObject.at;
+                            let size = win.lastIpcObject.size;
+
+                            if (at[0] < minX) minX = at[0];
+                            if (at[1] < minY) minY = at[1];
+                            if ((at[0] + size[0]) > maxX) maxX = at[0] + size[0];
+                            if ((at[1] + size[1]) > maxY) maxY = at[1] + size[1];
                         }
 
                         let spanX = maxX - minX;
@@ -405,11 +370,11 @@ Item {
                         delegate: Rectangle {
                             id: windowDelegate
                         
-                            x: Math.round((modelData.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
-                            y: Math.round((modelData.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
-                            width: Math.max(4, Math.round(modelData.size[0] * viewportFrame.scaleX))
-                            height: Math.max(4, Math.round(modelData.size[1] * viewportFrame.scaleY))
-                            visible: modelData.mapped
+                            x: Math.round((modelData.lastIpcObject.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
+                            y: Math.round((modelData.lastIpcObject.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
+                            width: Math.max(4, Math.round(modelData.lastIpcObject.size[0] * viewportFrame.scaleX))
+                            height: Math.max(4, Math.round(modelData.lastIpcObject.size[1] * viewportFrame.scaleY))
+                            visible: true
                             
                             color: viewportFrame.isTargetActiveWorkspace ?
                                 Qt.rgba(previewRoot.colorAccent.r, previewRoot.colorAccent.g, previewRoot.colorAccent.b, 0.15) : Qt.rgba(0, 0, 0, 0.6)
@@ -419,26 +384,7 @@ Item {
                             radius: 2
                             clip: true
 
-                            property var wlToplevel: {
-                                if (!modelData || !modelData.address) return null;
-                                let tracker = clientQueryProcess.running;
-                                let targetAddr = modelData.address.trim().toLowerCase();
-
-                                let match = Hyprland.toplevels.values.find(t => {
-                                    if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
-                                    return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
-                                });
-                                if (match && match.wayland) return match.wayland;
-                                
-                                if (Hyprland.activeWorkspace) {
-                                    let localMatch = Hyprland.activeWorkspace.toplevels.values.find(t => {
-                                        if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
-                                        return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
-                                    });
-                                    if (localMatch && localMatch.wayland) return localMatch.wayland;
-                                }
-                                return null;
-                            }
+                            property var wlToplevel: modelData.wayland ? modelData.wayland : null
 
                             Loader {
                                 anchors.fill: parent
@@ -466,8 +412,8 @@ Item {
                                 z: 10
 
                                 Text {
-                                    text: (modelData.title && modelData.title.trim() !== "" && modelData.title !== "~") ?
-                                        modelData.title : (modelData.class || "")
+                                    text: (modelData.lastIpcObject.title && modelData.lastIpcObject.title.trim() !== "" && modelData.lastIpcObject.title !== "~") ?
+                                        modelData.lastIpcObject.title : (modelData.lastIpcObject.class || "")
                                     font.family: previewRoot.shellFont
                                     font.pixelSize: 8;
                                     font.bold: true 
