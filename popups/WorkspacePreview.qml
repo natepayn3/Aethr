@@ -33,11 +33,13 @@ Item {
 
     FontConfig { id: fc }
 
+    // Synced properties to match standard stable horizontal bounds of WorkspaceOverview
+    property bool isVerticalWorkspace: viewportFrame.calculatedBounds.isVertical
     property real maxCardWidth: viewportFrame.width + 74
-    property real maxCardHeight: viewportFrame.calculatedBounds.isVertical ? 500 : 270
+    property real maxCardHeight: isVerticalWorkspace ? 440 : 300
 
     implicitWidth: Math.round(maxCardWidth)
-    implicitHeight: viewportFrame.calculatedBounds.isVertical ? 500 : 270
+    implicitHeight: 440
 
     width: implicitWidth
     height: implicitHeight
@@ -98,8 +100,6 @@ Item {
 
         opacity: previewRoot.active ? 1.0 : 0.0
         x: previewRoot.active ? 0 : -50
-        
-        // Fix: Keep visible true so the QML engine leaves screencopy bindings awake in the background
         visible: true
 
         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -111,7 +111,9 @@ Item {
         
         Rectangle {
             id: cardMainBody
-            anchors.fill: parent
+            width: parent.width
+            height: previewRoot.isVerticalWorkspace ? 440 : 300
+            anchors.centerIn: parent
             color: previewRoot.colorBackground
             z: 2
             radius: previewRoot.radiusValue
@@ -122,14 +124,14 @@ Item {
             text: "network_ping"
             font {
                 family: fc.iconFont
-                pixelSize: 80
+                pixelSize: 54
             }
             color: fc.overlayBackground
             styleColor: colorBackground
             z: 1
             anchors.bottom: cardMainBody.top
             anchors.horizontalCenter: cardMainBody.horizontalCenter
-            anchors.bottomMargin: -28
+            anchors.bottomMargin: -19
         }
 
         Item {
@@ -140,12 +142,7 @@ Item {
 
             Rectangle {
                 id: borderFrame
-                anchors.fill: parent
-                anchors.leftMargin: -2
-                anchors.topMargin: 0
-                anchors.rightMargin: 0
-                anchors.bottomMargin: 0
-              
+                anchors.fill: cardMainBody
                 color: "transparent"
                 border.color: previewRoot.colorBorder
                 border.width: 0
@@ -158,7 +155,7 @@ Item {
             anchors.fill: parent 
             hoverEnabled: true 
             acceptedButtons: Qt.LeftButton 
-            enabled: previewRoot.active // Disable interactions when module is hidden
+            enabled: previewRoot.active 
             onClicked: {
                 Hyprland.dispatch(`hl.dsp.focus({ workspace = "${previewRoot.workingWorkspace}" })`);
                 previewRoot.closeRequested();
@@ -168,10 +165,7 @@ Item {
 
         Item {
             id: layoutContentWrapper
-            width: Math.round(previewRoot.maxCardWidth)
-            height: Math.round(previewRoot.maxCardHeight)
-            x: Math.round((parent.width - width) / 2)
-            y: Math.round((parent.height - height) / 2)
+            anchors.fill: cardMainBody
             opacity: previewRoot.active ? 1.0 : 0.0 
             z: 5
 
@@ -191,14 +185,11 @@ Item {
                     anchors.leftMargin: 4
                     anchors.verticalCenter: parent.verticalCenter
                     width: 24
-                    spacing: 16
+                    spacing: 14
 
                     Text {
                         text: "clock_loader_10"
-                        font {
-                            family: fc.iconFont
-                            pixelSize: 30
-                        }
+                        font { family: fc.iconFont; pixelSize: 30 }
                         color: fc.textMuted
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 30
@@ -210,10 +201,7 @@ Item {
 
                     Text {
                         text: "clock_loader_10"
-                        font {
-                            family: fc.iconFont
-                            pixelSize: 30
-                        }
+                        font { family: fc.iconFont; pixelSize: 30 }
                         color: fc.textMuted
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 30
@@ -225,10 +213,7 @@ Item {
 
                     Text {
                         text: "density_small"
-                        font {
-                            family: fc.iconFont
-                            pixelSize: 30
-                        }
+                        font { family: fc.iconFont; pixelSize: 30 }
                         color: fc.textMuted
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
@@ -237,7 +222,7 @@ Item {
                 RowLayout {
                     id: headerRow
                     width: parent.width - tvKnobsColumn.width - 16
-                    height: 20
+                    height: 24
                     spacing: 16
                     anchors.top: parent.top
                     anchors.left: tvKnobsColumn.right
@@ -259,7 +244,7 @@ Item {
                             color: fc.textPrimary
                             anchors.verticalCenter: parent.verticalCenter
                             
-                            Component.onCompleted: fc.applyOutline(this)
+                            Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                         }
 
                         RowLayout {
@@ -271,8 +256,8 @@ Item {
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
-                                    visible: modelData.wayland && (modelData.wayland.appId || "") !== ""
-                                    source: Quickshell.iconPath(getCleanIconName(modelData.wayland ? modelData.wayland.appId : ""))
+                                    visible: (modelData.class || "") !== "" && modelData.mapped
+                                    source: Quickshell.iconPath(getCleanIconName(modelData.class))
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
                                     Layout.alignment: Qt.AlignVCenter
@@ -302,8 +287,8 @@ Item {
 
                 Rectangle {
                     id: viewportFrame
-                    anchors.left: tvKnobsColumn.right
-                    anchors.leftMargin: 16
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenterOffset: (tvKnobsColumn.width + 20) / 2
                     anchors.top: headerDivider.bottom
                     anchors.topMargin: 8
                     anchors.bottom: parent.bottom
@@ -311,15 +296,16 @@ Item {
                     color: "transparent" 
                     radius: 4
                     clip: true
+                    z: 10
 
+                    // Filters directly matching window metadata structure from Overview's client json strategy
                     property var workspaceWindows: Hyprland.toplevels.values.filter(w => {
                         return w.workspace && w.workspace.id === previewRoot.workingWorkspace;
-                    })
-                    property bool isTargetActiveWorkspace: !!(Hyprland.activeWorkspace && (previewRoot.workingWorkspace === Hyprland.activeWorkspace.id))
+                    }).map(w => w.lastIpcObject).filter(w => w !== undefined)
 
                     property var calculatedBounds: {
                         if (previewRoot.workingWorkspace === -1 || !workspaceWindows || workspaceWindows.length === 0) {
-                            let mX = 0, mY = 0, mWidth = 1920, mHeight = 1080;
+                            let mWidth = 1920, mHeight = 1080, mX = 0, mY = 0;
                             let wsObj = Hyprland.workspaces.values.find(w => w.id === previewRoot.workingWorkspace);
                             let targetMonitor = wsObj ? wsObj.monitor : Hyprland.activeMonitor;
                             if (targetMonitor) {
@@ -328,9 +314,6 @@ Item {
                                 mHeight = Math.round(targetMonitor.height / scale);
                                 mX = targetMonitor.x;
                                 mY = targetMonitor.y;
-                                let barThickness = 44;
-                                mX += barThickness; 
-                                mWidth -= barThickness;
                             }
                             return { "w": mWidth, "h": mHeight, "isVertical": mHeight > mWidth, "originX": mX, "originY": mY };
                         }
@@ -338,14 +321,12 @@ Item {
                         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                         for (let i = 0; i < workspaceWindows.length; i++) {
                             let win = workspaceWindows[i];
-                            if (!win.lastIpcObject || !win.lastIpcObject.at || !win.lastIpcObject.size) continue;
-                            let at = win.lastIpcObject.at;
-                            let size = win.lastIpcObject.size;
+                            if (!win.at || !win.size) continue;
 
-                            if (at[0] < minX) minX = at[0];
-                            if (at[1] < minY) minY = at[1];
-                            if ((at[0] + size[0]) > maxX) maxX = at[0] + size[0];
-                            if ((at[1] + size[1]) > maxY) maxY = at[1] + size[1];
+                            if (win.at[0] < minX) minX = win.at[0];
+                            if (win.at[1] < minY) minY = win.at[1];
+                            if ((win.at[0] + win.size[0]) > maxX) maxX = win.at[0] + win.size[0];
+                            if ((win.at[1] + win.size[1]) > maxY) maxY = win.at[1] + win.size[1];
                         }
 
                         let spanX = maxX - minX;
@@ -360,34 +341,49 @@ Item {
                         return { "w": normW, "h": normH, "isVertical": verticalDetected, "originX": minX, "originY": minY };
                     }
 
+                    height: cardMainBody.height - headerRow.height - 24
                     width: Math.round(height * (calculatedBounds.w / calculatedBounds.h))
                     property real scaleX: width / calculatedBounds.w
                     property real scaleY: height / calculatedBounds.h
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: fc.overlayBackground
+                        radius: 4
+                        z: 1
+                    }
 
                     Repeater {
                         model: viewportFrame.workspaceWindows
                         delegate: Rectangle {
                             id: windowDelegate
                         
-                            x: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX) : 0
-                            y: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY) : 0
-                            width: modelData.lastIpcObject && modelData.lastIpcObject.size ? Math.max(4, Math.round(modelData.lastIpcObject.size[0] * viewportFrame.scaleX)) : 4
-                            height: modelData.lastIpcObject && modelData.lastIpcObject.size ? Math.max(4, Math.round(modelData.lastIpcObject.size[1] * viewportFrame.scaleY)) : 4
-                            visible: true
+                            x: Math.round((modelData.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX)
+                            y: Math.round((modelData.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY)
+                            width: Math.max(4, Math.round(modelData.size[0] * viewportFrame.scaleX))
+                            height: Math.max(4, Math.round(modelData.size[1] * viewportFrame.scaleY))
+                            visible: modelData.mapped
+                            z: 2
                             
-                            color: viewportFrame.isTargetActiveWorkspace ?
-                                Qt.rgba(previewRoot.colorAccent.r, previewRoot.colorAccent.g, previewRoot.colorAccent.b, 0.15) : Qt.rgba(0, 0, 0, 0.6)
-                            border.color: viewportFrame.isTargetActiveWorkspace ?
-                                previewRoot.colorAccent : previewRoot.colorBorder
+                            color: fc.overlayBackground
+                            border.color: fc.borderMuted
                             border.width: 0
-                            radius: 2
-                            clip: true
+                            radius: 4
 
-                            property var wlToplevel: modelData.wayland ? modelData.wayland : null
+                            property var wlToplevel: {
+                                if (!modelData || !modelData.address) return null;
+                                let targetAddr = modelData.address.trim().toLowerCase();
+                                let match = Hyprland.toplevels.values.find(t => {
+                                    if (!t.lastIpcObject || !t.lastIpcObject.address) return false;
+                                    return t.lastIpcObject.address.trim().toLowerCase() === targetAddr;
+                                });
+                                if (match && match.wayland) return match.wayland;
+                                return null;
+                            }
 
                             Loader {
                                 anchors.fill: parent
-                                // Fix: Keep loader active behind the scenes even if target workspace is currently focused
+                                anchors.margins: 1
                                 active: windowDelegate.wlToplevel !== null
                                 asynchronous: true 
                                 
@@ -405,20 +401,17 @@ Item {
 
                             Rectangle {
                                 anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                height: Math.min(14, parent.height * 0.25)
-                                color: viewportFrame.isTargetActiveWorkspace ?
-                                    previewRoot.colorAccent : "#cc11111b"
-                                visible: parent.height > 20 && parent.width > 35
-                                z: 10
+                                height: Math.min(16, parent.height * 0.3)
+                                color: "#cc11111b"
+                                visible: parent.height > 24 && parent.width > 40
+                                radius: 2
 
                                 Text {
-                                    text: (modelData.lastIpcObject && modelData.lastIpcObject.title && modelData.lastIpcObject.title.trim() !== "" && modelData.lastIpcObject.title !== "~") ?
-                                        modelData.lastIpcObject.title : ((modelData.lastIpcObject && modelData.lastIpcObject.class) || "")
-                                    font.family: previewRoot.shellFont
+                                    text: (modelData.class || "")
+                                    font.family: fc.mainFont
                                     font.pixelSize: 8;
                                     font.bold: true 
-                                    color: viewportFrame.isTargetActiveWorkspace ?
-                                        previewRoot.colorBackground : fc.textPrimary
+                                    color: fc.textPrimary
                                     anchors.centerIn: parent
                                     width: parent.width - 4;
                                     elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
