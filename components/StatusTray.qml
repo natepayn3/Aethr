@@ -18,24 +18,22 @@ PanelWindow {
     
     property int totalItemCount: SystemTray.items.values.length
     
-    implicitWidth: totalItemCount === 0 ? 244 : (totalItemCount * 64) + ((totalItemCount - 1) * 16) + 48
+    implicitWidth: visualTrayCapsule.width + 72
     implicitHeight: 120 
     color: "transparent"
     exclusiveZone: 0
 
-    // Global tracking flag to freeze dismiss cycles when a menu is active
     property bool menuActive: false
 
     FontConfig { id: fc }
     ModuleConfig { id: shellConfig }
 
-    // --- Mask Surfaces ---
     Item {
         id: minimalMaskSurface
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: 16
+        height: 32
     }
 
     Item {
@@ -43,7 +41,7 @@ PanelWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: 120
+        height: 120 
     }
 
     mask: Region {
@@ -64,16 +62,11 @@ PanelWindow {
 
         let rawId = modelData.id || "";
         if (rawId !== "") {
-            // Isolate the last segment if it's a reverse DNS string
             let baseName = rawId.split('.').pop();
-            
-            // Split into individual words by breaking on dashes, underscores, or spaces
             let words = baseName.split(/[-_\s]+/);
             
-            // Filter out generic tray keywords and standalone instance numbers
             let cleanWords = words.filter(word => {
                 let lower = word.toLowerCase();
-                // Drop common keywords, empty strings, and any standalone digit
                 return lower !== "status" && 
                     lower !== "icon" && 
                     lower !== "tray" && 
@@ -81,10 +74,7 @@ PanelWindow {
                     !lower.match(/^\d+$/);
             });
             
-            // Fallback to the original base name if filtering emptied the array entirely
             let finalName = cleanWords.length > 0 ? cleanWords.join(" ") : baseName.replace(/[-_]/g, " ");
-                                    
-            // Capitalize the remaining words cleanly
             return finalName.replace(/\b\w/g, c => c.toUpperCase());
         }
 
@@ -97,7 +87,6 @@ PanelWindow {
         hoverEnabled: true
 
         property bool isPinned: false
-        // FIX: Retains pinned state if mouse is inside OR a native context menu is currently drawn
         property bool stableHover: trayHitbox.containsMouse || trayWindow.menuActive
 
         onStableHoverChanged: {
@@ -120,7 +109,7 @@ PanelWindow {
 
         Rectangle {
             id: inputStabilizerCapsule
-            width: parent.width - 24
+            width: visualTrayCapsule.width + 48
             height: 72
             radius: shellConfig.radiusValue - 2
             anchors.horizontalCenter: parent.horizontalCenter
@@ -141,7 +130,9 @@ PanelWindow {
             Row {
                 id: visualTrayCapsule
                 spacing: 16
-                anchors.centerIn: parent
+                anchors.centerIn: inputStabilizerCapsule
+
+                Taskbar {}
 
                 Item {
                     id: placeholderContainer
@@ -172,19 +163,12 @@ PanelWindow {
                         height: 64
                         z: trayWindow.activeHoverIndex === index ? 10 : 1
             
-                        // Bind the platform menu directly to the item's geometry
                         QsMenuAnchor {
                             id: itemMenuAnchor
                             menu: modelData.menu
-                            
-                            // 1. Target the delegate item wrapper directly instead of the window
                             anchor.item: trayItemDelegate 
-                            
-                            // 2. Align to the bottom edge of the icon bounds
                             anchor.edges: Edges.Bottom | Edges.Left 
                             anchor.gravity: Edges.Bottom | Edges.Right
-                            
-                            // 3. Add your exact structural offset (e.g., shifting down by 10px)
                             anchor.rect.x: 32
                             anchor.rect.y: 30
 
@@ -208,42 +192,65 @@ PanelWindow {
                             anchors.centerIn: parent
                             width: 32
                             height: 32
-                            
-                            // Evaluate if the source is already a file/pixmap URI before invoking iconPath lookup
-                            source: modelData.iconPath ? "file://" + modelData.iconPath : 
-                                    (modelData.icon && modelData.icon.startsWith("image://")) ? modelData.icon :
-                                    Quickshell.iconPath((modelData.icon || "image-missing").replace("image://icon/", ""))
-                                    
                             asynchronous: true
+                            
+                            source: {
+                                let rawId = modelData.id || "";
+                                if (rawId !== "") {
+                                    let cleanId = rawId.split('.').pop().toLowerCase();
+                                    
+                                    if (cleanId.includes("signal")) {
+                                        let sigPath = Quickshell.iconPath("signal-desktop", true);
+                                        if (sigPath !== "") return sigPath;
+                                    }
+                                    if (cleanId.includes("remmina")) {
+                                        let remPath = Quickshell.iconPath("org.remmina.Remmina", true);
+                                        if (remPath !== "") return remPath;
+                                    }
+                                }
+                                
+                                if (modelData.iconPath) return "file://" + modelData.iconPath;
+                                if (modelData.icon && modelData.icon.startsWith("image://")) return modelData.icon;
+                                
+                                let lookupIcon = (modelData.icon || "").replace("image://icon/", "").trim();
+                                if (lookupIcon === "") return "";
+                                return Quickshell.iconPath(lookupIcon);
+                            }
+                                    
                             opacity: (trayHitbox.isPinned || trayWindow.menuActive) ? 0.9 : 0.0
                             Behavior on opacity { NumberAnimation { duration: 180 } }
                         }
 
-                        Rectangle {
-                            id: tooltipBubble
-                            // Force visibility to true if we have any way to identify the app, or use a absolute fallback
+                        // --- LOCAL ICON-ANCHORED POPUP WINDOW ---
+                        // Attached directly to the item delegate with automatic translation
+                        PopupWindow {
+                            id: inlineTooltipPopup
                             visible: trayWindow.activeHoverIndex === index && !trayWindow.menuActive
-                            width: tooltipText.contentWidth + 16
-                            height: 26
-                            radius: 6
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.top: parent.bottom
-                            anchors.topMargin: 12
-                            color: fc.trackBackground
-                            border.color: fc.borderMuted
-                            border.width: 1
-                            z: 100
+                            
+                            // Locks tracking straight to the current icon delegate context
+                            anchor.item: trayItemDelegate
+                            anchor.edges: Edges.Bottom
+                            anchor.gravity: Edges.Bottom
+                            
+                            // Perfectly centers the 220px box directly under the 64px icon bounds
+                            anchor.rect.x: 31
+                            anchor.rect.y: 55
+
+                            implicitWidth: 220
+                            implicitHeight: 40
+                            color: "transparent"
 
                             Text {
-                                id: tooltipText
                                 anchors.centerIn: parent
-                                
                                 text: trayWindow.resolveAppName(modelData)
-                                    
                                 font.pointSize: 11
                                 font.family: fc.mainFont
                                 font.weight: Font.Normal
                                 color: trayWindow.themeText
+                                
+                                width: parent.width - 24
+                                elide: Text.ElideRight
+                                horizontalAlignment: Text.AlignHCenter
                             }
                         }
 
