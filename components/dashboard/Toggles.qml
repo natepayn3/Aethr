@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Qt.labs.folderlistmodel
 import "../../configs"
 
 Item {
@@ -14,40 +15,28 @@ Item {
     property bool caffeineActive: false
     property bool caffeineAvailable: false
 
-    // Function to verify if hypridle is available in the environment
-    function checkHypridle() {
-        var paths = ["file:///usr/bin/hypridle", "file:///usr/local/bin/hypridle"];
-        var found = false;
-        
-        // Loop through paths and verify existence via local XMLHttpRequests
-        for (var i = 0; i < paths.length; i++) {
-            var xhr = new XMLHttpRequest();
-            // Open a synchronous request to block UI thread briefly during initialization
-            xhr.open("GET", paths[i], false);
-            try {
-                xhr.send();
-                if (xhr.status === 200 || xhr.status === 0) {
-                    found = true;
-                    break;
-                }
-            } catch (e) {
-                // Fail silently if file doesn't exist or permissions deny reading
-            }
-        }
-        
-        caffeineAvailable = found;
-    }
-
-    Component.onCompleted: {
-        checkHypridle();
-    }
-
     signal wifiToggled()
     signal btToggled()
     signal dndToggled()
     signal caffeineToggled()
 
     FontConfig { id: fc }
+
+    // Check /usr/bin/ for hypridle
+    FolderListModel {
+        id: usrBinCheck
+        folder: "file:///usr/bin"
+        nameFilters: ["hypridle"]
+        onCountChanged: caffeineAvailable = (usrBinCheck.count > 0 || usrLocalBinCheck.count > 0)
+    }
+
+    // Check /usr/local/bin/ for hypridle
+    FolderListModel {
+        id: usrLocalBinCheck
+        folder: "file:///usr/local/bin"
+        nameFilters: ["hypridle"]
+        onCountChanged: caffeineAvailable = (usrBinCheck.count > 0 || usrLocalBinCheck.count > 0)
+    }
 
     GridLayout {
         id: togglesGrid
