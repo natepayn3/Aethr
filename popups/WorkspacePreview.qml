@@ -99,7 +99,8 @@ Item {
         opacity: previewRoot.active ? 1.0 : 0.0
         x: previewRoot.active ? 0 : -50
         
-        visible: previewRoot.active || exitXAnimation.running || opacity > 0.01
+        // Fix: Keep visible true so the QML engine leaves screencopy bindings awake in the background
+        visible: true
 
         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         
@@ -157,6 +158,7 @@ Item {
             anchors.fill: parent 
             hoverEnabled: true 
             acceptedButtons: Qt.LeftButton 
+            enabled: previewRoot.active // Disable interactions when module is hidden
             onClicked: {
                 Hyprland.dispatch(`hl.dsp.focus({ workspace = "${previewRoot.workingWorkspace}" })`);
                 previewRoot.closeRequested();
@@ -269,7 +271,6 @@ Item {
                             Repeater {
                                 model: viewportFrame.workspaceWindows
                                 delegate: Image {
-                                    // Guarded against null wayland objects (e.g. XWayland clients)
                                     visible: modelData.wayland && (modelData.wayland.appId || "") !== ""
                                     source: Quickshell.iconPath(getCleanIconName(modelData.wayland ? modelData.wayland.appId : ""))
                                     Layout.preferredWidth: 16
@@ -311,7 +312,6 @@ Item {
                     radius: 4
                     clip: true
 
-                    // Native Filter Block: Extracts client states cleanly out of C++ memory arrays
                     property var workspaceWindows: Hyprland.toplevels.values.filter(w => {
                         return w.workspace && w.workspace.id === previewRoot.workingWorkspace;
                     })
@@ -338,7 +338,6 @@ Item {
                         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                         for (let i = 0; i < workspaceWindows.length; i++) {
                             let win = workspaceWindows[i];
-                            // Translate last saved ipc configuration limits natively
                             if (!win.lastIpcObject || !win.lastIpcObject.at || !win.lastIpcObject.size) continue;
                             let at = win.lastIpcObject.at;
                             let size = win.lastIpcObject.size;
@@ -370,7 +369,6 @@ Item {
                         delegate: Rectangle {
                             id: windowDelegate
                         
-                            // Safe layout bindings checking if lastIpcObject.at/size properties exist before evaluating
                             x: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[0] - viewportFrame.calculatedBounds.originX) * viewportFrame.scaleX) : 0
                             y: modelData.lastIpcObject && modelData.lastIpcObject.at ? Math.round((modelData.lastIpcObject.at[1] - viewportFrame.calculatedBounds.originY) * viewportFrame.scaleY) : 0
                             width: modelData.lastIpcObject && modelData.lastIpcObject.size ? Math.max(4, Math.round(modelData.lastIpcObject.size[0] * viewportFrame.scaleX)) : 4
@@ -389,7 +387,8 @@ Item {
 
                             Loader {
                                 anchors.fill: parent
-                                active: windowDelegate.wlToplevel !== null && !viewportFrame.isTargetActiveWorkspace
+                                // Fix: Keep loader active behind the scenes even if target workspace is currently focused
+                                active: windowDelegate.wlToplevel !== null
                                 asynchronous: true 
                                 
                                 opacity: status === Loader.Ready ? 1.0 : 0.0
