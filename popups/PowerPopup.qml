@@ -58,7 +58,7 @@ PanelWindow {
                 text: "electrical_services"
                 font.family: fc.iconFont
                 font.pixelSize: 125
-                color: fc.overlayBackground
+                color: colorBackground
                 styleColor: colorBackground
                 
                 anchors.right: parent.left
@@ -77,7 +77,7 @@ PanelWindow {
                 text: "electrical_services"
                 font.family: fc.iconFont
                 font.pixelSize: 125
-                color: fc.overlayBackground
+                color: colorBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right

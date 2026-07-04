@@ -51,7 +51,7 @@ PanelWindow {
             anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
            
-            color: fc.trackBackground
+            color: colorBackground
             border.color: fc.borderMuted
             border.width: 1
             radius: shellConfig.radiusValue
@@ -61,7 +61,7 @@ PanelWindow {
                 text: "speaker_2"
                 font.family: fc.iconFont
                 font.pixelSize: 200
-                color: fc.trackBackground
+                color: colorBackground
                 styleColor: colorBackground
              
                 anchors.right: parent.left
@@ -75,7 +75,7 @@ PanelWindow {
                 text: "speaker_2"
                 font.family: fc.iconFont
                 font.pixelSize: 200
-                color: fc.trackBackground
+                color: colorBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right

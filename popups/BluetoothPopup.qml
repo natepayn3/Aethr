@@ -70,7 +70,7 @@ PanelWindow {
             anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
             
-            color: fc.trackBackground
+            color: colorBackground
             border.color: fc.borderMuted
             border.width: 1
             radius: shellConfig.radiusValue
@@ -81,7 +81,7 @@ PanelWindow {
                 text: "bluetooth_searching"
                 font.family: fc.iconFont
                 font.pixelSize: 150
-                color: fc.trackBackground
+                color: colorBackground
                 styleColor: colorBackground
                 
                 anchors.right: parent.left
@@ -97,7 +97,7 @@ PanelWindow {
                 text: "bluetooth_searching"
                 font.family: fc.iconFont
                 font.pixelSize: 150
-                color: fc.trackBackground
+                color: colorBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right
