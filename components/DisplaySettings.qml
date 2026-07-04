@@ -215,7 +215,6 @@ PanelWindow {
                     font.family: shellConfig.shellFont
                     font.pixelSize: 18
                     font.weight: Font.Bold
-                    Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                 }
 
                 ColumnLayout {
@@ -227,7 +226,6 @@ PanelWindow {
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.7)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
 
                     Slider {
@@ -300,7 +298,6 @@ PanelWindow {
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
 
                     Button {
@@ -345,7 +342,6 @@ PanelWindow {
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
 
                     Button {
@@ -404,7 +400,6 @@ PanelWindow {
                         font.family: shellConfig.shellFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                     
                     Item { Layout.fillWidth: true }
@@ -531,12 +526,11 @@ PanelWindow {
                     Layout.fillWidth: true
                     
                     Text {
-                        text: "Custom RGB Color Picker"
+                        text: "Color Picker"
                         color: settingsPopupWindow.localPickerColor
                         font.family: shellConfig.shellFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                     
                     Item { Layout.fillWidth: true }
