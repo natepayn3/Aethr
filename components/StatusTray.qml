@@ -138,13 +138,13 @@ PanelWindow {
             id: inputStabilizerCapsule
             width: visualTrayCapsule.width + 48
             height: 72
-            radius: shellConfig.radiusValue - 2
+            radius: shellConfig.radiusValue
             anchors.horizontalCenter: parent.horizontalCenter
  
             y: (trayHitbox.isPinned || trayWindow.menuActive) ? 6 : -height
-            color: fc.trackBackground
+            color: shellConfig.colorBackground
             border.color: (trayHitbox.isPinned || trayWindow.menuActive) ? fc.borderMuted : "transparent"
-            border.width: 1
+            border.width: 0
             opacity: (trayHitbox.isPinned || trayWindow.menuActive) ? 1.0 : 0.0
 
             Behavior on y { 
