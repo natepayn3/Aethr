@@ -179,9 +179,10 @@ PanelWindow {
                 visible: !settingsPopupWindow.showFontPicker && !settingsPopupWindow.showColorPicker
 
                 Text {
+                    // 🌟 Fixed: Title now dynamically tracks the selected theme text color channel
                     text: "Appearance Settings"
-                    color: fc.textPrimary
-                    font.family: fc.mainFont
+                    color: shellConfig.themeText
+                    font.family: shellConfig.shellFont
                     font.pixelSize: 18
                     font.weight: Font.Bold
                     Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
@@ -193,8 +194,9 @@ PanelWindow {
 
                     Text {
                         text: "Background Opacity: " + Math.round(alphaSlider.value * 100) + "%"
-                        color: fc.textMuted
-                        font.family: fc.mainFont
+                        // 🌟 Fixed: Sub-labels track a 70% alpha blend of the theme choice
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.7)
+                        font.family: shellConfig.shellFont
                         font.pixelSize: 13
                         Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
@@ -214,12 +216,12 @@ PanelWindow {
                             width: alphaSlider.availableWidth
                             height: implicitHeight
                             radius: 3
-                            color: Qt.rgba(1, 1, 1, 0.15)
+                            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.15)
 
                             Rectangle {
                                 width: alphaSlider.visualPosition * parent.width
                                 height: parent.height
-                                color: fc.textPrimary
+                                color: shellConfig.themeText
                                 radius: 3
                             }
                         }
@@ -230,7 +232,7 @@ PanelWindow {
                             implicitWidth: 16
                             implicitHeight: 16
                             radius: 8
-                            color: fc.textPrimary
+                            color: shellConfig.themeText
                         }
                     }
                 }
@@ -241,8 +243,9 @@ PanelWindow {
 
                     Text {
                         text: "Active Font Family"
-                        color: fc.textMuted
-                        font.family: fc.mainFont
+                        // 🌟 Fixed: Muted header track labels use a 60% alpha blend configuration
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
+                        font.family: shellConfig.shellFont
                         font.pixelSize: 13
                         Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
@@ -258,7 +261,7 @@ PanelWindow {
 
                         contentItem: Text {
                             text: settingsPopupWindow.selectedFont
-                            color: fc.textPrimary
+                            color: shellConfig.themeText
                             font.family: settingsPopupWindow.selectedFont
                             font.pixelSize: 14
                             verticalAlignment: Text.AlignVCenter
@@ -278,8 +281,9 @@ PanelWindow {
 
                     Text {
                         text: "Active Font Color"
-                        color: fc.textMuted
-                        font.family: fc.mainFont
+                        // 🌟 Fixed: Label tracks a 60% alpha blend variant of your custom theme text color selection
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
+                        font.family: shellConfig.shellFont
                         font.pixelSize: 13
                         Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
@@ -301,7 +305,7 @@ PanelWindow {
                             }
                             Text {
                                 text: ("" + settingsPopupWindow.selectedColor).toUpperCase()
-                                color: fc.textPrimary
+                                color: shellConfig.themeText
                                 font.family: fc.monoFont
                                 font.pixelSize: 13
                                 Layout.fillWidth: true
@@ -324,8 +328,8 @@ PanelWindow {
                     
                     contentItem: Text {
                         text: "Apply & Restart Shell"
-                        color: fc.textPrimary
-                        font.family: fc.mainFont
+                        color: shellConfig.themeText
+                        font.family: shellConfig.shellFont
                         font.weight: Font.Bold
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -333,33 +337,28 @@ PanelWindow {
                     }
 
                     background: Rectangle {
-                        color: applyButton.down ? Qt.rgba(1, 1, 1, 0.1) : (applyButton.hovered ? fc.overlayBackground : fc.trackBackground)
+                        color: applyButton.down ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.1) : (applyButton.hovered ? fc.overlayBackground : fc.trackBackground)
                         radius: 8
                         border.color: applyButton.hovered ? Qt.rgba(0, 0, 0, 0.2) : fc.borderMuted
                         border.width: 1
                     }
 
                     onClicked: {
-                        // 1. Instantly update live memory state
                         shellConfig.themeBackground = Qt.rgba(0.4, 0.4, 0.4, alphaSlider.value);
                         shellConfig.themeText = settingsPopupWindow.selectedColor;
                         shellConfig.shellFont = settingsPopupWindow.selectedFont;
 
-                        // 2. Format values for disk persistence
                         let alpha = alphaSlider.value.toFixed(2);
                         let hex = ("" + settingsPopupWindow.selectedColor).toUpperCase();
                         let font = settingsPopupWindow.selectedFont;
                         
-                        // 🌟 Zero hardcoded paths. Dynamically resolves absolute disk path relative to this file.
                         let currentDir = Qt.resolvedUrl(".").toString().replace("file://", "");
                         let cfg = `${currentDir}../configs/ModuleConfig.qml`;
 
-                        // 3. Keep single line target instructions simple
                         let cmd1 = `sed -i -E 's/(property color themeBackground:).*/\\1 Qt.rgba(0.4, 0.4, 0.4, ${alpha})/' ${cfg}`;
                         let cmd2 = `sed -i -E 's/(property color themeText:).*/\\1 "${hex}"/' ${cfg}`;
                         let cmd3 = `sed -i -E 's/(property string shellFont:).*/\\1 "${font}"/' ${cfg}`;
 
-                        // 4. Clean execution structure keeping engine syntax safe
                         Quickshell.execDetached([
                             "fish", 
                             "-c", 
@@ -384,8 +383,8 @@ PanelWindow {
                     
                     Text {
                         text: "Select System Font"
-                        color: fc.textPrimary
-                        font.family: fc.mainFont
+                        color: shellConfig.themeText
+                        font.family: shellConfig.shellFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
@@ -405,8 +404,8 @@ PanelWindow {
                         }
                         contentItem: Text { 
                             text: "Back"
-                            color: fc.textPrimary
-                            font.family: fc.mainFont
+                            color: shellConfig.themeText
+                            font.family: shellConfig.shellFont
                             font.pixelSize: 12
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -421,16 +420,16 @@ PanelWindow {
                     Layout.fillWidth: true
                     implicitHeight: 36
                     placeholderText: "Search fonts..."
-                    placeholderTextColor: fc.textMuted
-                    color: fc.textPrimary
-                    font.family: fc.mainFont
+                    placeholderTextColor: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
+                    color: shellConfig.themeText
+                    font.family: shellConfig.shellFont
                     font.pixelSize: 13
                     selectByMouse: true
                     
                     background: Rectangle {
                         color: Qt.rgba(0, 0, 0, 0.15)
                         radius: 6
-                        border.color: fontSearchField.activeFocus ? fc.overlayForeground : fc.borderMuted
+                        border.color: fontSearchField.activeFocus ? shellConfig.themeText : fc.borderMuted
                         border.width: 1
                     }
 
@@ -467,7 +466,7 @@ PanelWindow {
                                 text: modelData
                                 font.family: modelData
                                 font.pixelSize: 14
-                                color: fc.textPrimary
+                                color: shellConfig.themeText
                                 anchors.left: parent.left
                                 anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
@@ -482,8 +481,8 @@ PanelWindow {
                         Text {
                             anchors.centerIn: parent
                             text: "No matching fonts found"
-                            color: fc.textMuted
-                            font.family: fc.mainFont
+                            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
+                            font.family: shellConfig.shellFont
                             font.pixelSize: 13
                             visible: fontListView.count === 0
                         }
@@ -504,8 +503,8 @@ PanelWindow {
                     
                     Text {
                         text: "Custom RGB Color Picker"
-                        color: fc.textPrimary
-                        font.family: fc.mainFont
+                        color: shellConfig.themeText
+                        font.family: shellConfig.shellFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
@@ -525,8 +524,8 @@ PanelWindow {
                         }
                         contentItem: Text { 
                             text: "Done"
-                            color: fc.textPrimary
-                            font.family: fc.mainFont
+                            color: shellConfig.themeText
+                            font.family: shellConfig.shellFont
                             font.pixelSize: 12
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -562,7 +561,7 @@ PanelWindow {
                             anchors.fill: parent
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
-                                GradientStop { position: 0.0; color: shellConfig.themeText }
+                                GradientStop { position: 0.0; color: "#FFFFFF" }
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
                         }
@@ -581,7 +580,7 @@ PanelWindow {
                             y: ((1.0 - settingsPopupWindow.currentVal) * parent.height) - height / 2
                             width: 12; height: 12; radius: 6
                             color: "transparent"
-                            border.color: shellConfig.themeText
+                            border.color: "#FFFFFF"
                             border.width: 2
 
                             Rectangle {
@@ -629,7 +628,7 @@ PanelWindow {
                             y: (settingsPopupWindow.currentHue * parent.height) - height / 2
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: parent.width + 4; height: 8; radius: 2
-                            color: shellConfig.themeText
+                            color: "#FFFFFF"
                             border.color: "#000000"
                             border.width: 1
                         }
@@ -642,7 +641,6 @@ PanelWindow {
                                 let normY = Math.max(0.0, Math.min(1.0, mouse.y / height))
                                 settingsPopupWindow.currentHue = normY
                                 
-                                // Snap to full color if dragging hue while stuck on white/black
                                 if (settingsPopupWindow.currentSat === 0.0) settingsPopupWindow.currentSat = 1.0;
                                 if (settingsPopupWindow.currentVal === 0.0) settingsPopupWindow.currentVal = 1.0;
 
@@ -671,8 +669,8 @@ PanelWindow {
                         Layout.fillWidth: true
                         height: 36
                         placeholderText: "#FFFFFFFF"
-                        placeholderTextColor: fc.textMuted
-                        color: fc.textPrimary
+                        placeholderTextColor: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
+                        color: shellConfig.themeText
                         font.family: fc.monoFont
                         font.pixelSize: 14
                         font.bold: true
@@ -681,7 +679,7 @@ PanelWindow {
                         background: Rectangle {
                             color: Qt.rgba(0, 0, 0, 0.15)
                             radius: 6
-                            border.color: colorHexInput.activeFocus ? fc.overlayForeground : fc.borderMuted
+                            border.color: colorHexInput.activeFocus ? shellConfig.themeText : fc.borderMuted
                             border.width: 1
                         }
 

@@ -97,7 +97,8 @@ PanelWindow {
                         width: 28
                         height: 28
                         radius: 6
-                        color: Qt.rgba(1, 1, 1, 0.06)
+                        // 🌟 Swapped static white for an 8% alpha variant of your theme selection
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.08)
                         Layout.alignment: Qt.AlignVCenter
 
                         Text {
@@ -106,7 +107,7 @@ PanelWindow {
                             text: "notifications_unread"
                             font.family: fc.iconFont
                             font.pixelSize: 25
-                            color: "#ffffff"
+                            color: shellConfig.themeText
                            
                             Component.onCompleted: {
                                 fc.applyOutline(this, fc.overlayBackground)
@@ -122,7 +123,7 @@ PanelWindow {
                         Text {
                             id: summaryText
                             text: model.summary
-                            color: "#ffffff"
+                            color: shellConfig.themeText
                             font.family: fc.mainFont
                             font.pixelSize: 15
                             font.weight: Font.Bold
@@ -137,7 +138,8 @@ PanelWindow {
                         Text {
                             id: bodyText
                             text: model.body
-                            color: fc.textMuted
+                            // 🌟 Swapped fc.textMuted for a dynamic 50% opacity theme text color blend
+                            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                             font.family: fc.mainFont
                             font.pixelSize: 15
                             elide: Text.ElideRight

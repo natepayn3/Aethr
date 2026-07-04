@@ -361,7 +361,7 @@ PanelWindow {
                                     
                                     ShapePath {
                                         fillColor: "transparent"
-                                        strokeColor: rootShell.primaryColor ? Qt.color(rootShell.primaryColor) : "#ffffff"
+                                        strokeColor: rootShell.primaryColor ? Qt.color(rootShell.primaryColor) : shellConfig.themeText
                                         strokeWidth: 3
                                         
                                         startX: glowOutline.sk + glowOutline.r; startY: 0
@@ -379,7 +379,7 @@ PanelWindow {
                                     anchors.fill: parent
                                     source: glowOutline
                                     shadowEnabled: true
-                                    shadowColor: rootShell.primaryColor ? Qt.color(rootShell.primaryColor) : "#ffffff"
+                                    shadowColor: rootShell.primaryColor ? Qt.color(rootShell.primaryColor) : shellConfig.themeText
                                     shadowBlur: 0
                                     shadowVerticalOffset: 0
                                     shadowHorizontalOffset: 0

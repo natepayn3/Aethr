@@ -350,7 +350,7 @@ print(json.dumps(apps))
 
                             Text {
                                 text: "Applications"
-                                color: "#ffffff"
+                                color: launcherModuleRoot.themeText // 🌟 Map cleanly to component color targets
                                 font.family: "Google Sans Flex"
                                 font.pixelSize: 18
                                 font.weight: Font.Bold
@@ -366,7 +366,7 @@ print(json.dumps(apps))
 
                             Text {
                                 text: "terminal"
-                                color: "#ffffff"
+                                color: launcherModuleRoot.themeText // 🌟 Map cleanly to component color targets
                                 font.family: fc.iconFont
                                 font.pixelSize: 40
                                 font.weight: Font.ExtraLight
@@ -386,7 +386,8 @@ print(json.dumps(apps))
                             font.family: fc.mainFont
                             font.pixelSize: 20 
                             color: launcherModuleRoot.themeText
-                            placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
+                            // 🌟 Swapped hardcoded translucent white for 30% alpha of your custom picker themeText color
+                            placeholderTextColor: Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.3)
                             selectByMouse: true
                             verticalAlignment: TextInput.AlignVCenter 
                                          
@@ -443,7 +444,8 @@ print(json.dumps(apps))
                                     background: Rectangle { 
                                         color: appDelegate.highlighted
                                             ? launcherModuleRoot.themeAccent 
-                                            : (appDelegate.hovered ? Qt.rgba(1, 1, 1, 0.05) : "transparent")
+                                            // 🌟 Bound the secondary item background hover layout to 5% alpha themeText mix
+                                            : (appDelegate.hovered ? Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.05) : "transparent")
                                         border.color: appDelegate.highlighted ? launcherModuleRoot.cardBorder : "transparent"
                                         border.width: 1
                                         radius: 10 
@@ -485,7 +487,8 @@ print(json.dumps(apps))
                                                 text: modelData.desc !== "" ? modelData.desc : "Application" 
                                                 font.family: fc.mainFont
                                                 font.pixelSize: 14
-                                                color: fc.textMuted
+                                                // 🌟 Bound muted info secondary labels dynamically to 50% alpha themeText color blend
+                                                color: Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.5)
                                                 Layout.fillWidth: true
                                                 elide: Text.ElideRight
                                                                                                     

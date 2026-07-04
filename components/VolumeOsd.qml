@@ -60,7 +60,7 @@ PanelWindow {
                 text: volumeOsdWindow.isMuted ? "volume_off" : "volume_up"
                 font.family: fc.iconFont
                 font.pixelSize: 32
-                color: "#ffffff"
+                color: shellConfig.themeText
                 
                 Component.onCompleted: {
                     fc.applyOutline(this, fc.overlayBackground)
@@ -88,7 +88,7 @@ PanelWindow {
                     Rectangle {
                         width: volumeSlider.visualPosition * parent.width
                         height: parent.height
-                        color: volumeOsdWindow.isMuted ? fc.overlayForeground : "#ffffff"
+                        color: volumeOsdWindow.isMuted ? fc.overlayForeground : shellConfig.themeText
                         radius: 3
                     }
                 }
@@ -99,13 +99,13 @@ PanelWindow {
                     implicitWidth: 18
                     implicitHeight: 18
                     radius: 9
-                    color: volumeOsdWindow.isMuted ? fc.overlayForeground : "#ffffff"
+                    color: volumeOsdWindow.isMuted ? fc.overlayForeground : shellConfig.themeText
                 }
             }
 
             Text {
                 text: volumeOsdWindow.isMuted ? "Muted" : volumeOsdWindow.systemVolume + "%"
-                color: "#ffffff"
+                color: shellConfig.themeText
                 font.family: fc.mainFont
                 font.pixelSize: 18
                 font.weight: Font.Bold
