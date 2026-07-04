@@ -31,7 +31,6 @@ Why "Aethr"? Aethr represents the invisible, transient layer of the interface. B
 - bluez & bluez-utils — Provides bluetoothctl for Bluetooth management.
 - networkmanager — Provides nmcli for wireless network infrastructure.
 - wireplumber — Provides wpctl for PipeWire audio routing.
-- python — Execution environment for application indexing.
 
 ## Installation & Deployment
 
