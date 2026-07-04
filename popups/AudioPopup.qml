@@ -53,7 +53,7 @@ PanelWindow {
            
             color: colorBackground
             border.color: fc.borderMuted
-            border.width: 1
+            border.width: 0
             radius: shellConfig.radiusValue
 
             Text {

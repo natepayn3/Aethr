@@ -165,7 +165,7 @@ PanelWindow {
             
             color: shellConfig.colorBackground
             border.color: shellConfig.colorBorder
-            border.width: 1
+            border.width: 0
             radius: shellConfig.radiusValue
 
             Text {
