@@ -4,16 +4,16 @@ QtObject {
     id: fontConfig
 
     // --- TYPOGRAPHY FAMILIES ---
-    readonly property string mainFont: "Google Sans Flex"
-    readonly property string monoFont: "JetBrains Mono"
-    readonly property string iconFont: "Material Symbols Outlined"
+    property string mainFont: shellConfig.shellFont
+    property string monoFont: shellConfig.monoFont || "monospace"
+    property string iconFont: shellConfig.iconFont || "Material Symbols Outlined"
 
     // --- SYSTEM THEME PALETTE ---
     readonly property color overlayForeground: Qt.rgba(0.4, 0.4, 0.4, 0.9)  // Muted grey overlay text
     readonly property color overlayBackground: Qt.rgba(0.4, 0.4, 0.4, 0.28) // Translucent base layer
     readonly property color trackBackground: Qt.rgba(1, 1, 1, 0.05)         // Track translucent fill
     readonly property color borderMuted: Qt.rgba(1, 1, 1, 0.03)             // Subtle divider bounds
-    readonly property color textPrimary: "#ffffff"                          // Main solid text
+    readonly property color textPrimary: shellConfig.themeText                          // Main solid text
     readonly property color textMuted: Qt.rgba(1, 1, 1, 0.5)                // Secondary labels
 
     // --- ENHANCED SMOOTHING INJECTOR ---
