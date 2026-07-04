@@ -97,7 +97,10 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             
             y: dockHitbox.isPinned ? (parent.height - height - 6) : parent.height
-            color: Qt.rgba(0, 0, 0, 0.01)
+            color: shellConfig.colorBackground
+
+            border.color: dockHitbox.isPinned ? fc.borderMuted : "transparent"
+            border.width: 0
 
             Behavior on y {
                 NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
