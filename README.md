@@ -25,12 +25,21 @@ A modular, bar-less shell built for Quickshell on Hyprland.
 
 Why "Aethr"? Aethr represents the invisible, transient layer of the interface. By eschewing a persistent bar, this shell stays out of your way until you need it—using hover-proximity and intelligent triggers to summon docks and trays, leaving your workspace completely clear.
 
+<img width="1920" height="1080" alt="01" src="https://github.com/user-attachments/assets/b90c2336-5b69-417f-8a80-4dabb4811303" />
+
+<img width="1920" height="1080" alt="02" src="https://github.com/user-attachments/assets/38279eb3-c90e-4c1c-bd10-1f42096151ac" />
+
+<img width="1920" height="1080" alt="03" src="https://github.com/user-attachments/assets/89bbdb23-d7ef-4660-ab53-8093e148814c" />
+
+<div align="center"><img height="300" alt="05" src="https://github.com/user-attachments/assets/7864ee13-16cb-499f-878e-838e695b73ee" />&nbsp;<img height="300" alt="04" src="https://github.com/user-attachments/assets/0aaa47da-e79b-47e4-b2ea-dc226142fe9e" /></div>
+
 ### System Dependencies
 
-- quickshell — System shell orchestration platform.
-- bluez & bluez-utils — Provides bluetoothctl for Bluetooth management.
-- networkmanager — Provides nmcli for wireless network infrastructure.
-- wireplumber — Provides wpctl for PipeWire audio routing.
+- quickshell (duh)
+- bluez & bluez-utils
+- networkmanager
+- wireplumber
+- satty
 
 ## Installation & Deployment
 
