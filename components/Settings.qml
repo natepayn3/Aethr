@@ -27,7 +27,7 @@ PanelWindow {
     property bool showColorPicker: false
     
     property string selectedFont: shellConfig.shellFont
-    property color selectedColor: shellConfig.themeText
+    property color localPickerColor: shellConfig.themeText
 
     property real currentHue: 0.0
     property real currentSat: 1.0
@@ -47,14 +47,22 @@ PanelWindow {
         onTriggered: outsideDismiss.forceActiveFocus()
     }
 
+    // 🌟 Fixed: Function layout guarantees safe absolute engine resolution across all child nodes
+    function getAbsoluteConfigPath() {
+        let currentDir = Qt.resolvedUrl(".").toString().replace("file://", "");
+        return `${currentDir}../configs/ModuleConfig.qml`;
+    }
+
+    function writeConfigValue(commandString) {
+        Quickshell.execDetached(["fish", "-c", commandString]);
+    }
+
     function updateColorFromHSV() {
         if (_isUpdatingFromInput) return;
         _isUpdatingFromInput = true;
         try {
             let nextColor = Qt.hsva(currentHue, currentSat, currentVal, 1.0);
-            selectedColor = nextColor;
-            
-            // Force update the text display value instantly while dragging sliders
+            localPickerColor = nextColor;
             colorHexInput.text = ("" + nextColor).toUpperCase();
         } catch(e) {
             console.log("Error updating color from HSV: " + e);
@@ -74,11 +82,11 @@ PanelWindow {
                     cleanText = "#" + cleanText;
                 }
                 
-                selectedColor = cleanText;
+                localPickerColor = cleanText;
                 
-                let h = selectedColor.hsvHue;
-                let s = selectedColor.hsvSaturation;
-                let v = selectedColor.hsvValue;
+                let h = localPickerColor.hsvHue;
+                let s = localPickerColor.hsvSaturation;
+                let v = localPickerColor.hsvValue;
                 
                 currentHue = isNaN(h) || h === undefined ? 0.0 : h;
                 currentSat = isNaN(s) || s === undefined ? 0.0 : s;
@@ -121,7 +129,7 @@ PanelWindow {
         Rectangle {
             id: bgCard
             width: shellConfig.panelWidth
-            height: 460
+            height: 400
             transformOrigin: Item.Center
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 100
@@ -179,7 +187,6 @@ PanelWindow {
                 visible: !settingsPopupWindow.showFontPicker && !settingsPopupWindow.showColorPicker
 
                 Text {
-                    // 🌟 Fixed: Title now dynamically tracks the selected theme text color channel
                     text: "Appearance Settings"
                     color: shellConfig.themeText
                     font.family: shellConfig.shellFont
@@ -194,7 +201,6 @@ PanelWindow {
 
                     Text {
                         text: "Background Opacity: " + Math.round(alphaSlider.value * 100) + "%"
-                        // 🌟 Fixed: Sub-labels track a 70% alpha blend of the theme choice
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.7)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
@@ -207,6 +213,17 @@ PanelWindow {
                         from: 0.0
                         to: 1.0
                         value: 0.7 
+
+                        onValueChanged: {
+                            shellConfig.themeBackground = Qt.rgba(0.4, 0.4, 0.4, value);
+                        }
+
+                        onMoved: {
+                            let alpha = value.toFixed(2);
+                            // 🌟 Fixed: Invokes the layout root path resolution loop safely
+                            let path = settingsPopupWindow.getAbsoluteConfigPath();
+                            writeConfigValue(`sed -i -E 's/(property color themeBackground:).*/\\1 Qt.rgba(0.4, 0.4, 0.4, ${alpha})/' ${path}`);
+                        }
 
                         background: Rectangle {
                             x: alphaSlider.leftPadding
@@ -243,7 +260,6 @@ PanelWindow {
 
                     Text {
                         text: "Active Font Family"
-                        // 🌟 Fixed: Muted header track labels use a 60% alpha blend configuration
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
@@ -260,9 +276,9 @@ PanelWindow {
                         }
 
                         contentItem: Text {
-                            text: settingsPopupWindow.selectedFont
+                            text: shellConfig.shellFont
                             color: shellConfig.themeText
-                            font.family: settingsPopupWindow.selectedFont
+                            font.family: shellConfig.shellFont
                             font.pixelSize: 14
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignLeft
@@ -281,7 +297,6 @@ PanelWindow {
 
                     Text {
                         text: "Active Font Color"
-                        // 🌟 Fixed: Label tracks a 60% alpha blend variant of your custom theme text color selection
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
@@ -300,11 +315,11 @@ PanelWindow {
                             
                             Rectangle {
                                 width: 16; height: 16; radius: 4
-                                color: settingsPopupWindow.selectedColor
+                                color: shellConfig.themeText
                                 border.color: fc.borderMuted
                             }
                             Text {
-                                text: ("" + settingsPopupWindow.selectedColor).toUpperCase()
+                                text: ("" + shellConfig.themeText).toUpperCase()
                                 color: shellConfig.themeText
                                 font.family: fc.monoFont
                                 font.pixelSize: 13
@@ -320,54 +335,6 @@ PanelWindow {
                 }
 
                 Item { Layout.fillHeight: true }
-
-                Button {
-                    id: applyButton
-                    Layout.fillWidth: true
-                    implicitHeight: 40
-                    
-                    contentItem: Text {
-                        text: "Apply & Restart Shell"
-                        color: shellConfig.themeText
-                        font.family: shellConfig.shellFont
-                        font.weight: Font.Bold
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
-                    }
-
-                    background: Rectangle {
-                        color: applyButton.down ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.1) : (applyButton.hovered ? fc.overlayBackground : fc.trackBackground)
-                        radius: 8
-                        border.color: applyButton.hovered ? Qt.rgba(0, 0, 0, 0.2) : fc.borderMuted
-                        border.width: 1
-                    }
-
-                    onClicked: {
-                        shellConfig.themeBackground = Qt.rgba(0.4, 0.4, 0.4, alphaSlider.value);
-                        shellConfig.themeText = settingsPopupWindow.selectedColor;
-                        shellConfig.shellFont = settingsPopupWindow.selectedFont;
-
-                        let alpha = alphaSlider.value.toFixed(2);
-                        let hex = ("" + settingsPopupWindow.selectedColor).toUpperCase();
-                        let font = settingsPopupWindow.selectedFont;
-                        
-                        let currentDir = Qt.resolvedUrl(".").toString().replace("file://", "");
-                        let cfg = `${currentDir}../configs/ModuleConfig.qml`;
-
-                        let cmd1 = `sed -i -E 's/(property color themeBackground:).*/\\1 Qt.rgba(0.4, 0.4, 0.4, ${alpha})/' ${cfg}`;
-                        let cmd2 = `sed -i -E 's/(property color themeText:).*/\\1 "${hex}"/' ${cfg}`;
-                        let cmd3 = `sed -i -E 's/(property string shellFont:).*/\\1 "${font}"/' ${cfg}`;
-
-                        Quickshell.execDetached([
-                            "fish", 
-                            "-c", 
-                            cmd1 + " && " + cmd2 + " && " + cmd3
-                        ]);
-                        
-                        settingsPopupWindow.animateActive = false;
-                    }
-                }
             }
 
             // --- VIEW 2: TRANSITION SYSTEM FONT PICKER WINDOW ---
@@ -459,7 +426,7 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 6
-                                color: settingsPopupWindow.selectedFont === modelData ? fc.overlayBackground : (parent.containsMouse ? fc.trackBackground : "transparent")
+                                color: shellConfig.shellFont === modelData ? fc.overlayBackground : (parent.containsMouse ? fc.trackBackground : "transparent")
                             }
 
                             Text {
@@ -473,7 +440,9 @@ PanelWindow {
                             }
 
                             onClicked: {
-                                settingsPopupWindow.selectedFont = modelData;
+                                shellConfig.shellFont = modelData;
+                                let path = settingsPopupWindow.getAbsoluteConfigPath();
+                                writeConfigValue(`sed -i -E 's/(property string shellFont:).*/\\1 "${modelData}"/' ${path}`);
                                 settingsPopupWindow.showFontPicker = false;
                             }
                         }
@@ -503,7 +472,7 @@ PanelWindow {
                     
                     Text {
                         text: "Custom RGB Color Picker"
-                        color: shellConfig.themeText
+                        color: settingsPopupWindow.localPickerColor
                         font.family: shellConfig.shellFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
@@ -524,7 +493,7 @@ PanelWindow {
                         }
                         contentItem: Text { 
                             text: "Done"
-                            color: shellConfig.themeText
+                            color: settingsPopupWindow.localPickerColor
                             font.family: shellConfig.shellFont
                             font.pixelSize: 12
                             font.bold: true
@@ -533,6 +502,12 @@ PanelWindow {
                         }
                         onClicked: {
                             settingsPopupWindow.applyManualHex(colorHexInput.text);
+                            shellConfig.themeText = settingsPopupWindow.localPickerColor;
+                            
+                            let hex = ("" + settingsPopupWindow.localPickerColor).toUpperCase();
+                            let path = settingsPopupWindow.getAbsoluteConfigPath();
+                            writeConfigValue(`sed -i -E 's/(property color themeText:).*/\\1 "${hex}"/' ${path}`);
+                            
                             settingsPopupWindow.showColorPicker = false;
                         }
                     }
@@ -659,7 +634,7 @@ PanelWindow {
 
                     Rectangle {
                         width: 44; height: 36; radius: 6
-                        color: settingsPopupWindow.selectedColor
+                        color: settingsPopupWindow.localPickerColor
                         border.color: fc.borderMuted
                         border.width: 1
                     }
@@ -669,8 +644,8 @@ PanelWindow {
                         Layout.fillWidth: true
                         height: 36
                         placeholderText: "#FFFFFFFF"
-                        placeholderTextColor: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
-                        color: shellConfig.themeText
+                        placeholderTextColor: Qt.rgba(settingsPopupWindow.localPickerColor.r, settingsPopupWindow.localPickerColor.g, settingsPopupWindow.localPickerColor.b, 0.4)
+                        color: settingsPopupWindow.localPickerColor
                         font.family: fc.monoFont
                         font.pixelSize: 14
                         font.bold: true
@@ -679,7 +654,7 @@ PanelWindow {
                         background: Rectangle {
                             color: Qt.rgba(0, 0, 0, 0.15)
                             radius: 6
-                            border.color: colorHexInput.activeFocus ? shellConfig.themeText : fc.borderMuted
+                            border.color: colorHexInput.activeFocus ? settingsPopupWindow.localPickerColor : fc.borderMuted
                             border.width: 1
                         }
 
@@ -696,7 +671,9 @@ PanelWindow {
             focusDelayTimer.start();
             settingsPopupWindow.animateActive = true;
             
-            let c = settingsPopupWindow.selectedColor;
+            let c = shellConfig.themeText;
+            settingsPopupWindow.localPickerColor = c;
+            
             let h = c.hsvHue;
             let s = c.hsvSaturation;
             let v = c.hsvValue;
