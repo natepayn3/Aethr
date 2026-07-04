@@ -351,7 +351,7 @@ print(json.dumps(apps))
                             Text {
                                 text: "Applications"
                                 color: launcherModuleRoot.themeText // 🌟 Map cleanly to component color targets
-                                font.family: "Google Sans Flex"
+                                font.family: shellConfig.shellFont
                                 font.pixelSize: 18
                                 font.weight: Font.Bold
                                 Component.onCompleted: {
@@ -383,15 +383,13 @@ print(json.dumps(apps))
                             Layout.fillWidth: true 
                             Layout.preferredHeight: 46 
                             placeholderText: "Search apps..."
-                            font.family: fc.mainFont
+                            font.family: shellConfig.shellFont
                             font.pixelSize: 20 
                             color: launcherModuleRoot.themeText
                             // 🌟 Swapped hardcoded translucent white for 30% alpha of your custom picker themeText color
                             placeholderTextColor: Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.3)
                             selectByMouse: true
                             verticalAlignment: TextInput.AlignVCenter 
-                                         
-                            Component.onCompleted: fc.applySmoothing(this)
 
                             background: Rectangle { 
                                 color: Qt.rgba(0, 0, 0, 0.15) 
@@ -477,10 +475,6 @@ print(json.dumps(apps))
                                                 font.weight: appDelegate.isPinned ? Font.Bold : Font.Normal 
                                                 Layout.fillWidth: true
                                                 elide: Text.ElideRight
-                                                
-                                                Component.onCompleted: {
-                                                    fc.applyOutline(this, fc.overlayBackground)
-                                                }
                                             }
 
                                             Text {
@@ -491,10 +485,6 @@ print(json.dumps(apps))
                                                 color: Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.5)
                                                 Layout.fillWidth: true
                                                 elide: Text.ElideRight
-                                                                                                    
-                                                Component.onCompleted: {
-                                                    fc.applyOutline(this, fc.overlayBackground)
-                                                }
                                             }
                                         }
 
@@ -506,10 +496,6 @@ print(json.dumps(apps))
                                             visible: appDelegate.isPinned 
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.rightMargin: 4
-                                                                                                
-                                            Component.onCompleted: {
-                                                fc.applyOutline(this, fc.overlayBackground)
-                                            }
                                         }
                                     } 
 
