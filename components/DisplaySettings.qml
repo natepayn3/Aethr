@@ -210,7 +210,7 @@ PanelWindow {
                 visible: !settingsPopupWindow.showFontPicker && !settingsPopupWindow.showColorPicker
 
                 Text {
-                    text: "Settings"
+                    text: "Display Settings"
                     color: shellConfig.themeText
                     font.family: shellConfig.shellFont
                     font.pixelSize: 18
@@ -399,7 +399,7 @@ PanelWindow {
                     Layout.fillWidth: true
                     
                     Text {
-                        text: "Select System Font:"
+                        text: "Select Font:"
                         color: shellConfig.themeText
                         font.family: shellConfig.shellFont
                         font.pixelSize: 16
