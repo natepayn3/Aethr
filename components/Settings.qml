@@ -47,7 +47,6 @@ PanelWindow {
         onTriggered: outsideDismiss.forceActiveFocus()
     }
 
-    // 🌟 Function layout guarantees safe absolute engine resolution across all child nodes
     function getAbsoluteConfigPath() {
         let currentDir = Qt.resolvedUrl(".").toString().replace("file://", "");
         return `${currentDir}../configs/ModuleConfig.qml`;
@@ -88,8 +87,7 @@ PanelWindow {
                 let s = localPickerColor.hsvSaturation;
                 let v = localPickerColor.hsvValue;
                 
-                // 🎨 Only touch currentHue if the color actually has color saturation.
-                // If it's grayscale (s === 0), leave currentHue exactly as it is.
+                // 🎨 Normalize hue; preserve current track position if grayscale (s === 0)
                 if (s > 0 && h !== undefined && !isNaN(h) && h >= 0) {
                     currentHue = h > 1.0 ? (h / 360.0) : h;
                 }
@@ -135,7 +133,6 @@ PanelWindow {
             id: bgCard
             width: shellConfig.panelWidth
             
-            // 🌟 Live Morphing Height tracking explicit structural implicit height properties safely
             height: settingsPopupWindow.showFontPicker 
                 ? (fontPickerLayout.implicitHeight + 44)
                 : (settingsPopupWindow.showColorPicker ? (colorPickerLayout.implicitHeight + 44) : (mainLayout.implicitHeight + 44))
@@ -192,7 +189,10 @@ PanelWindow {
 
             MouseArea {
                 anchors.fill: parent
+                // Catch pointer events fully to stop background bleed-through
                 onClicked: (mouse) => mouse.accepted = true
+                onPressed: (mouse) => mouse.accepted = true
+                onReleased: (mouse) => mouse.accepted = true
             }
 
             // --- VIEW 1: MAIN CONFIGURATION CONTROLS ---
@@ -392,7 +392,12 @@ PanelWindow {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
-                        onClicked: settingsPopupWindow.showFontPicker = false
+                        onClicked: {
+                            // Delay file write until exiting to prevent live-reload destruction
+                            let path = settingsPopupWindow.getAbsoluteConfigPath();
+                            writeConfigValue(`sed -i -E 's/(property string shellFont:).*/\\1 "${shellConfig.shellFont}"/' ${path}`);
+                            settingsPopupWindow.showFontPicker = false;
+                        }
                     }
                 }
 
@@ -454,10 +459,8 @@ PanelWindow {
                             }
 
                             onClicked: {
+                                // Update running state instantly; do not run sed here
                                 shellConfig.shellFont = modelData;
-                                let path = settingsPopupWindow.getAbsoluteConfigPath();
-                                writeConfigValue(`sed -i -E 's/(property string shellFont:).*/\\1 "${modelData}"/' ${path}`);
-                                settingsPopupWindow.showFontPicker = false;
                             }
                         }
                         
@@ -480,8 +483,6 @@ PanelWindow {
                 anchors.margins: 22
                 spacing: 14
                 visible: settingsPopupWindow.showColorPicker
-                
-                // 🌟 Fixed: Lock down a solid baseline metric configuration for the container panel
                 implicitHeight: 334
 
                 RowLayout {
@@ -538,7 +539,7 @@ PanelWindow {
                     Rectangle {
                         id: satValMatrix
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
+                        Layout.preferredHeight: 200
                         radius: 6
                         clip: true
                         border.color: fc.borderMuted
@@ -598,14 +599,13 @@ PanelWindow {
                         }
                     }
 
-                    // Replace the old 'id: hueBarTrack' Rectangle block with this:
                     Item {
                         Layout.preferredWidth: 24
                         Layout.preferredHeight: satValMatrix.height
 
                         Rectangle {
                             id: hueBarTrack
-                            anchors.fill: parent // Forces local coordinate space matching the layout cell
+                            anchors.fill: parent
                             radius: 6
                             border.color: fc.borderMuted
 
@@ -620,9 +620,7 @@ PanelWindow {
                                 GradientStop { position: 1.0; color: "#ff0000" }
                             }
 
-                            // The handle selector
                             Rectangle {
-                                // Evaluates safely against the anchored local track height
                                 y: (settingsPopupWindow.currentHue * hueBarTrack.height) - (height / 2)
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: parent.width + 4
@@ -653,7 +651,6 @@ PanelWindow {
                     }
                 }
 
-                // Lower Hex Display and Manual Input Box
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 12
@@ -684,8 +681,8 @@ PanelWindow {
                             border.width: 1
                         }
 
+                        // Dropped editingFinished handler to stop accidental focus losses
                         onAccepted: settingsPopupWindow.applyManualHex(text)
-                        onEditingFinished: settingsPopupWindow.applyManualHex(text)
                     }
                 }
             }
@@ -704,7 +701,6 @@ PanelWindow {
             let s = c.hsvSaturation;
             let v = c.hsvValue;
             
-            // 🎨 Prevent resetting slider for white/grayscale profiles on window load
             if (s > 0 && h !== undefined && !isNaN(h) && h >= 0) {
                 settingsPopupWindow.currentHue = h > 1.0 ? (h / 360.0) : h;
             }
