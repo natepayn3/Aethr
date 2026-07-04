@@ -1,0 +1,717 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import Quickshell
+import Quickshell.Wayland
+import "../configs"
+
+PanelWindow {
+    id: settingsPopupWindow
+
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "quickshell-launcher"
+    WlrLayershell.keyboardFocus: visible ? WlrLayershell.OnDemand : WlrLayershell.None
+    exclusionMode: ExclusionMode.Ignore
+
+    anchors {
+        bottom: true
+        top: true
+        left: true
+        right: true
+    }
+    
+    color: "transparent"
+
+    property bool animateActive: false
+    property bool showFontPicker: false
+    property bool showColorPicker: false
+    
+    property string selectedFont: shellConfig.shellFont
+    property color selectedColor: shellConfig.themeText
+
+    property real currentHue: 0.0
+    property real currentSat: 1.0
+    property real currentVal: 1.0
+
+    property bool _isUpdatingFromInput: false
+
+    property var masterFontList: Qt.fontFamilies()
+    property var filteredFontList: masterFontList
+
+    FontConfig { id: fc }
+
+    Timer {
+        id: focusDelayTimer
+        interval: 50
+        repeat: false
+        onTriggered: outsideDismiss.forceActiveFocus()
+    }
+
+    function updateColorFromHSV() {
+        if (_isUpdatingFromInput) return;
+        _isUpdatingFromInput = true;
+        try {
+            let nextColor = Qt.hsva(currentHue, currentSat, currentVal, 1.0);
+            selectedColor = nextColor;
+            
+            // Force update the text display value instantly while dragging sliders
+            colorHexInput.text = ("" + nextColor).toUpperCase();
+        } catch(e) {
+            console.log("Error updating color from HSV: " + e);
+        } finally {
+            _isUpdatingFromInput = false;
+        }
+    }
+
+    function applyManualHex(textValue) {
+        let cleanText = textValue.trim();
+        let regExp = /^#?([0-9A-F]{6}|[0-9A-F]{8})$/i;
+        
+        if (regExp.test(cleanText)) {
+            _isUpdatingFromInput = true;
+            try {
+                if (!cleanText.startsWith("#")) {
+                    cleanText = "#" + cleanText;
+                }
+                
+                selectedColor = cleanText;
+                
+                let h = selectedColor.hsvHue;
+                let s = selectedColor.hsvSaturation;
+                let v = selectedColor.hsvValue;
+                
+                currentHue = isNaN(h) || h === undefined ? 0.0 : h;
+                currentSat = isNaN(s) || s === undefined ? 0.0 : s;
+                currentVal = isNaN(v) || v === undefined ? 1.0 : v;
+            } catch(e) {
+                console.log("Error applying manual hex: " + e);
+            } finally {
+                _isUpdatingFromInput = false;
+            }
+        }
+    }
+
+    function filterFonts(query) {
+        if (query.trim() === "") {
+            filteredFontList = masterFontList;
+        } else {
+            let lowerQuery = query.toLowerCase();
+            filteredFontList = masterFontList.filter(function(fontName) {
+                return fontName.toLowerCase().indexOf(lowerQuery) !== -1;
+            });
+        }
+    }
+
+    MouseArea {
+        id: outsideDismiss
+        anchors.fill: parent
+        
+        focus: true
+        Keys.onEscapePressed: (event) => {
+            settingsPopupWindow.animateActive = false;
+            event.accepted = true;
+        }
+
+        onClicked: {
+            settingsPopupWindow.animateActive = false;
+            settingsPopupWindow.showFontPicker = false;
+            settingsPopupWindow.showColorPicker = false;
+        }
+
+        Rectangle {
+            id: bgCard
+            width: shellConfig.panelWidth
+            height: 460
+            transformOrigin: Item.Center
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 100
+            anchors.horizontalCenter: parent.horizontalCenter
+           
+            color: fc.trackBackground
+            border.color: fc.borderMuted
+            border.width: 1
+            radius: shellConfig.radiusValue
+
+            states: [
+                State {
+                    name: "hidden"
+                    when: !settingsPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 0.0; scale: 0.3 }
+                },
+                State {
+                    name: "shown"
+                    when: settingsPopupWindow.animateActive
+                    PropertyChanges { target: bgCard; opacity: 1.0; scale: 1.0 }
+                }
+            ]
+
+            transitions: [
+                Transition {
+                    from: "hidden"; to: "shown"
+                    ParallelAnimation {
+                        NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationIn; easing.type: Easing.OutBack; easing.amplitude: shellConfig.springBack }
+                        NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityIn; easing.type: Easing.OutQuad }
+                    }
+                },
+                Transition {
+                    from: "shown"; to: "hidden"
+                    SequentialAnimation {
+                        ParallelAnimation {
+                            NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
+                            NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
+                        }
+                        ScriptAction { script: settingsPopupWindow.visible = false } 
+                    }
+                }
+            ]
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: (mouse) => mouse.accepted = true
+            }
+
+            // --- VIEW 1: MAIN CONFIGURATION CONTROLS ---
+            ColumnLayout {
+                id: mainLayout
+                anchors.fill: parent
+                anchors.margins: 22
+                spacing: 14
+                visible: !settingsPopupWindow.showFontPicker && !settingsPopupWindow.showColorPicker
+
+                Text {
+                    text: "Appearance Settings"
+                    color: fc.textPrimary
+                    font.family: fc.mainFont
+                    font.pixelSize: 18
+                    font.weight: Font.Bold
+                    Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: "Background Opacity: " + Math.round(alphaSlider.value * 100) + "%"
+                        color: fc.textMuted
+                        font.family: fc.mainFont
+                        font.pixelSize: 13
+                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                    }
+
+                    Slider {
+                        id: alphaSlider
+                        Layout.fillWidth: true
+                        from: 0.0
+                        to: 1.0
+                        value: 0.7 
+
+                        background: Rectangle {
+                            x: alphaSlider.leftPadding
+                            y: alphaSlider.topPadding + alphaSlider.availableHeight / 2 - height / 2
+                            implicitWidth: 200
+                            implicitHeight: 6
+                            width: alphaSlider.availableWidth
+                            height: implicitHeight
+                            radius: 3
+                            color: Qt.rgba(1, 1, 1, 0.15)
+
+                            Rectangle {
+                                width: alphaSlider.visualPosition * parent.width
+                                height: parent.height
+                                color: fc.textPrimary
+                                radius: 3
+                            }
+                        }
+
+                        handle: Rectangle {
+                            x: alphaSlider.leftPadding + alphaSlider.visualPosition * (alphaSlider.availableWidth - width)
+                            y: alphaSlider.topPadding + alphaSlider.availableHeight / 2 - height / 2
+                            implicitWidth: 16
+                            implicitHeight: 16
+                            radius: 8
+                            color: fc.textPrimary
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Text {
+                        text: "Active Font Family"
+                        color: fc.textMuted
+                        font.family: fc.mainFont
+                        font.pixelSize: 13
+                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        implicitHeight: 36
+                        onClicked: {
+                            fontSearchField.text = "";
+                            settingsPopupWindow.filteredFontList = settingsPopupWindow.masterFontList;
+                            settingsPopupWindow.showFontPicker = true;
+                        }
+
+                        contentItem: Text {
+                            text: settingsPopupWindow.selectedFont
+                            color: fc.textPrimary
+                            font.family: settingsPopupWindow.selectedFont
+                            font.pixelSize: 14
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
+                        }
+                        background: Rectangle {
+                            color: fc.trackBackground
+                            radius: 6
+                            border.color: fc.borderMuted
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Text {
+                        text: "Active Font Color"
+                        color: fc.textMuted
+                        font.family: fc.mainFont
+                        font.pixelSize: 13
+                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        implicitHeight: 36
+                        onClicked: settingsPopupWindow.showColorPicker = true
+
+                        contentItem: RowLayout {
+                            spacing: 10
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            
+                            Rectangle {
+                                width: 16; height: 16; radius: 4
+                                color: settingsPopupWindow.selectedColor
+                                border.color: fc.borderMuted
+                            }
+                            Text {
+                                text: ("" + settingsPopupWindow.selectedColor).toUpperCase()
+                                color: fc.textPrimary
+                                font.family: fc.monoFont
+                                font.pixelSize: 13
+                                Layout.fillWidth: true
+                            }
+                        }
+                        background: Rectangle {
+                            color: fc.trackBackground
+                            radius: 6
+                            border.color: fc.borderMuted
+                        }
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+
+                Button {
+                    id: applyButton
+                    Layout.fillWidth: true
+                    implicitHeight: 40
+                    
+                    contentItem: Text {
+                        text: "Apply & Restart Shell"
+                        color: fc.textPrimary
+                        font.family: fc.mainFont
+                        font.weight: Font.Bold
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                    }
+
+                    background: Rectangle {
+                        color: applyButton.down ? Qt.rgba(1, 1, 1, 0.1) : (applyButton.hovered ? fc.overlayBackground : fc.trackBackground)
+                        radius: 8
+                        border.color: applyButton.hovered ? Qt.rgba(0, 0, 0, 0.2) : fc.borderMuted
+                        border.width: 1
+                    }
+
+                    onClicked: {
+                        // 1. Instantly update live memory state
+                        shellConfig.themeBackground = Qt.rgba(0.4, 0.4, 0.4, alphaSlider.value);
+                        shellConfig.themeText = settingsPopupWindow.selectedColor;
+                        shellConfig.shellFont = settingsPopupWindow.selectedFont;
+
+                        // 2. Format values for disk persistence
+                        let alpha = alphaSlider.value.toFixed(2);
+                        let hex = ("" + settingsPopupWindow.selectedColor).toUpperCase();
+                        let font = settingsPopupWindow.selectedFont;
+                        
+                        // 🌟 Zero hardcoded paths. Dynamically resolves absolute disk path relative to this file.
+                        let currentDir = Qt.resolvedUrl(".").toString().replace("file://", "");
+                        let cfg = `${currentDir}../configs/ModuleConfig.qml`;
+
+                        // 3. Keep single line target instructions simple
+                        let cmd1 = `sed -i -E 's/(property color themeBackground:).*/\\1 Qt.rgba(0.4, 0.4, 0.4, ${alpha})/' ${cfg}`;
+                        let cmd2 = `sed -i -E 's/(property color themeText:).*/\\1 "${hex}"/' ${cfg}`;
+                        let cmd3 = `sed -i -E 's/(property string shellFont:).*/\\1 "${font}"/' ${cfg}`;
+
+                        // 4. Clean execution structure keeping engine syntax safe
+                        Quickshell.execDetached([
+                            "fish", 
+                            "-c", 
+                            cmd1 + " && " + cmd2 + " && " + cmd3
+                        ]);
+                        
+                        settingsPopupWindow.animateActive = false;
+                    }
+                }
+            }
+
+            // --- VIEW 2: TRANSITION SYSTEM FONT PICKER WINDOW ---
+            ColumnLayout {
+                id: fontPickerLayout
+                anchors.fill: parent
+                anchors.margins: 22
+                spacing: 12
+                visible: settingsPopupWindow.showFontPicker
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    
+                    Text {
+                        text: "Select System Font"
+                        color: fc.textPrimary
+                        font.family: fc.mainFont
+                        font.pixelSize: 16
+                        font.weight: Font.Bold
+                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                    }
+                    
+                    Item { Layout.fillWidth: true }
+                    
+                    Button {
+                        id: backButton
+                        flat: true
+                        implicitWidth: 60
+                        implicitHeight: 28
+                        background: Rectangle { 
+                            color: backButton.hovered ? fc.overlayBackground : fc.trackBackground
+                            radius: 4 
+                            border.color: backButton.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                        }
+                        contentItem: Text { 
+                            text: "Back"
+                            color: fc.textPrimary
+                            font.family: fc.mainFont
+                            font.pixelSize: 12
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: settingsPopupWindow.showFontPicker = false
+                    }
+                }
+
+                TextField {
+                    id: fontSearchField
+                    Layout.fillWidth: true
+                    implicitHeight: 36
+                    placeholderText: "Search fonts..."
+                    placeholderTextColor: fc.textMuted
+                    color: fc.textPrimary
+                    font.family: fc.mainFont
+                    font.pixelSize: 13
+                    selectByMouse: true
+                    
+                    background: Rectangle {
+                        color: Qt.rgba(0, 0, 0, 0.15)
+                        radius: 6
+                        border.color: fontSearchField.activeFocus ? fc.overlayForeground : fc.borderMuted
+                        border.width: 1
+                    }
+
+                    onTextChanged: settingsPopupWindow.filterFonts(text)
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: Qt.rgba(0, 0, 0, 0.15)
+                    radius: 8
+                    border.color: fc.borderMuted
+                    clip: true
+
+                    ListView {
+                        id: fontListView
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        spacing: 4
+                        model: settingsPopupWindow.filteredFontList
+
+                        delegate: MouseArea {
+                            width: fontListView.width
+                            height: 36
+                            hoverEnabled: true
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 6
+                                color: settingsPopupWindow.selectedFont === modelData ? fc.overlayBackground : (parent.containsMouse ? fc.trackBackground : "transparent")
+                            }
+
+                            Text {
+                                text: modelData
+                                font.family: modelData
+                                font.pixelSize: 14
+                                color: fc.textPrimary
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            onClicked: {
+                                settingsPopupWindow.selectedFont = modelData;
+                                settingsPopupWindow.showFontPicker = false;
+                            }
+                        }
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: "No matching fonts found"
+                            color: fc.textMuted
+                            font.family: fc.mainFont
+                            font.pixelSize: 13
+                            visible: fontListView.count === 0
+                        }
+                    }
+                }
+            }
+
+            // --- VIEW 3: DEDICATED TRANSITION COLOR PICKER WINDOW ---
+            ColumnLayout {
+                id: colorPickerLayout
+                anchors.fill: parent
+                anchors.margins: 22
+                spacing: 14
+                visible: settingsPopupWindow.showColorPicker
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    
+                    Text {
+                        text: "Custom RGB Color Picker"
+                        color: fc.textPrimary
+                        font.family: fc.mainFont
+                        font.pixelSize: 16
+                        font.weight: Font.Bold
+                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
+                    }
+                    
+                    Item { Layout.fillWidth: true }
+                    
+                    Button {
+                        id: colorBackButton
+                        flat: true
+                        implicitWidth: 60
+                        implicitHeight: 28
+                        background: Rectangle { 
+                            color: colorBackButton.hovered ? fc.overlayBackground : fc.trackBackground
+                            radius: 4 
+                            border.color: colorBackButton.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                        }
+                        contentItem: Text { 
+                            text: "Done"
+                            color: fc.textPrimary
+                            font.family: fc.mainFont
+                            font.pixelSize: 12
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: {
+                            settingsPopupWindow.applyManualHex(colorHexInput.text);
+                            settingsPopupWindow.showColorPicker = false;
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 16
+
+                    Rectangle {
+                        id: satValMatrix
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: 6
+                        clip: true
+                        border.color: fc.borderMuted
+                        border.width: 1
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: Qt.hsva(settingsPopupWindow.currentHue, 1.0, 1.0, 1.0)
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0.0; color: shellConfig.themeText }
+                                GradientStop { position: 1.0; color: "transparent" }
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            gradient: Gradient {
+                                orientation: Gradient.Vertical
+                                GradientStop { position: 0.0; color: "transparent" }
+                                GradientStop { position: 1.0; color: "#000000" }
+                            }
+                        }
+
+                        Rectangle {
+                            x: (settingsPopupWindow.currentSat * parent.width) - width / 2
+                            y: ((1.0 - settingsPopupWindow.currentVal) * parent.height) - height / 2
+                            width: 12; height: 12; radius: 6
+                            color: "transparent"
+                            border.color: shellConfig.themeText
+                            border.width: 2
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 4; height: 4; radius: 2
+                                color: "#000000"
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            preventStealing: true
+                            
+                            function updateCoordinates(mouse) {
+                                let normX = Math.max(0.0, Math.min(1.0, mouse.x / width))
+                                let normY = Math.max(0.0, Math.min(1.0, mouse.y / height))
+                                settingsPopupWindow.currentSat = normX
+                                settingsPopupWindow.currentVal = 1.0 - normY
+                                settingsPopupWindow.updateColorFromHSV()
+                            }
+                            onPressed: (mouse) => updateCoordinates(mouse)
+                            onPositionChanged: (mouse) => updateCoordinates(mouse)
+                        }
+                    }
+
+                    Rectangle {
+                        id: hueBarTrack
+                        Layout.preferredWidth: 24
+                        Layout.fillHeight: true
+                        radius: 6
+                        border.color: fc.borderMuted
+
+                        gradient: Gradient {
+                            orientation: Gradient.Vertical
+                            GradientStop { position: 0.0; color: "#ff0000" }
+                            GradientStop { position: 0.17; color: "#ffff00" }
+                            GradientStop { position: 0.33; color: "#00ff00" }
+                            GradientStop { position: 0.5; color: "#00ffff" }
+                            GradientStop { position: 0.67; color: "#0000ff" }
+                            GradientStop { position: 0.83; color: "#ff00ff" }
+                            GradientStop { position: 1.0; color: "#ff0000" }
+                        }
+
+                        Rectangle {
+                            y: (settingsPopupWindow.currentHue * parent.height) - height / 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: parent.width + 4; height: 8; radius: 2
+                            color: shellConfig.themeText
+                            border.color: "#000000"
+                            border.width: 1
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            preventStealing: true
+                            
+                            function updateHue(mouse) {
+                                let normY = Math.max(0.0, Math.min(1.0, mouse.y / height))
+                                settingsPopupWindow.currentHue = normY
+                                
+                                // Snap to full color if dragging hue while stuck on white/black
+                                if (settingsPopupWindow.currentSat === 0.0) settingsPopupWindow.currentSat = 1.0;
+                                if (settingsPopupWindow.currentVal === 0.0) settingsPopupWindow.currentVal = 1.0;
+
+                                settingsPopupWindow.updateColorFromHSV()
+                            }
+                            onPressed: (mouse) => updateHue(mouse)
+                            onPositionChanged: (mouse) => updateHue(mouse)
+                        }
+                    }
+                }
+
+                // Lower Hex Display and Manual Input Box
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+
+                    Rectangle {
+                        width: 44; height: 36; radius: 6
+                        color: settingsPopupWindow.selectedColor
+                        border.color: fc.borderMuted
+                        border.width: 1
+                    }
+
+                    TextField {
+                        id: colorHexInput
+                        Layout.fillWidth: true
+                        height: 36
+                        placeholderText: "#FFFFFFFF"
+                        placeholderTextColor: fc.textMuted
+                        color: fc.textPrimary
+                        font.family: fc.monoFont
+                        font.pixelSize: 14
+                        font.bold: true
+                        selectByMouse: true
+                        
+                        background: Rectangle {
+                            color: Qt.rgba(0, 0, 0, 0.15)
+                            radius: 6
+                            border.color: colorHexInput.activeFocus ? fc.overlayForeground : fc.borderMuted
+                            border.width: 1
+                        }
+
+                        onAccepted: settingsPopupWindow.applyManualHex(text)
+                        onEditingFinished: settingsPopupWindow.applyManualHex(text)
+                    }
+                }
+            }
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            focusDelayTimer.start();
+            settingsPopupWindow.animateActive = true;
+            
+            let c = settingsPopupWindow.selectedColor;
+            let h = c.hsvHue;
+            let s = c.hsvSaturation;
+            let v = c.hsvValue;
+            
+            settingsPopupWindow.currentHue = isNaN(h) || h === undefined ? 0.0 : h;
+            settingsPopupWindow.currentSat = isNaN(s) || s === undefined ? 0.0 : s;
+            settingsPopupWindow.currentVal = isNaN(v) || v === undefined ? 1.0 : v;
+            colorHexInput.text = ("" + c).toUpperCase();
+        } else {
+            focusDelayTimer.stop();
+            settingsPopupWindow.animateActive = false;
+            settingsPopupWindow.showFontPicker = false;
+            settingsPopupWindow.showColorPicker = false;
+        }
+    }
+}
