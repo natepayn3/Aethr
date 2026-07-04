@@ -33,7 +33,8 @@ Item {
             text: !brightnessSliderRoot.hasHardware ? "brightness_empty" : (brightnessSliderRoot.currentBrightness < 0.4 ? "light_mode" : "brightness_high")
             font.family: fc.iconFont
             font.pixelSize: 24
-            color: Qt.rgba(1, 1, 1, 0.4)
+            // 🌟 Bound background icon color to 40% opacity of your theme color selection
+            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
             width: 24
             height: 24
             horizontalAlignment: Text.AlignHCenter
@@ -53,7 +54,8 @@ Item {
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: brightnessSliderRoot.percentageText
-            color: Qt.rgba(1, 1, 1, 0.35)
+            // 🌟 Bound background label color to 35% opacity of your theme color selection
+            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
             font.family: fc.mainFont
             font.pixelSize: 13
             font.weight: Font.Bold
@@ -65,7 +67,7 @@ Item {
             id: fillBar
             height: parent.height
             width: !brightnessSliderRoot.hasHardware ? 0 : parent.height + ((parent.width - parent.height) * brightnessSliderRoot.currentBrightness)
-            color: "#ffffff"
+            color: shellConfig.themeText
             radius: height / 2
             anchors.left: parent.left
             anchors.leftMargin: 0

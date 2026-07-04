@@ -26,7 +26,7 @@ Column {
         text: weatherRoot.weatherGlyph
         font.family: fc.iconFont
         font.pixelSize: 60
-        color: "#ffffff"
+        color: shellConfig.themeText
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         
@@ -40,13 +40,9 @@ Column {
         font.family: fc.mainFont
         font.pixelSize: 24
         font.weight: Font.Bold
-        color: "#ffffff"
+        color: shellConfig.themeText
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        
-        Component.onCompleted: {
-            fc.applyOutline(this, fc.overlayBackground)
-        }
     }
 
     Text {
@@ -54,25 +50,20 @@ Column {
         font.family: fc.mainFont
         font.weight: Font.Bold
         font.pixelSize: 12
-        color: fc.textMuted
+        // Dynamically tints the custom color picker choice down to 50% opacity
+        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-       
-        Component.onCompleted: {
-            fc.applyOutline(this, fc.overlayBackground)
-        }
     }
+
     Text {
         text: "Feels like " + weatherRoot.weatherFeelsLike
         font.family: fc.mainFont
         font.pixelSize: 12
-        color: fc.textMuted
+        // Dynamically tints the custom color picker choice down to 50% opacity
+        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        
-        Component.onCompleted: {
-            fc.applyOutline(this, fc.overlayBackground)
-        }
     }
 
     Process {

@@ -67,7 +67,7 @@ Item {
             // Standard Active Progress Indicator 
             ShapePath {
                 fillColor: "transparent"
-                strokeColor: "#ffffff"
+                strokeColor: shellConfig.themeText
                 strokeWidth: 3.5 
                 capStyle: ShapePath.RoundCap
                 PathAngleArc { 
@@ -83,7 +83,8 @@ Item {
 
             Text {
                 text: ringRow.label
-                color: fc.textMuted
+                // Extracts RGB channel values dynamically and forces 50% opacity
+                color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                 font.family: fc.mainFont
                 font.pixelSize: 10 
                 font.weight: Font.Bold
@@ -94,7 +95,7 @@ Item {
             }
             Text {
                 text: Math.round(ringRow.value * 100) + "%"
-                color: "#ffffff"
+                color: shellConfig.themeText
                 font.family: fc.mainFont
                 font.pixelSize: 12 
                 font.weight: Font.DemiBold

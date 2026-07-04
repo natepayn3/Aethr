@@ -22,13 +22,9 @@ Column {
         font.family: fc.mainFont
         font.pixelSize: 46
         font.weight: Font.Bold
-        color: "#ffffff"
+        color: shellConfig.themeText
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        
-        Component.onCompleted: {
-            fc.applyOutline(this, fc.overlayBackground)
-        }
     }
 
     Text {
@@ -36,12 +32,8 @@ Column {
         font.family: fc.mainFont
         font.pixelSize: 13
         font.weight: Font.Medium
-        color: fc.textMuted
+        color: shellConfig.themeText
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        
-        Component.onCompleted: {
-            fc.applyOutline(this, fc.overlayBackground)
-        }
     }
 }

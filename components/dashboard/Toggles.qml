@@ -64,7 +64,10 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                color: togglesWrapper.wifiActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
+                // Dynamic tint allocation based on runtime hex state
+                color: togglesWrapper.wifiActive 
+                       ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.85) 
+                       : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
                 
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -88,7 +91,7 @@ Item {
                 width: parent.height - 4
                 height: parent.height - 4
                 radius: height / 2
-                color: togglesWrapper.wifiActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                color: togglesWrapper.wifiActive ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.12)
                 anchors.verticalCenter: parent.verticalCenter
                 x: togglesWrapper.wifiActive ? parent.width - width - 2 : 2
 
@@ -99,7 +102,7 @@ Item {
                     text: !togglesWrapper.wifiAvailable ? "wifi_off" : "wifi"
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
-                    color: togglesWrapper.wifiActive ? fc.overlayForeground : Qt.rgba(1, 1, 1, 0.4)
+                    color: togglesWrapper.wifiActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                     Component.onCompleted: fc.applySmoothing(this)
                 }
             }
@@ -128,7 +131,9 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                color: togglesWrapper.btActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
+                color: togglesWrapper.btActive 
+                       ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.85) 
+                       : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
                 
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -152,7 +157,7 @@ Item {
                 width: parent.height - 4
                 height: parent.height - 4
                 radius: height / 2
-                color: togglesWrapper.btActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                color: togglesWrapper.btActive ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.12)
                 anchors.verticalCenter: parent.verticalCenter
                 x: togglesWrapper.btActive ? parent.width - width - 2 : 2
 
@@ -163,7 +168,7 @@ Item {
                     text: "bluetooth"
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
-                    color: togglesWrapper.btActive ? fc.overlayForeground : Qt.rgba(1, 1, 1, 0.4)
+                    color: togglesWrapper.btActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                     Component.onCompleted: fc.applySmoothing(this)
                 }
             }
@@ -192,7 +197,9 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                color: togglesWrapper.dndActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
+                color: togglesWrapper.dndActive 
+                       ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.85) 
+                       : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
                 
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -216,7 +223,7 @@ Item {
                 width: parent.height - 4
                 height: parent.height - 4
                 radius: height / 2
-                color: togglesWrapper.dndActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                color: togglesWrapper.dndActive ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.12)
                 anchors.verticalCenter: parent.verticalCenter
                 x: togglesWrapper.dndActive ? parent.width - width - 2 : 2
 
@@ -227,7 +234,7 @@ Item {
                     text: "do_not_disturb_on"
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
-                    color: togglesWrapper.dndActive ? fc.overlayForeground : Qt.rgba(1, 1, 1, 0.4)
+                    color: togglesWrapper.dndActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                     Component.onCompleted: fc.applySmoothing(this)
                 }
             }
@@ -257,7 +264,9 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                color: togglesWrapper.caffeineActive ? Qt.rgba(1, 1, 1, 0.85) : Qt.rgba(1, 1, 1, 0.35)
+                color: togglesWrapper.caffeineActive 
+                       ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.85) 
+                       : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
                 
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -284,8 +293,9 @@ Item {
                 width: parent.height - 4
                 height: parent.height - 4
                 radius: height / 2
-                color: !togglesWrapper.caffeineAvailable ? Qt.rgba(1, 1, 1, 0.12) :
-                       togglesWrapper.caffeineActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.12)
+                color: !togglesWrapper.caffeineAvailable 
+                       ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.12) 
+                       : (togglesWrapper.caffeineActive ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.12))
                        
                 anchors.verticalCenter: parent.verticalCenter
                 x: (togglesWrapper.caffeineAvailable && togglesWrapper.caffeineActive) ? parent.width - width - 2 : 2
@@ -297,8 +307,9 @@ Item {
                     text: "local_cafe"
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
-                    color: !togglesWrapper.caffeineAvailable ? Qt.rgba(1, 1, 1, 0.4) :
-                           togglesWrapper.caffeineActive ? fc.overlayForeground : Qt.rgba(1, 1, 1, 0.4)
+                    color: !togglesWrapper.caffeineAvailable 
+                           ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4) 
+                           : (togglesWrapper.caffeineActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4))
                            
                     Component.onCompleted: fc.applySmoothing(this)
                 }

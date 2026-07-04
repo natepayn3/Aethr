@@ -54,7 +54,8 @@ RowLayout {
             text: "music_note"
             font.family: fc.iconFont
             font.pixelSize: 24
-            color: Qt.rgba(1, 1, 1, 0.2)
+            // 🌟 Bound the fallback icon color to 20% opacity of your theme color selection
+            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.2)
             visible: artImage.status !== Image.Ready
         }
     }
@@ -68,7 +69,7 @@ RowLayout {
         Text { 
             id: titleText
             text: mediaRoot.mediaTitle
-            color: "#ffffff"
+            color: shellConfig.themeText
             font.family: fc.mainFont
             font.pixelSize: 14
             font.weight: Font.Bold
@@ -84,7 +85,8 @@ RowLayout {
         Text { 
             id: artistText
             text: mediaRoot.mediaArtist
-            color: fc.textMuted
+            // 🌟 Swapped out fc.textMuted for a dynamic 50% opacity theme color blend
+            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
             font.family: fc.mainFont
             font.pixelSize: 11
             elide: Text.ElideRight
@@ -108,7 +110,7 @@ RowLayout {
                     text: "skip_previous"
                     font.family: fc.iconFont
                     font.pixelSize: 20
-                    color: "#ffffff"
+                    color: shellConfig.themeText
                     Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                 }
                 MouseArea { 
@@ -126,7 +128,7 @@ RowLayout {
                     text: mediaRoot.mediaStatus === "Playing" ? "pause_circle" : "play_circle"
                     font.family: fc.iconFont
                     font.pixelSize: 26
-                    color: "#ffffff"
+                    color: shellConfig.themeText
                     Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                 }
                 MouseArea { 
@@ -144,7 +146,7 @@ RowLayout {
                     text: "skip_next"
                     font.family: fc.iconFont
                     font.pixelSize: 20
-                    color: "#ffffff"
+                    color: shellConfig.themeText
                     Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                 }
                 MouseArea { 

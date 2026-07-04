@@ -17,7 +17,7 @@ ColumnLayout {
     // --- CALENDAR HEADER (Month & Year) ---
     Text {
         text: Qt.formatDate(calRoot.displayDate, "MMMM yyyy")
-        color: "#ffffff"
+        color: shellConfig.themeText
         font.family: fc.mainFont
         font.pixelSize: 13
         font.weight: Font.Bold
@@ -47,7 +47,8 @@ ColumnLayout {
                 Text {
                     anchors.centerIn: parent
                     text: modelData
-                    color: fc.textMuted
+                    // 🌟 Extract RGB channels dynamically and set to 50% opacity
+                    color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                     font.family: fc.mainFont
                     font.pixelSize: 10
                     font.weight: Font.Bold
@@ -78,7 +79,8 @@ ColumnLayout {
                 Text {
                     anchors.centerIn: parent
                     text: parent.isValidDay ? parent.dayNumber : ""
-                    color: parent.isToday ? "#ffffff" : Qt.rgba(1, 1, 1, 0.75)
+                    // 🌟 Swapped the hardcoded white for a 75% alpha version of your theme color
+                    color: parent.isToday ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.75)
                     font.family: fc.mainFont
                     font.pixelSize: parent.isToday ? 13 : 11
                     font.weight: parent.isToday ? Font.Bold : Font.Normal

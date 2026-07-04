@@ -44,7 +44,8 @@ Item {
         Text {
             anchors.centerIn: parent
             text: volumeSliderRoot.percentageText
-            color: Qt.rgba(1, 1, 1, 0.35)
+            // 🌟 Swapped hardcoded white for a 35% alpha version of your theme color
+            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
             font.family: fc.mainFont
             font.pixelSize: 13
             font.weight: Font.Bold
@@ -61,7 +62,7 @@ Item {
             
             // Map the width dynamically so 0% volume sits exactly at the height (48px circle)
             width: parent.height + ((parent.width - parent.height) * volumeSliderRoot.currentVolume)
-            color: "#ffffff"
+            color: shellConfig.themeText
             radius: height / 2
             
             // Keep it hard-pinned to the left edge of the container at all times
@@ -97,7 +98,8 @@ Item {
             text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
             font.family: fc.iconFont
             font.pixelSize: 24
-            color: Qt.rgba(1, 1, 1, 0.4)
+            // 🌟 Swapped hardcoded white for a 40% alpha version of your theme color
+            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
             anchors.left: parent.left
             anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter

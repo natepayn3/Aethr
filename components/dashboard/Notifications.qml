@@ -30,7 +30,7 @@ Rectangle {
 
             Text {
                 text: "Notifications"
-                color: "#ffffff"
+                color: shellConfig.themeText
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
@@ -47,7 +47,10 @@ Rectangle {
                 font.family: fc.mainFont
                 font.pixelSize: 12
                 font.weight: Font.Bold
-                color: clearMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.9) : Qt.rgba(1, 1, 1, 0.4)
+                // 🌟 Dynamically shifts opacity between 90% and 40% using the picker color
+                color: clearMouse.containsMouse 
+                       ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.9) 
+                       : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                 
                 Component.onCompleted: {
                     fc.applyOutline(this, fc.overlayBackground)
@@ -112,7 +115,7 @@ Rectangle {
                     text: "close"
                     font.family: fc.iconFont
                     font.pixelSize: 14
-                    color: "#ffffff"
+                    color: shellConfig.themeText
                     opacity: 0.5
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -139,7 +142,7 @@ Rectangle {
 
                     Text { 
                         text: modelData.summary
-                        color: "#ffffff"
+                        color: shellConfig.themeText
                         font.family: fc.mainFont
                         font.pixelSize: 14
                         font.weight: Font.DemiBold
@@ -153,7 +156,8 @@ Rectangle {
                
                     Text { 
                         text: modelData.body
-                        color: fc.textMuted
+                        // 🌟 Swapped out fc.textMuted for a dynamic 50% opacity theme color blend
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                         font.family: fc.mainFont
                         font.pixelSize: 13
                         wrapMode: Text.Wrap
@@ -171,7 +175,8 @@ Rectangle {
     // --- EMPTY STATE INDICATOR ---
     Text {
         text: "No notifications"
-        color: Qt.rgba(1, 1, 1, 0.25)
+        // 🌟 Bound the placeholder empty label color to 25% opacity of your theme selection
+        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.25)
         font.family: fc.mainFont
         font.pixelSize: 12
         width: parent.width
