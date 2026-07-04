@@ -43,7 +43,7 @@ PanelWindow {
     property color themeAccent: shellConfig.themeAccent
     property color hoverBorder: shellConfig.hoverBorder
 
-    Settings { id: settingsOverlay; visible: false }
+    DisplaySettings { id: displaySettingsOverlay; visible: false }
     BluetoothPopup { id: bluetoothOverlay; visible: false }
     AudioPopup { id: audioOverlay; visible: false }
     WifiPopup { id: wifiOverlay; visible: false }
@@ -62,7 +62,7 @@ PanelWindow {
                                    (dockWindow.launcherModule && 
                                     dockWindow.launcherModule.active && 
                                     dockWindow.launcherModule.targetScreen === dockWindow.screen) ||
-                                   settingsOverlay.visible ||
+                                   displaySettingsOverlay.visible ||
                                    bluetoothOverlay.visible ||
                                    audioOverlay.visible ||
                                    wifiOverlay.visible ||
@@ -128,12 +128,11 @@ PanelWindow {
                   
                     Text {
                         anchors.centerIn: parent
-                        text: "settings"
+                        text: "display_settings"
                         font.family: fc.iconFont
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -159,7 +158,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -185,7 +183,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -211,7 +208,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -237,7 +233,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -263,7 +258,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -289,7 +283,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -315,7 +308,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
 
@@ -341,7 +333,6 @@ PanelWindow {
                         font.pixelSize: 32
                         color: dockHitbox.isPinned ? Qt.rgba(dockWindow.themeText.r, dockWindow.themeText.g, dockWindow.themeText.b, 0.9) : "transparent"
                         Behavior on color { ColorAnimation { duration: 180 } }
-                        Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                     }
                 }
             }
@@ -368,8 +359,8 @@ PanelWindow {
 
                 onClicked: (mouse) => {
                     if (dockHitbox.activeHoverIndex === 0) {
-                        if (!settingsOverlay.visible) settingsOverlay.visible = true;
-                        else settingsOverlay.animateActive = false;
+                        if (!displaySettingsOverlay.visible) displaySettingsOverlay.visible = true;
+                        else displaySettingsOverlay.animateActive = false;
                     } else if (dockHitbox.activeHoverIndex === 1) {
                         if (dockWindow.launcherModule.active) {
                             dockWindow.launcherModule.active = false;
