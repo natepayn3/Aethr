@@ -184,6 +184,9 @@ PanelWindow {
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: wifiPopupWindow.togglePowerState()
                         
+                        // 🌟 Enforce hand pointer over header hardware switch toggle
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+                        
                         implicitWidth: 42
                         implicitHeight: 24
                         
@@ -244,6 +247,8 @@ PanelWindow {
                     }
                 }
 
+                // ... line breaks and infrastructure models remain exactly the same ...
+
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
@@ -276,9 +281,10 @@ PanelWindow {
                             anchors.fill: parent
                             radius: 12
                             clip: true
+                            // 🌟 Aligned highlights with settings view using fc.trackBackground on entry hover
                             color: model.connected 
                                 ? shellConfig.themeAccent
-                                : (itemMouse.containsMouse || isExpanded ? shellConfig.colorBorder : "transparent")
+                                : (itemMouse.containsMouse || isExpanded ? fc.trackBackground : "transparent")
                             border.color: itemMouse.containsMouse || isExpanded ? shellConfig.hoverBorder : "transparent"
                             border.width: 1
                         }
@@ -332,6 +338,8 @@ PanelWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     enabled: !isConnecting
+                                    // 🌟 Hand pointer shape applied directly over list entry bounding boxes
+                                    cursorShape: Qt.PointingHandCursor
                                     
                                     onClicked: {
                                         if (wifiPopupWindow.expandedSsid === model.ssid) {
@@ -367,17 +375,25 @@ PanelWindow {
                                             id: disconnectBtn
                                             text: "Disconnect"
                                             Layout.fillWidth: true
+                                            hoverEnabled: true
+                                            // 🌟 Hand pointer over configuration control buttons
+                                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                                             onClicked: disconnectProc.disconnect(model.ssid)
                                             contentItem: Text { text: disconnectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; Component.onCompleted: fc.applySmoothing(this) }
-                                            background: Rectangle { radius: 8; color: disconnectBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: disconnectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
+                                            // 🌟 Shifted to fc.overlayBackground on button hover transitions
+                                            background: Rectangle { radius: 8; color: disconnectBtn.hovered ? fc.overlayBackground : shellConfig.themeAccent; border.color: disconnectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                         Button {
                                             id: forgetActiveBtn
                                             text: "Forget"
                                             Layout.fillWidth: true
+                                            hoverEnabled: true
+                                            // 🌟 Hand pointer over configuration control buttons
+                                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                                             onClicked: forgetProc.forget(model.ssid)
                                             contentItem: Text { text: forgetActiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; Component.onCompleted: fc.applySmoothing(this) }
-                                            background: Rectangle { radius: 8; color: forgetActiveBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: forgetActiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
+                                            // 🌟 Shifted to fc.overlayBackground on button hover transitions
+                                            background: Rectangle { radius: 8; color: forgetActiveBtn.hovered ? fc.overlayBackground : shellConfig.themeAccent; border.color: forgetActiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                     }
 
@@ -391,9 +407,13 @@ PanelWindow {
                                             text: isConnecting ? "Connecting..." : (isFailed ? "Retry Connection" : "Connect")
                                             Layout.fillWidth: true
                                             enabled: !isConnecting
+                                            hoverEnabled: true
+                                            // 🌟 Hand pointer over configuration control buttons
+                                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                                             onClicked: connectNetworkProc.connectTo(model.ssid, "", isKnown)
                                             contentItem: Text { text: connectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: connectBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
-                                            background: Rectangle { radius: 8; color: connectBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: connectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
+                                            // 🌟 Shifted to fc.overlayBackground on button hover transitions
+                                            background: Rectangle { radius: 8; color: connectBtn.hovered ? fc.overlayBackground : shellConfig.themeAccent; border.color: connectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                         Button {
                                             id: forgetInactiveBtn
@@ -401,9 +421,13 @@ PanelWindow {
                                             visible: isKnown
                                             Layout.preferredWidth: 90
                                             enabled: !isConnecting
+                                            hoverEnabled: true
+                                            // 🌟 Hand pointer over configuration control buttons
+                                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                                             onClicked: forgetProc.forget(model.ssid)
                                             contentItem: Text { text: forgetInactiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: forgetInactiveBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
-                                            background: Rectangle { radius: 8; color: forgetInactiveBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: forgetInactiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
+                                            // 🌟 Shifted to fc.overlayBackground on button hover transitions
+                                            background: Rectangle { radius: 8; color: forgetInactiveBtn.hovered ? fc.overlayBackground : shellConfig.themeAccent; border.color: forgetInactiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                     }
 
@@ -430,6 +454,9 @@ PanelWindow {
                                                 font.pixelSize: 13
                                                 echoMode: TextInput.Password
                                                 enabled: !isConnecting
+
+                                                selectByMouse: true
+                                                HoverHandler { cursorShape: Qt.IBeamCursor }
                                                 
                                                 onAccepted: if (!isConnecting) connectNetworkProc.connectTo(model.ssid, passInput.text, false)
                                                 onTextEdited: if (isFailed) wifiPopupWindow.failedSsid = ""
@@ -450,9 +477,13 @@ PanelWindow {
                                             text: isConnecting ? "Wait..." : "Join"
                                             Layout.preferredWidth: 80
                                             enabled: !isConnecting
+                                            hoverEnabled: true
+                                            // 🌟 Hand pointer over configuration control buttons
+                                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                                             onClicked: connectNetworkProc.connectTo(model.ssid, passInput.text, false)
                                             contentItem: Text { text: joinBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: joinBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
-                                            background: Rectangle { radius: 8; color: joinBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: joinBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
+                                            // 🌟 Shifted to fc.overlayBackground on button hover transitions
+                                            background: Rectangle { radius: 8; color: joinBtn.hovered ? fc.overlayBackground : shellConfig.themeAccent; border.color: joinBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                     }
                                 }
@@ -494,6 +525,7 @@ PanelWindow {
         }
     }
 
+    // ... lines containing backend orchestration and bash process handling blocks stay exactly the same ...
     Process {
         id: fetchStatusProc
         command: ["sh", "-c", "nmcli dev | grep -q wifi && nmcli -t -f WIFI g"]

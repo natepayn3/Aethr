@@ -164,8 +164,9 @@ PanelWindow {
                             Layout.preferredHeight: 64
                             radius: 12
                             
+                            // 🌟 Aligned highlights with settings view using fc.overlayBackground on hover
                             color: powerPopupWindow.activeHoverIndex === index 
-                                ? powerPopupWindow.colorBackground 
+                                ? fc.overlayBackground 
                                 : fc.trackBackground
                             border.color: powerPopupWindow.activeHoverIndex === index ? shellConfig.hoverBorder : "transparent"
                             border.width: 1

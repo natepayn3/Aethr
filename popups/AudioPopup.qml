@@ -191,6 +191,9 @@ PanelWindow {
                         to: 100
                         value: audioPopupWindow.systemVolume
 
+                        // 🌟 Track cursor hover shapes over slider context tracks
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                         onMoved: {
                             audioPopupWindow.systemVolume = value;
                             if (audioPopupWindow.isMuted) audioPopupWindow.isMuted = false;
@@ -222,7 +225,6 @@ PanelWindow {
                             implicitWidth: 16
                             implicitHeight: 16
                             radius: 8
-                            // Fixed typo from volumeOsdWindow.isMuted to audioPopupWindow.isMuted
                             color: audioPopupWindow.isMuted ? fc.overlayForeground : shellConfig.themeText
                         }
                     }
@@ -240,6 +242,9 @@ PanelWindow {
                             Layout.fillWidth: true
                             implicitHeight: 38
                             hoverEnabled: true
+                            // 🌟 Enforce hand cursor shape on list entry hover
+                            cursorShape: Qt.PointingHandCursor
+
                             onClicked: {
                                 sinkSetProc.command = ["wpctl", "set-default", model.sinkTarget];
                                 sinkSetProc.running = true;
@@ -248,7 +253,8 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: parent.containsMouse ? shellConfig.themeAccent : "transparent"
+                                // 🌟 Use fc.trackBackground for hover highlighting to align with settings views
+                                color: parent.containsMouse ? fc.trackBackground : "transparent"
                                 border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
                             }
@@ -359,6 +365,9 @@ PanelWindow {
                         to: 100
                         value: audioPopupWindow.inputVolume
 
+                        // 🌟 Track cursor hover shapes over slider context tracks
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                         onMoved: {
                             audioPopupWindow.inputVolume = value;
                             if (audioPopupWindow.isInputMuted) audioPopupWindow.isInputMuted = false;
@@ -407,6 +416,9 @@ PanelWindow {
                             Layout.fillWidth: true
                             implicitHeight: 38
                             hoverEnabled: true
+                            // 🌟 Enforce hand cursor shape on list entry hover
+                            cursorShape: Qt.PointingHandCursor
+
                             onClicked: {
                                 sinkSetProc.command = ["wpctl", "set-default", model.sourceTarget];
                                 sinkSetProc.running = true;
@@ -415,7 +427,8 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: parent.containsMouse ? shellConfig.themeAccent : "transparent"
+                                // 🌟 Use fc.trackBackground for hover highlighting to align with settings views
+                                color: parent.containsMouse ? fc.trackBackground : "transparent"
                                 border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
                             }

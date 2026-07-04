@@ -173,7 +173,6 @@ PanelWindow {
                 text: "arrow_cool_down"
                 font.family: fc.iconFont
                 font.pixelSize: 125
-                // 🔄 Reverted back to window background color to maintain clipping mask silhouette
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
                 anchors.right: parent.left
@@ -187,7 +186,6 @@ PanelWindow {
                 text: "arrow_warm_up"
                 font.family: fc.iconFont
                 font.pixelSize: 125
-                // 🔄 Reverted back to window background color to maintain clipping mask silhouette
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
                 anchors.left: parent.right
@@ -385,10 +383,16 @@ PanelWindow {
                             flat: true
                             implicitWidth: 120
                             implicitHeight: 30
+                            hoverEnabled: true
+                            
+                            // 🌟 Hand pointer shape attached to Import
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                             background: Rectangle {
                                 radius: 8
-                                color: importBtn.hovered ? shellConfig.themeAccent : "transparent"
-                                border.color: importBtn.hovered ? shellConfig.hoverBorder : "transparent"
+                                // 🌟 Use generic highlight layout tokens on hover
+                                color: importBtn.hovered ? fc.trackBackground : "transparent"
+                                border.color: importBtn.hovered ? fc.borderMuted : "transparent"
                                 border.width: 1
                             }
                             contentItem: Text { text: "+ Import"; font.family: shellConfig.shellFont; font.pixelSize: 12; font.bold: true; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
@@ -410,12 +414,15 @@ PanelWindow {
                             width: profileListView.width
                             height: 60
                             hoverEnabled: true
+                            // 🌟 Enforce hand cursor shape on list entries
+                            cursorShape: Qt.PointingHandCursor
 
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                color: networkPopupWindow.activeVpnName === profileName ? shellConfig.themeAccent : (parent.containsMouse ? shellConfig.colorBorder : "transparent")
-                                border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.2) : (parent.containsMouse ? shellConfig.hoverBorder : "transparent")
+                                // 🌟 Updated list item highlights to use generic tokens
+                                color: networkPopupWindow.activeVpnName === profileName ? shellConfig.themeAccent : (parent.containsMouse ? fc.trackBackground : "transparent")
+                                border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.2) : (parent.containsMouse ? fc.borderMuted : "transparent")
                                 border.width: 1
                             }
 
@@ -443,6 +450,9 @@ PanelWindow {
                                     checked: networkPopupWindow.activeVpnName === profileName
                                     onClicked: networkPopupWindow.toggleProfileState(profileName, checked)
                                     
+                                    // 🌟 Hand pointer over configuration switch controls
+                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                                     implicitWidth: 42
                                     implicitHeight: 24
                                     
@@ -471,7 +481,12 @@ PanelWindow {
                                     id: delBtn
                                     flat: true
                                     implicitWidth: 28; implicitHeight: 28
-                                    background: Rectangle { color: delBtn.hovered ? shellConfig.colorBorder : "transparent"; radius: 6 }
+                                    hoverEnabled: true
+                                    
+                                    // 🌟 Hand pointer over entry removal action buttons
+                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+
+                                    background: Rectangle { color: delBtn.hovered ? fc.trackBackground : "transparent"; radius: 6; border.color: delBtn.hovered ? fc.borderMuted : "transparent"; border.width: 1 }
                                     contentItem: Text { text: "delete"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: delBtn.hovered ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                                     onClicked: networkPopupWindow.deleteProfile(profileName)
                                 }
@@ -492,7 +507,12 @@ PanelWindow {
                         Text { text: "Select VPN config:"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         Button {
                             id: cancelBtn; flat: true; implicitWidth: 70; implicitHeight: 28
-                            background: Rectangle { color: cancelBtn.hovered ? shellConfig.themeAccent : "transparent"; border.color: cancelBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1; radius: 6 }
+                            hoverEnabled: true
+                            
+                            // 🌟 Hand pointer over directory cancel action buttons
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
+
+                            background: Rectangle { color: cancelBtn.hovered ? fc.trackBackground : "transparent"; border.color: cancelBtn.hovered ? fc.borderMuted : "transparent"; border.width: 1; radius: 6 }
                             contentItem: Text { text: "Cancel"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                             onClicked: networkPopupWindow.showFileBrowser = false
                         }
@@ -524,12 +544,15 @@ PanelWindow {
                                 delegate: MouseArea {
                                     id: fileDelegateItem; width: fileListView.width; height: fileName === "." ? 0 : 34; visible: fileName !== "."
                                     hoverEnabled: true
+                                    // 🌟 Hand pointer for individual file elements
+                                    cursorShape: Qt.PointingHandCursor
 
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: 6
-                                        color: parent.containsMouse ? shellConfig.themeAccent : "transparent"
-                                        border.color: parent.containsMouse ? shellConfig.hoverBorder : "transparent"
+                                        // 🌟 Match generic browser highlight parameters safely
+                                        color: parent.containsMouse ? fc.trackBackground : "transparent"
+                                        border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                         border.width: 1
                                     }
 

@@ -176,12 +176,17 @@ PanelWindow {
                         height: 32
                         hoverEnabled: true
                         enabled: bluetoothPopupWindow.isPowered
+                        // 🌟 Track active pointing hand icon shape over button bounds
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: bluetoothPopupWindow.triggerScan()
 
                         Rectangle {
                             anchors.fill: parent
                             radius: 8
-                            color: parent.containsMouse ? Qt.rgba(255, 255, 255, 0.08) : "transparent"
+                            // 🌟 Use standard track layout highlights when hovered
+                            color: parent.containsMouse ? fc.trackBackground : "transparent"
+                            border.color: parent.containsMouse ? fc.borderMuted : "transparent"
+                            border.width: 1
                         }
 
                         Text {
@@ -219,14 +224,19 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 implicitHeight: 46
                                 radius: 12
+                                // 🌟 Set high-contrast tracking rules to use fc.trackBackground and fc.borderMuted when hovered
                                 color: model.connected 
                                        ? Qt.rgba(255, 255, 255, 0.08) 
-                                       : (delegateMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.04) : "transparent")
+                                       : (delegateMouse.containsMouse ? fc.trackBackground : "transparent")
+                                border.color: delegateMouse.containsMouse ? fc.borderMuted : "transparent"
+                                border.width: 1
 
                                 MouseArea {
                                     id: delegateMouse
                                     anchors.fill: parent
                                     hoverEnabled: true
+                                    // 🌟 Enforce pointer shape changes across row interaction blocks
+                                    cursorShape: Qt.PointingHandCursor
                                 }
 
                                 RowLayout {
@@ -355,6 +365,9 @@ PanelWindow {
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: bluetoothPopupWindow.togglePower()
                         
+                        // 🌟 Force hand pointer over hardware switch toggles
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                         implicitWidth: 42
                         implicitHeight: 24
                         
