@@ -327,7 +327,7 @@ print(json.dumps(apps))
                 radius: 16
                 antialiasing: true
                 border.color: launcherModuleRoot.themeBorder
-                border.width: 1
+                border.width: 0
             }
 
             Rectangle {
