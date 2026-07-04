@@ -73,7 +73,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             anchors.left: parent.left
-            anchors.leftMargin: 15
+            anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: 0
             Component.onCompleted: fc.applySmoothing(this)
@@ -119,7 +119,7 @@ Item {
                 height: 24
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                x: 15
+                x: 12
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
                 Component.onCompleted: fc.applySmoothing(this)

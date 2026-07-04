@@ -94,18 +94,24 @@ Item {
         // Background Icon (White/Dimmed when unfilled)
         Text {
             id: bgIcon
-            visible: fillBar.width < (x + width) // Fixed icon overlap behavior from other modules
+            visible: fillBar.width < (x + width)
             text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
             font.family: fc.iconFont
             font.pixelSize: 24
-            // 🌟 Swapped hardcoded white for a 40% alpha version of your theme color
             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
             anchors.left: parent.left
-            anchors.leftMargin: 16
+            anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
            
-            Component.onCompleted: {
-                fc.applyOutline(this, Qt.rgba(0, 0, 0, 0.35))
+            verticalAlignment: Text.AlignVCenter
+
+            Rectangle {
+                width: 6
+                height: 6
+                radius: 3
+                color: fc.overlayForeground
+                anchors.centerIn: parent
+                visible: volumeSliderRoot.currentVolume === 0.0
             }
         }
 
@@ -114,18 +120,18 @@ Item {
             height: parent.height
             width: fillBar.width
             clip: true
+            anchors.verticalCenter: parent.verticalCenter
 
             Text {
                 text: volumeSliderRoot.currentVolume === 0 ? "volume_off" : (volumeSliderRoot.currentVolume < 0.4 ? "volume_down" : "volume_up")
                 font.family: fc.iconFont
                 font.pixelSize: 24
                 color: fc.overlayForeground
-                x: 16
+                verticalAlignment: Text.AlignVCenter
+                
+                // 🎯 Pin horizontally via static X coordinate and use parent vertical centering
+                x: 12
                 anchors.verticalCenter: parent.verticalCenter
-    
-                Component.onCompleted: {
-                    fc.applySmoothing(this)
-                }
             }
         }
     }
