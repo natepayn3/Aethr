@@ -129,7 +129,7 @@ Item {
                 family: fc.iconFont
                 pixelSize: 54
             }
-            color: fc.overlayBackground
+            color: shellConfig.colorBackground
             styleColor: colorBackground
             z: 1
             anchors.bottom: cardMainBody.top
@@ -249,8 +249,6 @@ Item {
                             font.bold: true
                             color: shellConfig.themeText // 🌟 Bound directly to dynamic picker color
                             anchors.verticalCenter: parent.verticalCenter
-                            
-                            Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
                         }
 
                         RowLayout {
@@ -353,7 +351,7 @@ Item {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: fc.overlayBackground
+                        color: shellConfig.colorBackground
                         radius: 4
                         z: 1
                     }
@@ -370,7 +368,7 @@ Item {
                             visible: modelData.lastIpcObject ? true : false
                             z: 2
                             
-                            color: fc.overlayBackground
+                            color: shellConfig.colorBackground
                             border.color: fc.borderMuted
                             border.width: 0
                             radius: 4
