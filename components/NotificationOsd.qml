@@ -81,9 +81,9 @@ PanelWindow {
                 id: bannerCard
                 anchors.fill: parent
                 radius: 16
-                color: fc.trackBackground
+                color: shellConfig.colorBackground
                 border.color: fc.borderMuted
-                border.width: 1
+                border.width: 0
 
                 RowLayout {
                     anchors.left: parent.left
