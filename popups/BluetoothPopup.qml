@@ -161,7 +161,7 @@ PanelWindow {
 
                     Text {
                         text: "Bluetooth Devices"
-                        color: "#ffffff"
+                        color: shellConfig.themeText
                         font.family: fc.mainFont
                         font.pixelSize: 18
                         font.weight: Font.Bold
@@ -189,7 +189,7 @@ PanelWindow {
                             text: "radar"
                             font.family: fc.iconFont
                             font.pixelSize: 22
-                            color: "#ffffff"
+                            color: shellConfig.themeText
                             opacity: bluetoothPopupWindow.isScanning ? 1.0 : 0.6
                             style: Text.Outline
                             styleColor: fc.overlayBackground
@@ -241,7 +241,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: model.name !== "" ? model.name : model.mac
-                                            color: "#ffffff"
+                                            color: shellConfig.themeText
                                             font.family: fc.mainFont
                                             font.pixelSize: 14
                                             font.weight: model.connected ? Font.Bold : Font.Normal
@@ -253,7 +253,7 @@ PanelWindow {
 
                                         Text {
                                             text: model.connected ? "Connected" : (model.paired ? "Paired" : model.mac)
-                                            color: "#ffffff"
+                                            color: shellConfig.themeText
                                             opacity: model.connected ? 0.9 : 0.5
                                             font.family: fc.mainFont
                                             font.pixelSize: 11
@@ -289,7 +289,7 @@ PanelWindow {
                                             text: !model.paired ? "link" : (model.connected ? "link_off" : "cable")
                                             font.family: fc.iconFont
                                             font.pixelSize: 18
-                                            color: "#ffffff"
+                                            color: shellConfig.themeText
                                             style: Text.Outline
                                             styleColor: fc.overlayBackground
                                         }
@@ -315,7 +315,7 @@ PanelWindow {
                                             text: "delete"
                                             font.family: fc.iconFont
                                             font.pixelSize: 18
-                                            color: "#ffffff"
+                                            color: shellConfig.themeText
                                             opacity: 0.8
                                             style: Text.Outline
                                             styleColor: fc.overlayBackground
@@ -341,7 +341,7 @@ PanelWindow {
                         text: bluetoothPopupWindow.activeStatusText
                         font.family: fc.mainFont
                         font.pixelSize: 14
-                        color: "#ffffff"
+                        color: shellConfig.themeText
                         opacity: 0.8
                         style: Text.Outline
                         styleColor: fc.overlayBackground

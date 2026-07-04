@@ -173,6 +173,7 @@ PanelWindow {
                 text: "arrow_cool_down"
                 font.family: fc.iconFont
                 font.pixelSize: 125
+                // 🔄 Reverted back to window background color to maintain clipping mask silhouette
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
                 anchors.right: parent.left
@@ -186,6 +187,7 @@ PanelWindow {
                 text: "arrow_warm_up"
                 font.family: fc.iconFont
                 font.pixelSize: 125
+                // 🔄 Reverted back to window background color to maintain clipping mask silhouette
                 color: shellConfig.colorBackground
                 styleColor: colorBackground
                 anchors.left: parent.right
@@ -267,7 +269,7 @@ PanelWindow {
                         ColumnLayout {
                             spacing: 2
                             Layout.preferredWidth: 110
-                            Text { text: "Download"; font.family: shellConfig.shellFont; font.pixelSize: 14; color: Qt.rgba(1, 1, 1, 0.5); horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
+                            Text { text: "Download"; font.family: shellConfig.shellFont; font.pixelSize: 14; color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5); horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                             Text { text: networkPopupWindow.downloadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         }
                         
@@ -276,7 +278,7 @@ PanelWindow {
                         ColumnLayout {
                             spacing: 2
                             Layout.preferredWidth: 110
-                            Text { text: "Upload"; font.family: shellConfig.shellFont; font.pixelSize: 14; color: Qt.rgba(1, 1, 1, 0.5); horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
+                            Text { text: "Upload"; font.family: shellConfig.shellFont; font.pixelSize: 14; color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5); horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                             Text { text: networkPopupWindow.uploadSpeed; font.family: shellConfig.shellFont; font.pixelSize: 18; font.weight: Font.Bold; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         }
                         
@@ -288,7 +290,6 @@ PanelWindow {
                         id: sparklineCanvasWrapper
                         Layout.fillWidth: true
                         height: 44
-                        //visible: graphHistoryModel.count > 1
 
                         Shape {
                             anchors.fill: parent
@@ -297,12 +298,12 @@ PanelWindow {
 
                             ShapePath {
                                 id: filledAreaPath
-                                fillColor: Qt.rgba(1, 1, 1, 0.08) 
+                                fillColor: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.08) 
                                 strokeColor: "transparent"
 
                                 PathPolyline {
                                     path: {
-                                        let dummy = networkPopupWindow.graphTick; // Binds the tick dependency
+                                        let dummy = networkPopupWindow.graphTick; 
                                         let pointsList = [];
                                         let totalPoints = graphHistoryModel.count;
                                         if (totalPoints < 2) return pointsList;
@@ -337,14 +338,14 @@ PanelWindow {
 
                             ShapePath {
                                 fillColor: "transparent"
-                                strokeColor: Qt.rgba(1, 1, 1, 0.6)
+                                strokeColor: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
                                 strokeWidth: 1.5
                                 capStyle: ShapePath.RoundCap
                                 joinStyle: ShapePath.RoundJoin
 
                                 PathPolyline {
                                     path: {
-                                        let dummy = networkPopupWindow.graphTick; // Binds the tick dependency
+                                        let dummy = networkPopupWindow.graphTick; 
                                         let pointsList = [];
                                         let totalPoints = graphHistoryModel.count;
                                         if (totalPoints < 2) return pointsList;
@@ -386,8 +387,8 @@ PanelWindow {
                             implicitHeight: 30
                             background: Rectangle {
                                 radius: 8
-                                color: importBtn.hovered ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
-                                border.color: importBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                                color: importBtn.hovered ? shellConfig.themeAccent : "transparent"
+                                border.color: importBtn.hovered ? shellConfig.hoverBorder : "transparent"
                                 border.width: 1
                             }
                             contentItem: Text { text: "+ Import"; font.family: shellConfig.shellFont; font.pixelSize: 12; font.bold: true; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
@@ -413,9 +414,8 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                // Inline comment: Toned down active opacity to fix toggle contrast against the highlighted container
-                                color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.05) : (parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent")
-                                border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(1, 1, 1, 0.2) : (parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent")
+                                color: networkPopupWindow.activeVpnName === profileName ? shellConfig.themeAccent : (parent.containsMouse ? shellConfig.colorBorder : "transparent")
+                                border.color: networkPopupWindow.activeVpnName === profileName ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.2) : (parent.containsMouse ? shellConfig.hoverBorder : "transparent")
                                 border.width: 1
                             }
 
@@ -425,24 +425,22 @@ PanelWindow {
                                 spacing: 12
 
                                 Text {
-                                    // Inline comment: Dynamic material symbol swap based on connection state
                                     text: networkPopupWindow.activeVpnName === profileName ? "vpn_key" : "vpn_key_off"
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: 18
-                                    color: networkPopupWindow.activeVpnName === profileName ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4)
+                                    color: networkPopupWindow.activeVpnName === profileName ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                                 }
 
                                 ColumnLayout {
                                     spacing: 1
                                     Layout.fillWidth: true
                                     Text { text: profileName; font.family: shellConfig.shellFont; font.bold: true; font.pixelSize: 13; color: shellConfig.themeText; elide: Text.ElideRight }
-                                    Text { text: networkPopupWindow.activeVpnName === profileName ? "Connected" : "Disconnected"; font.family: shellConfig.shellFont; font.pixelSize: 11; color: Qt.rgba(1,1,1,0.5) }
+                                    Text { text: networkPopupWindow.activeVpnName === profileName ? "Connected" : "Disconnected"; font.family: shellConfig.shellFont; font.pixelSize: 11; color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5) }
                                 }
 
                                 Switch {
                                     id: itemToggleSwitch
                                     checked: networkPopupWindow.activeVpnName === profileName
-                                    // Inline comment: Route back to the local connection execution handler
                                     onClicked: networkPopupWindow.toggleProfileState(profileName, checked)
                                     
                                     implicitWidth: 42
@@ -453,7 +451,7 @@ PanelWindow {
                                         height: 24
                                         radius: 12
                                         color: itemToggleSwitch.checked ? shellConfig.themeAccent : "transparent"
-                                        border.color: Qt.rgba(fc.textPrimary.r, fc.textPrimary.g, fc.textPrimary.b, 0.5)
+                                        border.color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                                         border.width: 2
 
                                         Rectangle {
@@ -462,7 +460,7 @@ PanelWindow {
                                             width: 14
                                             height: 14
                                             radius: 7
-                                            color: fc.textPrimary
+                                            color: shellConfig.themeText 
                                             
                                             Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                                         }
@@ -473,8 +471,8 @@ PanelWindow {
                                     id: delBtn
                                     flat: true
                                     implicitWidth: 28; implicitHeight: 28
-                                    background: Rectangle { color: delBtn.hovered ? Qt.rgba(1, 1, 1, 0.1) : "transparent"; radius: 6 }
-                                    contentItem: Text { text: "delete"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: delBtn.hovered ? "#ffffff" : Qt.rgba(1, 1, 1, 0.4); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                    background: Rectangle { color: delBtn.hovered ? shellConfig.colorBorder : "transparent"; radius: 6 }
+                                    contentItem: Text { text: "delete"; font.family: "Material Symbols Outlined"; font.pixelSize: 16; color: delBtn.hovered ? shellConfig.themeText : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                                     onClicked: networkPopupWindow.deleteProfile(profileName)
                                 }
                             }
@@ -494,8 +492,8 @@ PanelWindow {
                         Text { text: "Select VPN config:"; font.family: shellConfig.shellFont; font.pixelSize: 14; font.bold: true; color: shellConfig.themeText; Layout.fillWidth: true; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                         Button {
                             id: cancelBtn; flat: true; implicitWidth: 70; implicitHeight: 28
-                            background: Rectangle { color: cancelBtn.hovered ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"; border.color: cancelBtn.hovered ? Qt.rgba(0, 0, 0, 0.2) : "transparent"; border.width: 1; radius: 6 }
-                            contentItem: Text { text: "Cancel"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(1,1,1,0.6); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
+                            background: Rectangle { color: cancelBtn.hovered ? shellConfig.themeAccent : "transparent"; border.color: cancelBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1; radius: 6 }
+                            contentItem: Text { text: "Cancel"; font.family: shellConfig.shellFont; font.pixelSize: 12; color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.35) }
                             onClicked: networkPopupWindow.showFileBrowser = false
                         }
                     }
@@ -530,8 +528,8 @@ PanelWindow {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: 6
-                                        color: parent.containsMouse ? Qt.rgba(0.4, 0.4, 0.4, 0.28) : "transparent"
-                                        border.color: parent.containsMouse ? Qt.rgba(0, 0, 0, 0.2) : "transparent"
+                                        color: parent.containsMouse ? shellConfig.themeAccent : "transparent"
+                                        border.color: parent.containsMouse ? shellConfig.hoverBorder : "transparent"
                                         border.width: 1
                                     }
 
@@ -630,7 +628,6 @@ PanelWindow {
     }
     
     function toggleProfileState(profileName, itemChecked) {
-        // Inline comment: Execute shell notifications when the interface toggles
         if (itemChecked) {
             vpnNotificationProc.fire("VPN Connected", "Connected to " + profileName)
         } else {

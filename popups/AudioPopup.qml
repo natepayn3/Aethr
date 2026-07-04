@@ -134,7 +134,7 @@ PanelWindow {
 
                     Text {
                         text: "Audio Output"
-                        color: "#ffffff"
+                        color: shellConfig.themeText
                         font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
@@ -147,7 +147,7 @@ PanelWindow {
 
                     Text {
                         text: audioPopupWindow.isMuted ? "Muted" : audioPopupWindow.systemVolume + "%"
-                        color: "#ffffff"
+                        color: shellConfig.themeText
                         font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
@@ -167,7 +167,7 @@ PanelWindow {
                         text: audioPopupWindow.isMuted ? "volume_off" : "volume_up"
                         font.family: fc.iconFont
                         font.pixelSize: 28
-                        color: "#ffffff"
+                        color: shellConfig.themeText
 
                         Component.onCompleted: {
                             fc.applyOutline(this, fc.overlayBackground)
@@ -211,7 +211,7 @@ PanelWindow {
                             Rectangle {
                                 width: volumeSlider.visualPosition * parent.width
                                 height: parent.height
-                                color: audioPopupWindow.isMuted ? fc.overlayForeground : "#ffffff"
+                                color: audioPopupWindow.isMuted ? fc.overlayForeground : shellConfig.themeText
                                 radius: 3
                             }
                         }
@@ -223,7 +223,7 @@ PanelWindow {
                             implicitHeight: 16
                             radius: 8
                             // Fixed typo from volumeOsdWindow.isMuted to audioPopupWindow.isMuted
-                            color: audioPopupWindow.isMuted ? fc.overlayForeground : "#ffffff"
+                            color: audioPopupWindow.isMuted ? fc.overlayForeground : shellConfig.themeText
                         }
                     }
                 }
@@ -260,7 +260,7 @@ PanelWindow {
 
                                 Text {
                                     text: model.sinkName
-                                    color: "#ffffff"
+                                    color: shellConfig.themeText
                                     font.family: fc.mainFont
                                     font.pixelSize: 14
                                     font.weight: model.isDefault ? Font.DemiBold : Font.Normal
@@ -277,7 +277,7 @@ PanelWindow {
                                     text: "check"
                                     font.family: fc.iconFont
                                     font.pixelSize: 18
-                                    color: "#ffffff"
+                                    color: shellConfig.themeText
                                     opacity: 0.95
                                     visible: model.isDefault
 
@@ -302,7 +302,7 @@ PanelWindow {
 
                     Text {
                         text: "Audio Input"
-                        color: "#ffffff"
+                        color: shellConfig.themeText
                         font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
@@ -315,7 +315,7 @@ PanelWindow {
 
                     Text {
                         text: audioPopupWindow.isInputMuted ? "Muted" : audioPopupWindow.inputVolume + "%"
-                        color: "#ffffff"
+                        color: shellConfig.themeText
                         font.family: fc.mainFont
                         font.pixelSize: 16
                         font.weight: Font.Bold
@@ -335,7 +335,7 @@ PanelWindow {
                         text: audioPopupWindow.isInputMuted ? "mic_off" : "mic"
                         font.family: fc.iconFont
                         font.pixelSize: 28
-                        color: "#ffffff"
+                        color: shellConfig.themeText
 
                         Component.onCompleted: {
                             fc.applyOutline(this, fc.overlayBackground)
@@ -379,7 +379,7 @@ PanelWindow {
                             Rectangle {
                                 width: micSlider.visualPosition * parent.width
                                 height: parent.height
-                                color: audioPopupWindow.isInputMuted ? fc.overlayForeground : "#ffffff"
+                                color: audioPopupWindow.isInputMuted ? fc.overlayForeground : shellConfig.themeText
                                 radius: 3
                             }
                         }
@@ -390,7 +390,7 @@ PanelWindow {
                             implicitWidth: 16
                             implicitHeight: 16
                             radius: 8
-                            color: audioPopupWindow.isInputMuted ? fc.overlayForeground : "#ffffff"
+                            color: audioPopupWindow.isInputMuted ? fc.overlayForeground : shellConfig.themeText
                         }
                     }
                 }
@@ -427,7 +427,7 @@ PanelWindow {
 
                                 Text {
                                     text: model.sourceName
-                                    color: "#ffffff"
+                                    color: shellConfig.themeText
                                     font.family: fc.mainFont
                                     font.pixelSize: 14
                                     font.weight: model.isDefault ? Font.DemiBold : Font.Normal
@@ -440,7 +440,7 @@ PanelWindow {
                                     text: "check"
                                     font.family: fc.iconFont
                                     font.pixelSize: 18
-                                    color: "#ffffff"
+                                    color: shellConfig.themeText
                                     opacity: 0.95
                                     visible: model.isDefault
                                 }

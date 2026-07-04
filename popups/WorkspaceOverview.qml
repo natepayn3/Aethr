@@ -251,7 +251,8 @@ PanelWindow {
                                         Text {
                                             text: "clock_loader_10"
                                             font { family: fontCfg.iconFont; pixelSize: 30 }
-                                            color: fontCfg.textMuted
+                                            // 🌟 Swapped hardcoded text colors for a dynamic 40% alpha version of your theme color selection
+                                            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             width: 30
                                             height: 30
@@ -262,7 +263,8 @@ PanelWindow {
                                         Text {
                                             text: "clock_loader_10"
                                             font { family: fontCfg.iconFont; pixelSize: 30 }
-                                            color: fontCfg.textMuted
+                                            // 🌟 Swapped hardcoded text colors for a dynamic 40% alpha version of your theme color selection
+                                            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             width: 30
                                             height: 30
@@ -273,7 +275,8 @@ PanelWindow {
                                         Text {
                                             text: "density_small"
                                             font { family: fontCfg.iconFont; pixelSize: 30 }
-                                            color: fontCfg.textMuted
+                                            // 🌟 Swapped hardcoded text colors for a dynamic 40% alpha version of your theme color selection
+                                            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                                             anchors.horizontalCenter: parent.horizontalCenter
                                         }
                                     }
@@ -304,7 +307,10 @@ PanelWindow {
                                                 font.family: overviewWindow.shellFont
                                                 font.pixelSize: tileWrapper.isTargetActive ? 16 : 13
                                                 font.bold: true
-                                                color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.textMuted
+                                                // 🌟 Swapped text states to scale opacities dynamically off shellConfig.themeText
+                                                color: tileWrapper.isTargetActive 
+                                                       ? shellConfig.themeText 
+                                                       : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 Component.onCompleted: fontCfg.applyOutline(this, fontCfg.overlayBackground)
                                                 
@@ -433,8 +439,8 @@ PanelWindow {
                                                 z: 2
                                                 
                                                 color: tileWrapper.isTargetActive ? 
-                                                    Qt.rgba(fontCfg.textPrimary.r, fontCfg.textPrimary.g, fontCfg.textPrimary.b, 0.15) : fontCfg.overlayBackground
-                                                border.color: tileWrapper.isTargetActive ? fontCfg.textPrimary : fontCfg.borderMuted
+                                                    Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.15) : fontCfg.overlayBackground
+                                                border.color: tileWrapper.isTargetActive ? shellConfig.themeText : fontCfg.borderMuted
                                                 border.width: 0
                                                 radius: 4
 
@@ -473,7 +479,7 @@ PanelWindow {
                                                 Rectangle {
                                                     anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
                                                     height: Math.min(16, parent.height * 0.3)
-                                                    color: tileWrapper.isTargetActive ? fontCfg.textPrimary : "#cc11111b"
+                                                    color: tileWrapper.isTargetActive ? shellConfig.themeText : "#cc11111b"
                                                     visible: parent.height > 24 && parent.width > 40
                                                     radius: 2
 
@@ -482,7 +488,7 @@ PanelWindow {
                                                         font.family: fontCfg.mainFont
                                                         font.pixelSize: 8
                                                         font.bold: true 
-                                                        color: tileWrapper.isTargetActive ? "#000000" : fontCfg.textPrimary
+                                                        color: tileWrapper.isTargetActive ? "#000000" : shellConfig.themeText
                                                         anchors.centerIn: parent
                                                         width: parent.width - 4
                                                         elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter

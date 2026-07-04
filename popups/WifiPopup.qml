@@ -88,7 +88,8 @@ PanelWindow {
                 text: "rss_feed"
                 font.family: fc.iconFont
                 font.pixelSize: 125
-                color: fc.overlayBackground // Swapped hardcoded bg color for fontconfig overlay token
+                // 🔄 Reverted back to window background color to maintain clipping mask silhouette
+                color: colorBackground
                 styleColor: colorBackground
                 
                 anchors.right: parent.left
@@ -104,7 +105,8 @@ PanelWindow {
                 text: "rss_feed"
                 font.family: fc.iconFont
                 font.pixelSize: 125
-                color: fc.overlayBackground // Swapped hardcoded bg color for fontconfig overlay token
+                // 🔄 Reverted back to window background color to maintain clipping mask silhouette
+                color: colorBackground
                 styleColor: colorBackground
 
                 anchors.left: parent.right
@@ -165,13 +167,13 @@ PanelWindow {
 
                     Text {
                         text: "Wi-Fi Networks"
-                        color: fc.textPrimary // Bind directly to centralized text color
+                        color: shellConfig.themeText 
                         font.family: shellConfig.shellFont
                         font.pixelSize: 18
                         font.weight: Font.Bold
                         Layout.fillWidth: true
                         
-                        Component.onCompleted: fc.applyOutline(this) // Abstracted inline styling to the factory
+                        Component.onCompleted: fc.applyOutline(this)
                     }
 
                     Switch {
@@ -190,7 +192,7 @@ PanelWindow {
                             height: 24
                             radius: 12
                             color: powerSwitch.checked ? shellConfig.themeAccent : "transparent"
-                            border.color: powerSwitch.checked ? shellConfig.themeAccent : fc.borderMuted // Using centralized transparent borders
+                            border.color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                             border.width: 2
 
                             Rectangle {
@@ -199,7 +201,7 @@ PanelWindow {
                                 width: 14
                                 height: 14
                                 radius: 7
-                                color: fc.textPrimary // Swapped hardcoded reference
+                                color: shellConfig.themeText 
                                 
                                 Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                             }
@@ -215,9 +217,9 @@ PanelWindow {
 
                     Text {
                         text: !wifiPopupWindow.hasHardware ? "signal_wifi_off" : (wifiPopupWindow.isScanning ? "refresh" : "network_wifi")
-                        font.family: fc.iconFont // Use uniform centralized font family
+                        font.family: fc.iconFont
                         font.pixelSize: 22
-                        color: fc.textPrimary // central text channel
+                        color: shellConfig.themeText 
                         
                         Component.onCompleted: fc.applyOutline(this)
                         
@@ -234,7 +236,7 @@ PanelWindow {
                         text: wifiPopupWindow.activeStatusText
                         font.family: shellConfig.shellFont
                         font.pixelSize: 13
-                        color: fc.textMuted // Secondary text channel instead of hardcoded opacity modifiers
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                         
@@ -297,7 +299,7 @@ PanelWindow {
 
                                     Text {
                                         text: model.ssid
-                                        color: fc.textPrimary
+                                        color: shellConfig.themeText 
                                         font.family: shellConfig.shellFont
                                         font.pixelSize: 14
                                         font.weight: model.connected ? Font.Bold : Font.Normal
@@ -317,7 +319,9 @@ PanelWindow {
                                         }
                                         font.family: fc.iconFont
                                         font.pixelSize: 20
-                                        color: model.connected ? fc.textPrimary : fc.textMuted
+                                        color: model.connected 
+                                               ? shellConfig.themeText 
+                                               : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                                         
                                         Component.onCompleted: fc.applyOutline(this)
                                     }
@@ -364,7 +368,7 @@ PanelWindow {
                                             text: "Disconnect"
                                             Layout.fillWidth: true
                                             onClicked: disconnectProc.disconnect(model.ssid)
-                                            contentItem: Text { text: disconnectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: fc.textPrimary; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; Component.onCompleted: fc.applySmoothing(this) }
+                                            contentItem: Text { text: disconnectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; Component.onCompleted: fc.applySmoothing(this) }
                                             background: Rectangle { radius: 8; color: disconnectBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: disconnectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                         Button {
@@ -372,7 +376,7 @@ PanelWindow {
                                             text: "Forget"
                                             Layout.fillWidth: true
                                             onClicked: forgetProc.forget(model.ssid)
-                                            contentItem: Text { text: forgetActiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: fc.textPrimary; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; Component.onCompleted: fc.applySmoothing(this) }
+                                            contentItem: Text { text: forgetActiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; Component.onCompleted: fc.applySmoothing(this) }
                                             background: Rectangle { radius: 8; color: forgetActiveBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: forgetActiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                     }
@@ -388,7 +392,7 @@ PanelWindow {
                                             Layout.fillWidth: true
                                             enabled: !isConnecting
                                             onClicked: connectNetworkProc.connectTo(model.ssid, "", isKnown)
-                                            contentItem: Text { text: connectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: fc.textPrimary; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: connectBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
+                                            contentItem: Text { text: connectBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: connectBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
                                             background: Rectangle { radius: 8; color: connectBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: connectBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                         Button {
@@ -398,7 +402,7 @@ PanelWindow {
                                             Layout.preferredWidth: 90
                                             enabled: !isConnecting
                                             onClicked: forgetProc.forget(model.ssid)
-                                            contentItem: Text { text: forgetInactiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: fc.textPrimary; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: forgetInactiveBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
+                                            contentItem: Text { text: forgetInactiveBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: forgetInactiveBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
                                             background: Rectangle { radius: 8; color: forgetInactiveBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: forgetInactiveBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                     }
@@ -412,7 +416,7 @@ PanelWindow {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
                                             radius: 8
-                                            color: fc.trackBackground // Replaced hardcoded black overlay opacity mapping
+                                            color: fc.trackBackground 
                                             border.color: isFailed ? "#ff5555" : shellConfig.colorBorder
                                             border.width: 1
 
@@ -422,7 +426,7 @@ PanelWindow {
                                                 anchors.leftMargin: 10
                                                 anchors.rightMargin: 10
                                                 verticalAlignment: TextInput.AlignVCenter
-                                                color: fc.textPrimary
+                                                color: shellConfig.themeText 
                                                 font.pixelSize: 13
                                                 echoMode: TextInput.Password
                                                 enabled: !isConnecting
@@ -432,7 +436,7 @@ PanelWindow {
 
                                                 Text {
                                                     text: "Password..."
-                                                    color: fc.textMuted // Replaced hardcoded translucent white with textMuted
+                                                    color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                                                     font.pixelSize: 13
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     visible: passInput.text === "" && !passInput.activeFocus
@@ -447,7 +451,7 @@ PanelWindow {
                                             Layout.preferredWidth: 80
                                             enabled: !isConnecting
                                             onClicked: connectNetworkProc.connectTo(model.ssid, passInput.text, false)
-                                            contentItem: Text { text: joinBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: fc.textPrimary; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: joinBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
+                                            contentItem: Text { text: joinBtn.text; font.family: shellConfig.shellFont; font.pixelSize: 12; color: shellConfig.themeText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: joinBtn.enabled ? 1.0 : 0.4; Component.onCompleted: fc.applySmoothing(this) }
                                             background: Rectangle { radius: 8; color: joinBtn.hovered ? shellConfig.colorBackground : shellConfig.themeAccent; border.color: joinBtn.hovered ? shellConfig.hoverBorder : "transparent"; border.width: 1 }
                                         }
                                     }
@@ -686,7 +690,7 @@ PanelWindow {
         if (visible) {
             outsideDismiss.forceActiveFocus();
             fetchStatusProc.running = true;
-            wifiPopupWindow.animateActive = true; // Kick off open animation when window initializes
+            wifiPopupWindow.animateActive = true;
         } else {
             wifiPopupWindow.animateActive = false;
         }

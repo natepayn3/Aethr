@@ -193,7 +193,8 @@ Item {
                     Text {
                         text: "clock_loader_10"
                         font { family: fc.iconFont; pixelSize: 30 }
-                        color: fc.textMuted
+                        // 🌟 Swapped for 40% alpha blend of themeText
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 30
                         height: 30
@@ -205,7 +206,8 @@ Item {
                     Text {
                         text: "clock_loader_10"
                         font { family: fc.iconFont; pixelSize: 30 }
-                        color: fc.textMuted
+                        // 🌟 Swapped for 40% alpha blend of themeText
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 30
                         height: 30
@@ -217,7 +219,8 @@ Item {
                     Text {
                         text: "density_small"
                         font { family: fc.iconFont; pixelSize: 30 }
-                        color: fc.textMuted
+                        // 🌟 Swapped for 40% alpha blend of themeText
+                        color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
@@ -244,7 +247,7 @@ Item {
                             font.family: previewRoot.shellFont
                             font.pixelSize: 13
                             font.bold: true
-                            color: fc.textPrimary
+                            color: shellConfig.themeText // 🌟 Bound directly to dynamic picker color
                             anchors.verticalCenter: parent.verticalCenter
                             
                             Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
@@ -404,7 +407,7 @@ Item {
                                     font.family: fc.mainFont
                                     font.pixelSize: 8;
                                     font.bold: true 
-                                    color: fc.textPrimary
+                                    color: shellConfig.themeText // 🌟 Bound directly to dynamic picker color
                                     anchors.centerIn: parent
                                     width: parent.width - 4;
                                     elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
