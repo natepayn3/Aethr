@@ -29,7 +29,7 @@ PanelWindow {
     property color hoverBorder: shellConfig.hoverBorder 
     
     readonly property string barPosition: "left"
-    property color colorBackground: fontCfg.trackBackground
+    property color colorBackground: shellConfig.colorBackground
     property color colorBorder: fontCfg.borderMuted
    
     property color colorAccent: shellConfig.themeAccent
@@ -147,7 +147,7 @@ PanelWindow {
                 anchors.left: parent.left
                 anchors.leftMargin: dockHitbox.isPinned ? 5 : -75
 
-                color: fontCfg.trackBackground
+                color: sideDockWindow.colorBackground
                 border.color: dockHitbox.isPinned ? fontCfg.borderMuted : "transparent"
                 border.width: 1
 
