@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import Qt.labs.folderlistmodel
+import Quickshell
+import Quickshell.Io
 import "../../configs"
 
 Item {
@@ -13,9 +14,7 @@ Item {
     property bool btActive: false
     property bool dndActive: false
     property bool caffeineActive: false
-    
-    // Declarative binding evaluating the active status of both directory models
-    property bool caffeineAvailable: (usrBinCheck.count > 0 || usrLocalBinCheck.count > 0)
+    property bool caffeineAvailable: false
 
     signal wifiToggled()
     signal btToggled()
@@ -24,18 +23,18 @@ Item {
 
     FontConfig { id: fc }
 
-    // Check /usr/bin/ for hypridle
-    FolderListModel {
-        id: usrBinCheck
-        folder: "file:///usr/bin"
-        nameFilters: ["hypridle"]
-    }
-
-    // Check /usr/local/bin/ for hypridle
-    FolderListModel {
-        id: usrLocalBinCheck
-        folder: "file:///usr/local/bin"
-        nameFilters: ["hypridle"]
+    // Query the system path cleanly using Quickshell's native IO architecture
+    Process {
+        id: hypridleCheck
+        command: ["which", "hypridle"] // Command and arguments passed as a string list
+        running: true                  // Execute immediately on layout load
+        
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // If hypridle is present, 'which' outputs its absolute path string
+                caffeineAvailable = (this.text.trim().length > 0);
+            }
+        }
     }
 
     GridLayout {
