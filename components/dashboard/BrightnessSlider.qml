@@ -33,7 +33,6 @@ Item {
             text: !brightnessSliderRoot.hasHardware ? "brightness_empty" : (brightnessSliderRoot.currentBrightness < 0.4 ? "light_mode" : "brightness_high")
             font.family: fc.iconFont
             font.pixelSize: 24
-            // 🌟 Bound background icon color to 40% opacity of your theme color selection
             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
             width: 24
             height: 24
@@ -43,7 +42,6 @@ Item {
             anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: 0
-            Component.onCompleted: fc.applySmoothing(this)
         }
 
         // --- LEFT-ALIGNED STATUS TEXT (BACKGROUND) ---
@@ -54,12 +52,10 @@ Item {
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: brightnessSliderRoot.percentageText
-            // 🌟 Bound background label color to 35% opacity of your theme color selection
             color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.35)
             font.family: fc.mainFont
             font.pixelSize: 13
             font.weight: Font.Bold
-            Component.onCompleted: fc.applySmoothing(this)
         }
 
         // --- PROGRESS FILL BAR ---
@@ -89,7 +85,6 @@ Item {
                 x: 12
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 0
-                Component.onCompleted: fc.applySmoothing(this)
             }
 
             // --- LEFT-ALIGNED STATUS TEXT (FOREGROUND OVERLAY) ---
@@ -103,7 +98,6 @@ Item {
                 font.family: fc.mainFont
                 font.pixelSize: 13
                 font.weight: Font.Bold
-                Component.onCompleted: fc.applySmoothing(this)
             }
         }
     }
