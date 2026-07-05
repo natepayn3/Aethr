@@ -25,13 +25,9 @@ PanelWindow {
 
     property color colorBackground: shellConfig.colorBackground
     property color colorBorder: shellConfig.colorBorder
-
     property bool animateActive: false
-
-    // --- State Properties ---
     property int systemVolume: 50
     property bool isMuted: false
-    
     property int inputVolume: 50
     property bool isInputMuted: false
 
@@ -191,7 +187,6 @@ PanelWindow {
                         to: 100
                         value: audioPopupWindow.systemVolume
 
-                        // 🌟 Track cursor hover shapes over slider context tracks
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                         onMoved: {
@@ -242,7 +237,6 @@ PanelWindow {
                             Layout.fillWidth: true
                             implicitHeight: 38
                             hoverEnabled: true
-                            // 🌟 Enforce hand cursor shape on list entry hover
                             cursorShape: Qt.PointingHandCursor
 
                             onClicked: {
@@ -253,7 +247,6 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                // 🌟 Use fc.trackBackground for hover highlighting to align with settings views
                                 color: parent.containsMouse ? fc.trackBackground : "transparent"
                                 border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
@@ -273,10 +266,6 @@ PanelWindow {
                                     opacity: model.isDefault ? 1.0 : 0.7
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
-
-                                    Component.onCompleted: {
-                                        fc.applyOutline(this, fc.overlayBackground)
-                                    }
                                 }
 
                                 Text {
@@ -286,10 +275,6 @@ PanelWindow {
                                     color: shellConfig.themeText
                                     opacity: 0.95
                                     visible: model.isDefault
-
-                                    Component.onCompleted: {
-                                        fc.applyOutline(this, fc.overlayBackground)
-                                    }
                                 }
                             }
                         }
@@ -313,10 +298,6 @@ PanelWindow {
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.fillWidth: true
-
-                        Component.onCompleted: {
-                            fc.applyOutline(this, fc.overlayBackground)
-                        }
                     }
 
                     Text {
@@ -326,10 +307,6 @@ PanelWindow {
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         horizontalAlignment: Text.AlignRight
-
-                        Component.onCompleted: {
-                            fc.applyOutline(this, fc.overlayBackground)
-                        }
                     }
                 }
 
@@ -342,10 +319,6 @@ PanelWindow {
                         font.family: fc.iconFont
                         font.pixelSize: 28
                         color: shellConfig.themeText
-
-                        Component.onCompleted: {
-                            fc.applyOutline(this, fc.overlayBackground)
-                        }
 
                         MouseArea {
                             anchors.fill: parent
@@ -365,7 +338,6 @@ PanelWindow {
                         to: 100
                         value: audioPopupWindow.inputVolume
 
-                        // 🌟 Track cursor hover shapes over slider context tracks
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                         onMoved: {
@@ -416,7 +388,6 @@ PanelWindow {
                             Layout.fillWidth: true
                             implicitHeight: 38
                             hoverEnabled: true
-                            // 🌟 Enforce hand cursor shape on list entry hover
                             cursorShape: Qt.PointingHandCursor
 
                             onClicked: {
@@ -427,7 +398,6 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10
-                                // 🌟 Use fc.trackBackground for hover highlighting to align with settings views
                                 color: parent.containsMouse ? fc.trackBackground : "transparent"
                                 border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                                 border.width: 1
