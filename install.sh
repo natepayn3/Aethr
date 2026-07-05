@@ -5,7 +5,7 @@ set -e
 
 QUICKSHELL_DIR="$HOME/.config/quickshell/Aethr"
 
-# 📦 1. Install official repository dependencies (including fish and qt6-multimedia)
+# 📦 1. Install official repository dependencies (including fish, qt6-multimedia, and playerctl)
 echo "Installing system dependencies..."
 sudo pacman -S --needed --noconfirm \
     hyprland \
@@ -19,6 +19,7 @@ sudo pacman -S --needed --noconfirm \
     pipewire-pulse \
     pipewire-alsa \
     qt6-multimedia \
+    playerctl \
     base-devel \
     git \
     fish
@@ -32,9 +33,12 @@ if ! command -v yay &>/dev/null; then
     rm -rf "$BUILD_DIR"
 fi
 
-# 🛸 3. Build quickshell-git exclusively with yay
-echo "Installing quickshell-git via yay..."
-yay -S --aur --noconfirm --needed quickshell-git
+# 🛸 3. Build quickshell-git and font dependencies exclusively with yay
+echo "Installing quickshell-git and AUR fonts via yay..."
+yay -S --aur --noconfirm --needed \
+    quickshell-git \
+    ttf-material-symbols-variable-git \
+    ttf-material-icons
 
 # 📂 4. Setup quickshell directory and clone the repository
 echo "Deploying repository workspace..."
