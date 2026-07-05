@@ -27,8 +27,8 @@ RowLayout {
     // --- THUMBNAIL ART CONTAINER WITH CIRCULAR CAVA ---
     Item {
     id: artContainer
-    width: visible ? 130 : 0  // Increased from 110 to accommodate longer bars
-    height: 130               // Increased from 110
+    width: visible ? 130 : 0
+    height: 130
     Layout.alignment: Qt.AlignVCenter
     visible: mediaRoot.mediaStatus !== "Stopped"
 
@@ -115,7 +115,7 @@ RowLayout {
             Rectangle {
                 id: maskTarget
                 anchors.fill: parent
-                radius: width / 2 // Perfect circle
+                radius: width / 2
                 color: "black"
                 visible: false
             }
@@ -154,7 +154,6 @@ RowLayout {
             elide: Text.ElideRight
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            
             Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
         }
 
