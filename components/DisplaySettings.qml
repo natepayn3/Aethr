@@ -26,7 +26,7 @@ PanelWindow {
     property bool showFontPicker: false
     property bool showColorPicker: false
     
-    property string selectedFont: shellConfig.shellFont
+    property string selectedFont: shellConfig.shellFont ? shellConfig.shellFont : "Sans"
     property color localPickerColor: shellConfig.themeText
 
     property real currentHue: 0.0
@@ -223,7 +223,6 @@ PanelWindow {
 
             MouseArea {
                 anchors.fill: parent
-                // Catch pointer events fully to stop background bleed-through
                 onClicked: (mouse) => mouse.accepted = true
                 onPressed: (mouse) => mouse.accepted = true
                 onReleased: (mouse) => mouse.accepted = true
@@ -262,17 +261,14 @@ PanelWindow {
                         from: 0.0
                         to: 1.0
 
-                        // 沈 Force pointing hand icon shape over slider context tracks
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
-                        // 耳 Update the running memory state smoothly while dragging
                         onValueChanged: {
                             shellConfig.colorBackground = Qt.rgba(0.12, 0.12, 0.14, value);
                         }
 
-                        // 沈 Only write to disk when you release the mouse handle
                         onPressedChanged: {
-                            if (!pressed) { // False means the user just let go
+                            if (!pressed) {
                                 let alpha = value.toFixed(2);
                                 let path = settingsPopupWindow.getAbsoluteConfigPath();
                                 writeConfigValue(`sed -i -E 's/(property color colorBackground:).*/\\1 Qt.rgba(0.12, 0.12, 0.14, ${alpha})/' ${path}`);
@@ -284,7 +280,7 @@ PanelWindow {
                             if (currentAlpha !== undefined && !isNaN(currentAlpha)) {
                                 alphaSlider.value = currentAlpha;
                             } else {
-                                alphaSlider.value = 0.7; // Fallback default if config is missing
+                                alphaSlider.value = 0.7;
                             }
                         }
 
@@ -334,7 +330,6 @@ PanelWindow {
                         implicitHeight: 36
                         hoverEnabled: true
                         
-                        // 沈 Force pointing hand icon shape over custom button hitbox
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                         onClicked: {
@@ -353,7 +348,6 @@ PanelWindow {
                             leftPadding: 10
                         }
                         background: Rectangle {
-                            // 沈 Live tracking highlight matching backButton hover states
                             color: btnFontSelect.hovered ? fc.overlayBackground : fc.trackBackground
                             radius: 6
                             border.color: fc.borderMuted
@@ -378,7 +372,6 @@ PanelWindow {
                         implicitHeight: 36
                         hoverEnabled: true
 
-                        // 沈 Force pointing hand icon shape over custom button hitbox
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                         onClicked: settingsPopupWindow.showColorPicker = true
@@ -402,7 +395,6 @@ PanelWindow {
                             }
                         }
                         background: Rectangle {
-                            // 沈 Live tracking highlight matching backButton hover states
                             color: btnColorSelect.hovered ? fc.overlayBackground : fc.trackBackground
                             radius: 6
                             border.color: fc.borderMuted
@@ -439,7 +431,6 @@ PanelWindow {
                         implicitHeight: 28
                         hoverEnabled: true
                         
-                        // 沈 Force pointing hand icon shape over custom button hitbox
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                         background: Rectangle { 
@@ -457,7 +448,6 @@ PanelWindow {
                             verticalAlignment: Text.AlignVCenter
                         }
                         onClicked: {
-                            // Delay file write until exiting to prevent live-reload destruction
                             let path = settingsPopupWindow.getAbsoluteConfigPath();
                             writeConfigValue(`sed -i -E 's/(property string shellFont:).*/\\1 "${shellConfig.shellFont}"/' ${path}`);
                             settingsPopupWindow.showFontPicker = false;
@@ -524,7 +514,6 @@ PanelWindow {
                             }
 
                             onClicked: {
-                                // Update running state instantly; do not run sed here
                                 shellConfig.shellFont = modelData;
                             }
                         }
@@ -570,7 +559,6 @@ PanelWindow {
                         implicitHeight: 28
                         hoverEnabled: true
 
-                        // 沈 Force pointing hand icon shape over custom button hitbox
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                         background: Rectangle { 
@@ -752,7 +740,6 @@ PanelWindow {
                             border.width: 1
                         }
 
-                        // Dropped editingFinished handler to stop accidental focus losses
                         onAccepted: settingsPopupWindow.applyManualHex(text)
                     }
                 }
