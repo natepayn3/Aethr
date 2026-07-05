@@ -4,9 +4,9 @@ QtObject {
     id: fontConfig
 
     // --- TYPOGRAPHY FAMILIES ---
-    property string mainFont: shellConfig.shellFont || "Open Sans"
-    property string monoFont: shellConfig.monoFont  || "monospace"
-    property string iconFont: shellConfig.iconFont  || "Material Symbols Outlined"
+    property string mainFont: shellConfig.shellFont
+    property string monoFont: shellConfig.monoFont || "monospace"
+    property string iconFont: shellConfig.iconFont || "Material Symbols Outlined"
 
     // --- SYSTEM THEME PALETTE ---
     readonly property color overlayForeground: Qt.rgba(0.4, 0.4, 0.4, 0.9)  // Muted grey overlay text
