@@ -53,6 +53,10 @@ Add the following rule to your hyprland.lua for blur:
         ignore_alpha = 0,
     })
 
+### Wallpaper controls
+
+The wallpaper picker uses awww and supports animated wallpapers as well as ctrl+clicking for single wallpaper changes on multi-monitor setups.
+
 ### IPC Handlers
 
 Once deployed, you can interact with or toggle the shell layout elements cleanly via the command line or desktop keybinds:
