@@ -24,14 +24,9 @@ PanelWindow {
     
     color: "transparent"
 
-    // --- Global Theme Mapping ---
     property color colorBackground: shellConfig.colorBackground
     property color colorBorder: shellConfig.colorBorder
-
-    // Internal flag managing the graceful scale/fade execution loop
     property bool animateActive: false
-
-    // --- State Properties ---
     property bool isPowered: false
     property bool isScanning: false
     property bool isToggling: false
@@ -44,7 +39,7 @@ PanelWindow {
             cardContainerMouseArea.forceActiveFocus();
             stateFetcher.running = true;
             if (!deviceFetcher.running) deviceFetcher.running = true;
-            bluetoothPopupWindow.animateActive = true; // Safe visibility cascade kickoff
+            bluetoothPopupWindow.animateActive = true;
         } else {
             deviceFetcher.running = false;
             scanDurationTimer.stop();
@@ -58,7 +53,7 @@ PanelWindow {
     MouseArea {
         id: outsideDismiss
         anchors.fill: parent
-        onClicked: bluetoothPopupWindow.animateActive = false // Initiates uniform collapse cycle
+        onClicked: bluetoothPopupWindow.animateActive = false
 
         // --- Main Visual Panel ---
         Rectangle {
@@ -135,7 +130,6 @@ PanelWindow {
                             NumberAnimation { target: bgCard; property: "scale"; duration: shellConfig.durationOut; easing.type: Easing.InBack; easing.amplitude: shellConfig.springIn }
                             NumberAnimation { target: bgCard; property: "opacity"; duration: shellConfig.opacityOut; easing.type: Easing.InQuad }
                         }
-                        // Securely clip layout visibility after animation finishes
                         ScriptAction { script: bluetoothPopupWindow.visible = false } 
                     }
                 }
@@ -183,7 +177,6 @@ PanelWindow {
                         Rectangle {
                             anchors.fill: parent
                             radius: 8
-                            // 🌟 Use standard track layout highlights when hovered
                             color: parent.containsMouse ? fc.trackBackground : "transparent"
                             border.color: parent.containsMouse ? fc.borderMuted : "transparent"
                             border.width: 1
@@ -224,7 +217,6 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 implicitHeight: 46
                                 radius: 12
-                                // 🌟 Set high-contrast tracking rules to use fc.trackBackground and fc.borderMuted when hovered
                                 color: model.connected 
                                        ? Qt.rgba(255, 255, 255, 0.08) 
                                        : (delegateMouse.containsMouse ? fc.trackBackground : "transparent")
@@ -235,7 +227,6 @@ PanelWindow {
                                     id: delegateMouse
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    // 🌟 Enforce pointer shape changes across row interaction blocks
                                     cursorShape: Qt.PointingHandCursor
                                 }
 
@@ -365,7 +356,6 @@ PanelWindow {
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: bluetoothPopupWindow.togglePower()
                         
-                        // 🌟 Force hand pointer over hardware switch toggles
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
 
                         implicitWidth: 42
@@ -375,9 +365,7 @@ PanelWindow {
                             width: 42
                             height: 24
                             radius: 12
-                            // Inline comment: Track background fill matched to your shell config theme rules
                             color: powerSwitch.checked ? shellConfig.themeAccent : "transparent"
-                            // Inline comment: Constant text-colored outline dropped to 50% opacity across both toggle positions
                             border.color: Qt.rgba(fc.textPrimary.r, fc.textPrimary.g, fc.textPrimary.b, 0.5)
                             border.width: 2
 
@@ -389,7 +377,6 @@ PanelWindow {
                                 radius: 7
                                 color: fc.textPrimary
                                 
-                                // Inline comment: Fluid quad transition handling knob translation
                                 Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                             }
                         }
