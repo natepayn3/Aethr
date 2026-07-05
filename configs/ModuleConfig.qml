@@ -4,13 +4,13 @@ QtObject {
     id: config
 
     // --- SYSTEM THEME MATRIX ---
-    property color themeBackground: Qt.rgba(0.4, 0.4, 0.4, 1.00)
-    property color colorBackground: Qt.rgba(0.4, 0.4, 0.4, 0.3) // increase last number to make windows more visible
+    property color themeBackground: Qt.rgba(0.4, 0.4, 0.4, 0.94)
+    property color colorBackground: Qt.rgba(0.12, 0.12, 0.14, 0.60)
     property color colorBorder: Qt.rgba(1, 1, 1, 0.05)
     property color hoverBorder: Qt.rgba(0, 0, 0, 0.2)
     property color themeBorder: Qt.rgba(0, 0, 0, 0.15)
     property color cardBorder: Qt.rgba(0, 0, 0, 0.2)
-    property color themeText: "#FFFFFF"
+    property color themeText: "#D5D5D5"
     property color themeAccent: Qt.rgba(0.4, 0.4, 0.4, 0.28)
     property color colorAccent: Qt.rgba(0.6, 0.45, 0.9, 1.0)
     
