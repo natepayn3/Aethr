@@ -15,37 +15,8 @@ PanelWindow {
     required property var rootShell
 
     property string currentWallpaperPath: rootShell && rootShell.wallpaperRef ? rootShell.wallpaperRef.currentWallpaperPath : ""
-    property string currentScheme: "scheme-tonal-spot"
 
     signal applyFinished(string finalWallpaperPath)
-
-    Timer {
-        id: startupDelayTimer
-        interval: 500
-        running: false
-        repeat: false
-        onTriggered: {
-            if (currentWallpaperPath && currentWallpaperPath !== "") {
-                cacheCheckProc.running = true;
-            }
-        }
-    }
-
-    Process {
-        id: cacheCheckProc
-        running: false
-        command: ["fish", "-c", "test -f '" + Quickshell.env("HOME") + "/.cache/matugen-previews.json'"]
-        
-        onExited: (exitCode) => {
-            if (exitCode !== 0) {
-                 wallpaperBackend.triggerBackendRun(currentWallpaperPath, false);
-            }
-        }
-    }
-
-    Component.onCompleted: {
-        startupDelayTimer.start();
-    }
 
     WlrLayershell.namespace: "quickshell-wallpaper"
     WlrLayershell.layer: WlrLayer.Top
@@ -88,6 +59,7 @@ PanelWindow {
             let sockPath = "/run/user/" + Quickshell.env("UID") + "/" + waylandDisplay + "-awww-daemon.sock";
             let script = "killall -q mpvpaper; ";
             script += "set TARGET_MON (hyprctl monitors -j | jq -r '.[] | select(.focused) | .name'); ";
+            
             if (activeOnly) {
                 if (ext === "mp4" || ext === "webm") {
                     script += "awww clear -o \"$TARGET_MON\" 2>/dev/null; pkill -f \"mpvpaper.*$TARGET_MON\"; mpvpaper -vs -o 'loop no-audio' \"$TARGET_MON\" '" + filePath + "'; ";
@@ -104,24 +76,14 @@ PanelWindow {
                 }
             }
 
-            let matugenTarget = (ext === "mp4" || ext === "webm") 
-                ? (Quickshell.env("HOME") + "/.cache/quickshell_thumbs/" + filePath.split('/').pop() + ".jpg") 
-                : filePath;
-            let outPath = rootShell.matugenFilePath;
-            
-            script += "mkdir -p (dirname '" + outPath + "'); ";
-            script += "matugen image '" + matugenTarget + "' -t " + wallpaperWindow.currentScheme + " --prefer=saturation --json hex > '" + outPath + ".tmp'; ";
-            script += "mv '" + outPath + ".tmp' '" + outPath + "'; sync;";
-
             command = ["fish", "-c", script];
             running = false;
             running = true;
         }
     }
 
-    function apply(filePath, activeOnly = false, customScheme = "") {
+    function apply(filePath, activeOnly = false) {
         if (filePath && filePath !== "") currentWallpaperPath = filePath;
-        if (customScheme !== "") currentScheme = customScheme;
         
         if (!currentWallpaperPath || currentWallpaperPath === "") {
             currentWallpaperPath = carousel.currentFilePath;
@@ -134,7 +96,6 @@ PanelWindow {
         id: carouselContainer
         width: parent.width
         
-        // Dynamically scale height based on the total viewport constraints
         height: Math.min(parent.height * 0.55, 380)
         anchors.horizontalCenter: parent.horizontalCenter
         y: parent.height - height - ((rootShell.barPosition === "bottom") ? 46 : 10)
@@ -146,9 +107,9 @@ PanelWindow {
             height: parent.height
             clip: false
 
-            model: wallpaperModel
+            model: wallpaperModel.count > 0 ? wallpaperModel : [{ filePath: "", fileUrl: "", isFake: true }]
             focus: true
-            interactive: true
+            interactive: wallpaperModel.count > 0
 
             onOffsetChanged: {
                 let minOffset = 0;
@@ -157,10 +118,8 @@ PanelWindow {
                 else if (offset > maxOffset) offset = maxOffset;
             }
 
-            property int modelCount: wallpaperModel.count
+            property int modelCount: wallpaperModel.count > 0 ? wallpaperModel.count : 1
             
-            // --- SCALED CONFIGURATION MATRIX ---
-            // Replaces hardcoded layouts with proportional math fractions
             property real baseItemWidth: carousel.height * 0.52
             property real itemGap: -(baseItemWidth * 0.33)
             property real cardSkew: baseItemWidth * 0.3
@@ -186,8 +145,8 @@ PanelWindow {
             }
 
             property string currentFilePath: ""
-            Keys.onReturnPressed: (event) => wallpaperWindow.apply(currentFilePath, event.modifiers & Qt.ControlModifier)
-            Keys.onSpacePressed: (event) => wallpaperWindow.apply(currentFilePath, event.modifiers & Qt.ControlModifier)
+            Keys.onReturnPressed: (event) => { if (wallpaperModel.count > 0) wallpaperWindow.apply(currentFilePath, event.modifiers & Qt.ControlModifier); }
+            Keys.onSpacePressed: (event) => { if (wallpaperModel.count > 0) wallpaperWindow.apply(currentFilePath, event.modifiers & Qt.ControlModifier); }
             Keys.onEscapePressed: wallpaperWindow.active = false
 
             property bool isKeyboarding: false
@@ -206,8 +165,8 @@ PanelWindow {
                 }
             }
 
-            Keys.onLeftPressed: { carousel.isKeyboarding = true; carousel.hoveredIndex = -1; carousel.decrementCurrentIndex(); }
-            Keys.onRightPressed: { carousel.isKeyboarding = true; carousel.hoveredIndex = -1; carousel.incrementCurrentIndex(); }
+            Keys.onLeftPressed: { if (wallpaperModel.count > 0) { carousel.isKeyboarding = true; carousel.hoveredIndex = -1; carousel.decrementCurrentIndex(); } }
+            Keys.onRightPressed: { if (wallpaperModel.count > 0) { carousel.isKeyboarding = true; carousel.hoveredIndex = -1; carousel.incrementCurrentIndex(); } }
 
             delegate: Item {
                 id: delegateRoot
@@ -219,8 +178,13 @@ PanelWindow {
                 property bool isFocused: PathView.isCurrentItem
                 property bool isActiveTarget: carousel.activeIndex === index
 
-                onIsFocusedChanged: if (isFocused) carousel.currentFilePath = filePath;
-                Component.onCompleted: if (isFocused) carousel.currentFilePath = filePath;
+                property bool isFakeItem: typeof modelData !== "undefined"
+                // Safely read filePath without triggering engine evaluation reference breaks
+                property string safeFilePath: typeof filePath !== "undefined" ? filePath : ""
+                property string safeFileUrl: typeof fileUrl !== "undefined" ? fileUrl : ""
+
+                onIsFocusedChanged: if (isFocused && !isFakeItem) carousel.currentFilePath = safeFilePath;
+                Component.onCompleted: if (isFocused && !isFakeItem) carousel.currentFilePath = safeFilePath;
                 
                 property real diff: {
                     if (carousel.modelCount === 0) return 0;
@@ -245,9 +209,9 @@ PanelWindow {
                     x: delegateRoot.targetXShift
                 }
 
-                property string pathStr: String(filePath).toLowerCase()
-                property bool isVideo: pathStr.endsWith(".mp4") || pathStr.endsWith(".webm")
-                property string fileName: String(filePath).split('/').pop()
+                property string pathStr: isFakeItem ? "" : String(safeFilePath).toLowerCase()
+                property bool isVideo: !isFakeItem && (pathStr.endsWith(".mp4") || pathStr.endsWith(".webm"))
+                property string fileName: isFakeItem ? "" : String(safeFilePath).split('/').pop()
                 property string thumbDir: Quickshell.env("HOME") + "/.cache/quickshell_thumbs"
                 property string thumbFile: thumbDir + "/" + fileName + ".jpg"
                 property string thumbUrl: "file://" + thumbFile
@@ -255,7 +219,7 @@ PanelWindow {
                 
                 Process {
                     running: delegateRoot.isVideo && delegateRoot.isActiveTarget
-                    command: ["fish", "-c", "mkdir -p '" + thumbDir + "'; if not test -f '" + thumbFile + "'; ffmpeg -y -i '" + filePath + "' -ss 00:00:00.100 -vframes 1 -vf 'scale=450:-1' -q:v 2 '" + thumbFile + "' >/dev/null 2>&1; end"]
+                    command: ["fish", "-c", "mkdir -p '" + thumbDir + "'; if not test -f '" + thumbFile + "'; ffmpeg -y -i '" + safeFilePath + "' -ss 00:00:00.100 -vframes 1 -vf 'scale=450:-1' -q:v 2 '" + thumbFile + "' >/dev/null 2>&1; end"]
                     onExited: delegateRoot.thumbReady = true
                 }
 
@@ -268,12 +232,14 @@ PanelWindow {
 
                     MouseArea {
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: carousel.isKeyboarding ? Qt.BlankCursor : Qt.PointingHandCursor
-                        onEntered: if (!carousel.isKeyboarding) carousel.hoveredIndex = index;
+                        hoverEnabled: !isFakeItem
+                        cursorShape: isFakeItem ? Qt.ArrowCursor : (carousel.isKeyboarding ? Qt.BlankCursor : Qt.PointingHandCursor)
+                        onEntered: if (!carousel.isKeyboarding && !isFakeItem) carousel.hoveredIndex = index;
                         onExited: if (carousel.hoveredIndex === index) carousel.hoveredIndex = -1;
                         onClicked: (mouse) => {
-                            wallpaperWindow.apply(filePath, mouse.modifiers & Qt.ControlModifier);
+                            if (!isFakeItem) {
+                                wallpaperWindow.apply(safeFilePath, mouse.modifiers & Qt.ControlModifier);
+                            }
                             mouse.accepted = true;
                         }
                     }
@@ -291,7 +257,7 @@ PanelWindow {
                         property real sk: carousel.cardSkew
                         
                         ShapePath {
-                            fillColor: "white"
+                            fillColor: isFakeItem ? shellConfig.colorBackground : "white"
                             strokeColor: "transparent"
                             startX: skewMaskShape.sk + skewMaskShape.r; startY: 0
                             PathLine { x: skewMaskShape.width - skewMaskShape.r; y: 0 }
@@ -308,13 +274,11 @@ PanelWindow {
                     Image {
                         id: bgImg
                         anchors.fill: parent
-                        source: delegateRoot.isVideo ? (delegateRoot.thumbReady ? delegateRoot.thumbUrl : "") : fileUrl
+                        source: delegateRoot.isVideo ? (delegateRoot.thumbReady ? delegateRoot.thumbUrl : "") : (isFakeItem ? "" : safeFileUrl)
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true
                         visible: false
-                        
-                        // Fixed: Bind to the stable max width/height to prevent mid-animation cache evictions
                         sourceSize: Qt.size(Math.floor(carousel.expandedWidth * 1.2), Math.floor(carousel.height * 1.2))
                     }
 
@@ -326,7 +290,7 @@ PanelWindow {
                         sourceComponent: Component {
                             Video {
                                 anchors.fill: parent
-                                source: fileUrl
+                                source: safeFileUrl
                                 fillMode: VideoOutput.PreserveAspectCrop
                                 loops: MediaPlayer.Infinite
                                 muted: true
@@ -336,15 +300,43 @@ PanelWindow {
                     }
 
                     MultiEffect {
+                        id: effectMaskNode
                         anchors.fill: parent
                         source: vidLoader.active ? vidLoader.item : bgImg
                         maskEnabled: true
                         maskSource: skewMaskShape
                         maskThresholdMin: 0.5
                         maskSpreadAtMin: 1.0
+                        visible: !isFakeItem
+                    }
+
+                    ColumnLayout {
+                        id: fakeCardTextLayout
+                        anchors.centerIn: parent
+                        spacing: 4
+                        visible: isFakeItem
+                        z: 2
+
+                        Text {
+                            text: "No Wallpapers Found"
+                            color: shellConfig.themeText
+                            font.family: shellConfig.shellFont
+                            font.pixelSize: 16
+                            font.weight: Font.Bold
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+
+                        Text {
+                            text: "Drop images into ~/Pictures/Wallpapers and reload quickshell"
+                            color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
+                            font.family: shellConfig.shellFont
+                            font.pixelSize: 14
+                            Layout.alignment: Qt.AlignHCenter
+                        }
                     }
 
                     Loader {
+                        id: borderGlowLoader
                         anchors.fill: parent
                         active: delegateRoot.isActiveTarget
                         z: 5
