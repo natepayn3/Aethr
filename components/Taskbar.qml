@@ -103,7 +103,6 @@ Row {
                 anchor.edges: Edges.Bottom
                 anchor.gravity: Edges.Bottom
                 
-                // Matches the positioning configuration
                 anchor.rect.x: 31
                 anchor.rect.y: 55
 
