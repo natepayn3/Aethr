@@ -48,12 +48,10 @@ Scope {
     IpcHandler {
         target: "launcher"
         
-        // Toggles the launcher overlay visibility state
         function toggle(): void {
             launcherModuleRoot.active = !launcherModuleRoot.active;
         }
 
-        // Directly open the menu and force launch an executable target payload string
         function launch(execStr: string): void {
             launcherWindow.launchApp(execStr);
         }
@@ -107,65 +105,65 @@ Scope {
         Process {
             id: appFetcher
             command: ["python", "-c", `
-import os, glob, json
+            import os, glob, json
 
-apps = []
-fallback_options = [
-    "/usr/share/pixmaps/archlinux-logo.png",
-    "/usr/share/icons/hicolor/48x48/apps/utilities-terminal.png"
-]
-fallback = next((p for p in fallback_options if os.path.isfile(p)), "")
+            apps = []
+            fallback_options = [
+                "/usr/share/pixmaps/archlinux-logo.png",
+                "/usr/share/icons/hicolor/48x48/apps/utilities-terminal.png"
+            ]
+            fallback = next((p for p in fallback_options if os.path.isfile(p)), "")
 
-icon_dirs = [
-    os.path.expanduser("~/.local/share/icons"),
-    "/usr/share/icons/hicolor",
-    "/usr/share/icons/Papirus",
-    "/usr/share/icons",
-    "/usr/share/pixmaps"
-]
+            icon_dirs = [
+                os.path.expanduser("~/.local/share/icons"),
+                "/usr/share/icons/hicolor",
+                "/usr/share/icons/Papirus",
+                "/usr/share/icons",
+                "/usr/share/pixmaps"
+            ]
 
-for folder in ["/usr/share/applications", os.path.expanduser("~/.local/share/applications")]:
-    for path in glob.glob(os.path.join(folder, "**/*.desktop"), recursive=True):
-        if not os.path.isfile(path): continue
-        name, exec_cmd, icon, desc, nodisplay = "", "", "", "", False
-        try:
-            with open(path, "r", errors="ignore") as f:
-                for line in f:
-                    if line.startswith("Name=") and not name: name = line[5:].strip()
-                    elif line.startswith("Exec=") and not exec_cmd: exec_cmd = line[5:].strip()
-                    elif line.startswith("Icon=") and not icon: icon = line[5:].strip().split("?")[0]
-                    elif line.startswith("Comment=") and not desc: desc = line[8:].strip()
-                    elif line.startswith("NoDisplay=true"): nodisplay = True
-        except: continue
+            for folder in ["/usr/share/applications", os.path.expanduser("~/.local/share/applications")]:
+                for path in glob.glob(os.path.join(folder, "**/*.desktop"), recursive=True):
+                    if not os.path.isfile(path): continue
+                    name, exec_cmd, icon, desc, nodisplay = "", "", "", "", False
+                    try:
+                        with open(path, "r", errors="ignore") as f:
+                            for line in f:
+                                if line.startswith("Name=") and not name: name = line[5:].strip()
+                                elif line.startswith("Exec=") and not exec_cmd: exec_cmd = line[5:].strip()
+                                elif line.startswith("Icon=") and not icon: icon = line[5:].strip().split("?")[0]
+                                elif line.startswith("Comment=") and not desc: desc = line[8:].strip()
+                                elif line.startswith("NoDisplay=true"): nodisplay = True
+                    except: continue
 
-        if nodisplay or not name or not exec_cmd: continue
+                    if nodisplay or not name or not exec_cmd: continue
 
-        resolved = fallback
-        if icon:
-            if icon.startswith("/"):
-                if os.path.isfile(icon): resolved = icon
-            else:
-                found = False
-                for base in icon_dirs:
-                    if found: break
-                    for root, dirs, files in os.walk(base):
-                        for ext in [".svg", ".png", ".xpm"]:
-                            p = os.path.join(root, icon + ext)
-                            if os.path.isfile(p):
-                                resolved = p
-                                found = True
-                                break
-                        if found: break
+                    resolved = fallback
+                    if icon:
+                        if icon.startswith("/"):
+                            if os.path.isfile(icon): resolved = icon
+                        else:
+                            found = False
+                            for base in icon_dirs:
+                                if found: break
+                                for root, dirs, files in os.walk(base):
+                                    for ext in [".svg", ".png", ".xpm"]:
+                                        p = os.path.join(root, icon + ext)
+                                        if os.path.isfile(p):
+                                            resolved = p
+                                            found = True
+                                            break
+                                    if found: break
 
-        apps.append({
-            "name": name.replace("\\x22", "").replace("\\\\", ""),
-            "exec": exec_cmd.replace("\\x22", "").replace("\\\\", ""),
-            "icon": "file://" + resolved if resolved and not resolved.startswith("file://") else "file://" + fallback,
-            "desc": desc.replace("\\x22", "").replace("\\\\", "") if desc else "Application",
-            "path": path
-        })
+                    apps.append({
+                        "name": name.replace("\\x22", "").replace("\\\\", ""),
+                        "exec": exec_cmd.replace("\\x22", "").replace("\\\\", ""),
+                        "icon": "file://" + resolved if resolved and not resolved.startswith("file://") else "file://" + fallback,
+                        "desc": desc.replace("\\x22", "").replace("\\\\", "") if desc else "Application",
+                        "path": path
+                    })
 
-print(json.dumps(apps))
+            print(json.dumps(apps))
             `]
             running: false
             stdout: StdioCollector {
@@ -352,7 +350,7 @@ print(json.dumps(apps))
 
                             Text {
                                 text: "Applications"
-                                color: launcherModuleRoot.themeText // 🌟 Map cleanly to component color targets
+                                color: launcherModuleRoot.themeText
                                 font.family: shellConfig.shellFont
                                 font.pixelSize: 18
                                 font.weight: Font.Bold
@@ -365,7 +363,7 @@ print(json.dumps(apps))
 
                             Text {
                                 text: "terminal"
-                                color: launcherModuleRoot.themeText // 🌟 Map cleanly to component color targets
+                                color: launcherModuleRoot.themeText
                                 font.family: fc.iconFont
                                 font.pixelSize: 40
                                 font.weight: Font.ExtraLight
@@ -382,7 +380,6 @@ print(json.dumps(apps))
                             font.family: shellConfig.shellFont
                             font.pixelSize: 20 
                             color: launcherModuleRoot.themeText
-                            // 🌟 Swapped hardcoded translucent white for 30% alpha of your custom picker themeText color
                             placeholderTextColor: Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.3)
                             selectByMouse: true
                             verticalAlignment: TextInput.AlignVCenter 
@@ -438,7 +435,6 @@ print(json.dumps(apps))
                                     background: Rectangle { 
                                         color: appDelegate.highlighted
                                             ? launcherModuleRoot.themeAccent 
-                                            // 🌟 Bound the secondary item background hover layout to 5% alpha themeText mix
                                             : (appDelegate.hovered ? Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.05) : "transparent")
                                         border.color: appDelegate.highlighted ? launcherModuleRoot.cardBorder : "transparent"
                                         border.width: 1
@@ -477,7 +473,6 @@ print(json.dumps(apps))
                                                 text: modelData.desc !== "" ? modelData.desc : "Application" 
                                                 font.family: fc.mainFont
                                                 font.pixelSize: 14
-                                                // 🌟 Bound muted info secondary labels dynamically to 50% alpha themeText color blend
                                                 color: Qt.rgba(launcherModuleRoot.themeText.r, launcherModuleRoot.themeText.g, launcherModuleRoot.themeText.b, 0.5)
                                                 Layout.fillWidth: true
                                                 elide: Text.ElideRight
