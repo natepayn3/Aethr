@@ -5,7 +5,7 @@ set -e
 
 QUICKSHELL_DIR="$HOME/.config/quickshell/Aethr"
 
-# 📦 1. Install official repository dependencies (including fish)
+# 📦 1. Install official repository dependencies (including fish and qt6-multimedia)
 echo "Installing system dependencies..."
 sudo pacman -S --needed --noconfirm \
     hyprland \
@@ -18,6 +18,7 @@ sudo pacman -S --needed --noconfirm \
     pipewire-audio \
     pipewire-pulse \
     pipewire-alsa \
+    qt6-multimedia \
     base-devel \
     git \
     fish
@@ -47,27 +48,25 @@ else
     git clone https://github.com/natepayn3/Aethr.git "$QUICKSHELL_DIR"
 fi
 
-# ⚙️ 5. Hand execution over to fish for the remaining configurations
-echo "Switching context to fish to finalize configuration..."
-exec fish -c "
-    # Activate hardware runtime daemons and user audio engines
-    echo 'Initializing service engines...'
-    sudo systemctl enable --now bluetooth.service NetworkManager.service
-    systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
+# ⚙️ 5. Activate hardware runtime daemons and user audio engines
+echo "Initializing service engines..."
+sudo systemctl enable --now bluetooth.service NetworkManager.service
+systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
 
-    # Append Aethr startup daemons to hyprland.lua if not already present
-    set HYPRLAND_LUA '\$HOME/.config/hypr/hyprland.lua'
+# 🛠️ 6. Append Aethr startup daemons to hyprland.lua if not already present
+HYPRLAND_LUA="$HOME/.config/hypr/hyprland.lua"
 
-    if test -f \$HYPRLAND_LUA
-        if not grep -q 'qs -c Aethr' \$HYPRLAND_LUA
-            echo 'Adding Aethr startup hooks to hyprland.lua...'
-            printf '\nhl.on(\"hyprland.start\", function () \n  hl.exec_cmd(\"qs -c Aethr\")\n  hl.exec_cmd(\"awww-daemon\")\nend)\n' >> \$HYPRLAND_LUA
-        else
-            echo 'Aethr startup hooks already present in hyprland.lua. Skipping...'
-        end
+if [ -f "$HYPRLAND_LUA" ]; then
+    if ! grep -q 'qs -c Aethr' "$HYPRLAND_LUA"; then
+        echo "Adding Aethr startup hooks to hyprland.lua..."
+        
+        # Inject the Lua block cleanly without utilizing EOF
+        printf '\nhl.on("hyprland.start", function () \n  hl.exec_cmd("qs -c Aethr")\n  hl.exec_cmd("awww-daemon")\nend)\n' >> "$HYPRLAND_LUA"
     else
-        echo '⚠️ hyprland.lua not found at '\$HYPRLAND_LUA'. Skipping configuration append.'
-    end
+        echo "Aethr startup hooks already present in hyprland.lua. Skipping..."
+    fi
+else
+    echo "⚠️ hyprland.lua not found at $HYPRLAND_LUA. Skipping configuration append."
+fi
 
-    echo 'Done! Aethr workspace deployment complete.'
-"
+echo "Done! Aethr workspace deployment complete."
