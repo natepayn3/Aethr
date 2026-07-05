@@ -23,7 +23,6 @@ Item {
 
     FontConfig { id: fc }
 
-    // Query the system path cleanly using Quickshell's native IO architecture
     Process {
         id: hypridleCheck
         command: ["which", "hypridle"] // Command and arguments passed as a string list
@@ -101,7 +100,6 @@ Item {
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
                     color: togglesWrapper.wifiActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
-                    Component.onCompleted: fc.applySmoothing(this)
                 }
             }
 
@@ -167,7 +165,6 @@ Item {
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
                     color: togglesWrapper.btActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
-                    Component.onCompleted: fc.applySmoothing(this)
                 }
             }
 
@@ -233,7 +230,6 @@ Item {
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 18
                     color: togglesWrapper.dndActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
-                    Component.onCompleted: fc.applySmoothing(this)
                 }
             }
 
@@ -308,8 +304,6 @@ Item {
                     color: !togglesWrapper.caffeineAvailable 
                            ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4) 
                            : (togglesWrapper.caffeineActive ? fc.overlayForeground : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4))
-                           
-                    Component.onCompleted: fc.applySmoothing(this)
                 }
             }
 
