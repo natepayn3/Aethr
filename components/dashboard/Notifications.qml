@@ -47,7 +47,6 @@ Rectangle {
                 font.family: fc.mainFont
                 font.pixelSize: 12
                 font.weight: Font.Bold
-                // 🌟 Dynamically shifts opacity between 90% and 40% using the picker color
                 color: clearMouse.containsMouse 
                        ? Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.9) 
                        : Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.4)
@@ -156,7 +155,6 @@ Rectangle {
                
                     Text { 
                         text: modelData.body
-                        // 🌟 Swapped out fc.textMuted for a dynamic 50% opacity theme color blend
                         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
                         font.family: fc.mainFont
                         font.pixelSize: 13
@@ -175,7 +173,6 @@ Rectangle {
     // --- EMPTY STATE INDICATOR ---
     Text {
         text: "No notifications"
-        // 🌟 Bound the placeholder empty label color to 25% opacity of your theme selection
         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.25)
         font.family: fc.mainFont
         font.pixelSize: 12
