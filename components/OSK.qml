@@ -157,8 +157,9 @@ PanelWindow {
         id: keyboardWrapper
         color: "transparent"
         
-        property real posX: (root.width - width) / 2
-        property real posY: root.height - height - shellConfig.panelBottomMargin
+        // Initial spawning coordinate positioned out of the way in the bottom right bounds
+        property real posX: root.width - width - 30
+        property real posY: root.height - height - 30
         
         x: posX
         y: posY
@@ -276,9 +277,9 @@ PanelWindow {
                 width: 65; height: 82
             }
 
-            // Spacebar (Centered with an explicit shear offset correction)
+            // Spacebar (Restored back to division by 4 scaling logic)
             Loader {
-                x: ((parent.width - width) / 2) + 5; y: 115
+                x: (parent.width - width) / 4; y: 115
                 sourceComponent: keyCapComponent
                 onLoaded: item.keyData = ["Space", "KEY_SPACE", 1]
                 width: 220; height: 38
