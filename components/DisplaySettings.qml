@@ -453,10 +453,21 @@ PanelWindow {
                         }
                         
                         delegate: ItemDelegate {
+                            id: itemDelegateRoot
                             width: layoutDropdown.width
                             height: 36
                             
-                            HoverHandler { cursorShape: Qt.PointingHandCursor }
+                            MouseArea {
+                                id: delegateHoverArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                
+                                onClicked: {
+                                    layoutDropdown.currentIndex = index;
+                                    layoutDropdown.popup.close();
+                                }
+                            }
 
                             contentItem: Text {
                                 text: modelData
@@ -467,8 +478,8 @@ PanelWindow {
                                 leftPadding: 10
                             }
                             background: Rectangle {
-                                color: layoutDropdown.highlightedIndex === index ? fc.overlayBackground : "transparent"
                                 radius: 4
+                                color: selectedOskLayout === modelData ? fc.overlayBackground : (delegateHoverArea.containsMouse ? fc.trackBackground : "transparent")
                             }
                         }
                         
@@ -485,8 +496,8 @@ PanelWindow {
                                 currentIndex: layoutDropdown.highlightedIndex
                             }
                             background: Rectangle {
-                                // Locked to a solid, non-transparent background to hide underlying UI elements
-                                color: Qt.rgba(0.12, 0.12, 0.14, 1.0)
+                                // Transparent tint matching the font list container
+                                color: Qt.rgba(0, 0, 0, 0.15)
                                 border.color: fc.borderMuted
                                 border.width: 1
                                 radius: 6
