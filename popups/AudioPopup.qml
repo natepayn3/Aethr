@@ -269,7 +269,7 @@ PanelWindow {
                                 }
 
                                 Text {
-                                    text: "check"
+                                    text: "speaker_2"
                                     font.family: fc.iconFont
                                     font.pixelSize: 18
                                     color: shellConfig.themeText
@@ -420,7 +420,7 @@ PanelWindow {
                                 }
 
                                 Text {
-                                    text: "check"
+                                    text: "speaker_2"
                                     font.family: fc.iconFont
                                     font.pixelSize: 18
                                     color: shellConfig.themeText
