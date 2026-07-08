@@ -28,6 +28,22 @@ Item {
         id: globalProcessModel
     }
 
+    onListActiveChanged: {
+        if (!listActive) {
+            globalProcessModel.clear();
+        }
+    }
+
+    // Inline Comment: This timer lets the tray expand smoothly before firing the heavy process commands
+    Timer {
+        id: deferFetchTimer
+        interval: 300 // Slightly longer than the expansion animation duration
+        repeat: false
+        onTriggered: {
+            allProcessesFetcher.running = true;
+        }
+    }
+
     Timer {
         interval: 3000
         running: ringsRoot.visible
@@ -39,11 +55,18 @@ Item {
         }
     }
 
-    // Inline Comment: Master hitbox safely outside the layout, handling both buttons
+    // Inline Comment: Master hitbox restored to original functional state, but with staggered execution
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: allProcessesFetcher.running = true
+        onClicked: {
+            // Signal the parent layout to expand instantly
+            ringsRoot.activeLabel = "System";
+            ringsRoot.listActive = true;
+            
+            // Defer the heavy system processing until the animation finishes
+            deferFetchTimer.start();
+        }
     }
 
     Process {
@@ -51,7 +74,7 @@ Item {
         command: ["/bin/fish", "-c", "echo '___CAT___|CPU'; ps -eo pid,pcpu,comm --sort=-pcpu | head -n 9 | tail -n +2 | awk -v cores=(nproc) '{print $1\"|\"$2/cores\"|\"$3}'; echo '___CAT___|GPU'; nvidia-smi --query-compute-apps=pid,used_memory,name --format=csv,noheader,nounits 2>/dev/null | head -n 8 | awk -F', ' '{print $1\"|\"$2\" MB|\"$3}'; echo '___CAT___|RAM'; ps -eo pid,pmem,comm --sort=-pmem | head -n 9 | tail -n +2 | awk '{print $1\"|\"$2\"|\"$3}'"]
         stdout: StdioCollector {
             onStreamFinished: {
-                ringsRoot.activeModel.clear();
+                let parsedItems = [];
                 let currentCat = "CPU";
                 let lines = this.text.trim().split("\n");
                 
@@ -65,7 +88,7 @@ Item {
                         let percentage = currentCat === "GPU" ? parts[1] : Math.round(parseFloat(parts[1])) + "%";
                         if (currentCat !== "GPU" && Math.round(parseFloat(parts[1])) > 100) percentage = "100%";
                         
-                        ringsRoot.activeModel.append({
+                        parsedItems.push({
                             "category": currentCat,
                             "metric": percentage,
                             "name": parts[2],
@@ -73,8 +96,12 @@ Item {
                         });
                     }
                 }
-                ringsRoot.activeLabel = "System";
-                ringsRoot.listActive = true;
+
+                // Atomic bulk update prevents multi-frame layout thrashing
+                ringsRoot.activeModel.clear();
+                for (let item of parsedItems) {
+                    ringsRoot.activeModel.append(item);
+                }
             }
         }
     }
@@ -87,21 +114,14 @@ Item {
         property string label: ""
         property real value: 0.0
 
+        layer.enabled: true
+        layer.smooth: true
+        layer.samples: 4 
+        layer.textureSize: Qt.size(width * Screen.devicePixelRatio, height * Screen.devicePixelRatio)
+
         Shape {
             anchors.fill: parent
-            layer.enabled: true; layer.samples: 4
 
-            ShapePath {
-                fillColor: "transparent"
-                strokeColor: fc.overlayBackground
-                strokeWidth: 5.5
-                capStyle: ShapePath.RoundCap
-                PathAngleArc { 
-                    centerX: 42; centerY: 42; radiusX: 37; radiusY: 37 
-                    startAngle: -90; sweepAngle: Math.max(0.1, ringRow.value * 360) 
-                }
-            }
-            
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: fc.trackBackground
@@ -135,9 +155,7 @@ Item {
                 font.pixelSize: 10 
                 font.weight: Font.Bold
                 anchors.horizontalCenter: parent.horizontalCenter
-                Component.onCompleted: {
-                    fc.applyOutline(this, fc.overlayBackground)
-                }
+                Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
             }
             Text {
                 text: Math.round(ringRow.value * 100) + "%"
@@ -146,9 +164,7 @@ Item {
                 font.pixelSize: 12 
                 font.weight: Font.DemiBold
                 anchors.horizontalCenter: parent.horizontalCenter
-                Component.onCompleted: {
-                    fc.applyOutline(this, fc.overlayBackground)
-                }
+                Component.onCompleted: fc.applyOutline(this, fc.overlayBackground)
             }
         }
     }
@@ -177,8 +193,6 @@ Item {
             value: ringsRoot.sysDisk
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         }
-
-        // Inline Comment: Removed the problematic duplicate MouseArea from inside the layout
     }
 
     FileView {

@@ -324,18 +324,26 @@ PanelWindow {
                     clip: true
                     color: "transparent"
 
-                    Behavior on Layout.preferredWidth { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    Behavior on Layout.leftMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on Layout.preferredWidth { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                    Behavior on Layout.leftMargin { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                     HoverHandler { id: processPanelHover }
 
-                    ColumnLayout {
+                    // Decoupled container replaces ColumnLayout to stop rigid layout snapping
+                    Item {
                         width: 234
                         height: parent.height
-                        spacing: 10
 
+                        opacity: resourceRingsComp.listActive ? 1.0 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                        // 1. Header Section anchored cleanly to the top
                         RowLayout {
-                            Layout.fillWidth: true
+                            id: processHeader
+                            width: parent.width
+                            height: 24
+                            anchors.top: parent.top
+
                             Text {
                                 text: "Top Resource Consumers"
                                 color: shellConfig.themeText
@@ -372,14 +380,38 @@ PanelWindow {
                             }
                         }
 
+                        // 2. Process List floating fluidly between header and footer
                         ListView {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
+                            id: processListView
+                            width: parent.width
+                            anchors.top: processHeader.bottom
+                            anchors.bottom: diskSpaceFooter.top
+                            anchors.topMargin: 10
+                            anchors.bottomMargin: 10
                             clip: true
                             model: resourceRingsComp.activeModel
                             spacing: 6
                             boundsBehavior: Flickable.StopAtBounds
                             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                            populate: Transition {
+                            NumberAnimation { 
+                                property: "opacity"
+                                from: 0.0
+                                to: 1.0
+                                duration: 400 
+                                easing.type: Easing.OutCubic 
+                            }
+                        }
+
+                        add: Transition {
+                            NumberAnimation { 
+                                property: "opacity"
+                                from: 0.0
+                                to: 1.0
+                                duration: 250 
+                            }
+                        }
 
                             section.property: "category"
                             section.delegate: Column {
@@ -465,11 +497,12 @@ PanelWindow {
                             }
                         }
 
-                        // Inline Comment: Disk space progress bar appended to the bottom of the layout
+                        // 3. Disk Progress Section anchored to the bottom
                         Column {
-                            Layout.fillWidth: true
-                            Layout.topMargin: 8
-                            Layout.bottomMargin: 8
+                            id: diskSpaceFooter
+                            width: parent.width
+                            anchors.bottom: parent.bottom
+                            bottomPadding: 8
                             spacing: 6
 
                             RowLayout {
@@ -498,13 +531,13 @@ PanelWindow {
                                 width: parent.width
                                 height: 6
                                 radius: 3
-                                color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.1)
+                                color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.b, shellConfig.themeText.g, 0.1)
 
                                 Rectangle {
                                     width: parent.width * resourceRingsComp.sysDisk
                                     height: parent.height
                                     radius: 3
-                                    color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.6)
+                                    color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.b, shellConfig.themeText.g, 0.6)
                                     
                                     Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                                 }
