@@ -78,81 +78,75 @@ Item {
                 
                 previewRoot.workingWorkspace = previewRoot.targetWorkspace;
                 previewRoot.active = true;
+                
+                triggerIconLookups();
             }
         }
     }
 
-    // Purely generic Python filesystem search matching your workspace overview and AppLauncher logic
     Process {
         id: iconFinderProcess
         running: false
-        command: {
-            let classes = [];
-            let windows = viewportFrame ? viewportFrame.workspaceWindows : [];
-            if (windows) {
-                for (let i = 0; i < windows.length; i++) {
-                    let cls = (windows[i] && windows[i].lastIpcObject) ? windows[i].lastIpcObject.class : "";
-                    if (cls && !classes.includes(cls)) classes.push(cls);
-                }
-            }
-            return ["python", "-c", `
-    import os, sys, json
+        
+        property string targetClass: ""
+        
+        command: ["python", "-c", `
+import os, sys, json
 
-    class_list = json.loads(sys.argv[1])
-    icon_dirs = [
-        os.path.expanduser("~/.local/share/icons"),
-        "/usr/share/icons/hicolor",
-        "/usr/share/icons/Papirus",
-        "/usr/share/icons",
-        "/usr/share/pixmaps"
-    ]
+target = sys.argv[1].lower().strip()
+app_dirs = [
+    os.path.expanduser("~/.local/share/applications"),
+    "/usr/share/applications"
+]
 
-    resolved_map = {}
+resolved_icon = ""
 
-    for cl in class_list:
-        scrubbed = cl.replace("image://icon/", "").lower().strip()
-        if "." in scrubbed:
-            scrubbed = scrubbed.split(".")[-1]
-            
-        found = False
-        for base in icon_dirs:
-            if found: break
-            if not os.path.isdir(base): continue
-            
-            # Check standard direct lookup sizes instead of calling deep os.walk tree loops
-            paths_to_check = [
-                os.path.join(base, "Papirus/32x32/apps", scrubbed + ".svg"),
-                os.path.join(base, "Papirus/32x32/apps", scrubbed + "-desktop.svg"),
-                os.path.join(base, "hicolor/32x32/apps", scrubbed + ".png"),
-                os.path.join(base, scrubbed + ".png")
-            ]
-            
-            for path in paths_to_check:
-                if os.path.isfile(path):
-                    resolved_map[cl] = "file://" + path
-                    found = True
-                    break
+for base_dir in app_dirs:
+    if resolved_icon: break
+    if not os.path.isdir(base_dir): continue
+    
+    for f in os.listdir(base_dir):
+        if not f.endswith(".desktop"): continue
+        f_lower = f.lower()
+        
+        is_match = target in f_lower
+        
+        if is_match or target.replace(".", "-") in f_lower:
+            path = os.path.join(base_dir, f)
+            try:
+                with open(path, "r", errors="ignore") as file_handle:
+                    icon_name = ""
+                    wm_class_match = False
                     
-    print(json.dumps(resolved_map))
-    `, JSON.stringify(classes)]
-        }
+                    for line in file_handle:
+                        if line.startswith("Icon="):
+                            icon_name = line.split("=")[1].strip()
+                        elif line.startswith("StartupWMClass="):
+                            if target == line.split("=")[1].strip().lower():
+                                wm_class_match = True
+                    
+                    if icon_name and (is_match or wm_class_match):
+                        resolved_icon = icon_name
+                        break
+            except Exception:
+                continue
+
+if not resolved_icon:
+    resolved_icon = target
+
+print("image://icon/" + resolved_icon)
+`, targetClass]
+        
         stdout: StdioCollector {
             onTextChanged: {
                 let cleanText = text.trim();
-                if (!cleanText || cleanText === "{}") return;
-                try {
-                    previewRoot.resolvedIconPaths = JSON.parse(cleanText);
-                } catch(e) {}
+                if (!cleanText || !iconFinderProcess.targetClass) return;
+                
+                let updatedPaths = Object.assign({}, previewRoot.resolvedIconPaths);
+                updatedPaths[iconFinderProcess.targetClass] = cleanText;
+                previewRoot.resolvedIconPaths = updatedPaths;
             }
         }
-    }
-
-    // Declarative process runner tracking window list populations
-    Binding {
-        target: iconFinderProcess
-        property: "running"
-        value: viewportFrame && viewportFrame.workspaceWindows && viewportFrame.workspaceWindows.length > 0
-        when: previewRoot.active
     }
 
     Item {
@@ -415,6 +409,16 @@ Item {
                         z: 1
                     }
 
+                    Connections {
+                        target: viewportFrame
+                        ignoreUnknownSignals: true
+                        function onWorkspaceWindowsChanged() {
+                            if (previewRoot.active && viewportFrame.workspaceWindows.length > 0) {
+                                triggerIconLookups();
+                            }
+                        }
+                    }
+
                     Repeater {
                         model: viewportFrame.workspaceWindows
                         delegate: Rectangle {
@@ -473,6 +477,17 @@ Item {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    function triggerIconLookups() {
+        let windows = viewportFrame ? viewportFrame.workspaceWindows : [];
+        for (let i = 0; i < windows.length; i++) {
+            let cls = (windows[i] && windows[i].lastIpcObject) ? (windows[i].lastIpcObject.class || "") : "";
+            if (cls && !previewRoot.resolvedIconPaths[cls]) {
+                iconFinderProcess.targetClass = cls;
+                iconFinderProcess.running = true;
             }
         }
     }
