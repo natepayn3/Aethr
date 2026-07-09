@@ -88,63 +88,67 @@ Item {
         id: iconFinderProcess
         running: false
         
-        property string targetClass: ""
-        
         command: ["python", "-c", `
 import os, sys, json
 
-target = sys.argv[1].lower().strip()
+class_list = json.loads(sys.argv[1])
 app_dirs = [
     os.path.expanduser("~/.local/share/applications"),
     "/usr/share/applications"
 ]
 
-resolved_icon = ""
+resolved_map = {}
 
-for base_dir in app_dirs:
-    if resolved_icon: break
-    if not os.path.isdir(base_dir): continue
+for target_class in class_list:
+    target = target_class.lower().strip()
+    resolved_icon = ""
     
-    for f in os.listdir(base_dir):
-        if not f.endswith(".desktop"): continue
-        f_lower = f.lower()
+    for base_dir in app_dirs:
+        if resolved_icon: break
+        if not os.path.isdir(base_dir): continue
         
-        is_match = target in f_lower
-        
-        if is_match or target.replace(".", "-") in f_lower:
-            path = os.path.join(base_dir, f)
-            try:
-                with open(path, "r", errors="ignore") as file_handle:
-                    icon_name = ""
-                    wm_class_match = False
-                    
-                    for line in file_handle:
-                        if line.startswith("Icon="):
-                            icon_name = line.split("=")[1].strip()
-                        elif line.startswith("StartupWMClass="):
-                            if target == line.split("=")[1].strip().lower():
-                                wm_class_match = True
-                    
-                    if icon_name and (is_match or wm_class_match):
-                        resolved_icon = icon_name
-                        break
-            except Exception:
-                continue
+        for f in os.listdir(base_dir):
+            if not f.endswith(".desktop"): continue
+            f_lower = f.lower()
+            
+            is_match = target in f_lower
+            if is_match or target.replace(".", "-") in f_lower:
+                path = os.path.join(base_dir, f)
+                try:
+                    with open(path, "r", errors="ignore") as file_handle:
+                        icon_name = ""
+                        wm_class_match = False
+                        
+                        for line in file_handle:
+                            if line.startswith("Icon="):
+                                icon_name = line.split("=")[1].strip()
+                            elif line.startswith("StartupWMClass="):
+                                if target == line.split("=")[1].strip().lower():
+                                    wm_class_match = True
+                        
+                        if icon_name and (is_match or wm_class_match):
+                            resolved_icon = icon_name
+                            break
+                except Exception:
+                    continue
 
-if not resolved_icon:
-    resolved_icon = target
+    resolved_map[target_class] = "image://icon/" + (resolved_icon if resolved_icon else target)
 
-print("image://icon/" + resolved_icon)
-`, targetClass]
+print(json.dumps(resolved_map))
+`, JSON.stringify(getUnresolvedClasses())]
         
         stdout: StdioCollector {
             onTextChanged: {
                 let cleanText = text.trim();
-                if (!cleanText || !iconFinderProcess.targetClass) return;
-                
-                let updatedPaths = Object.assign({}, previewRoot.resolvedIconPaths);
-                updatedPaths[iconFinderProcess.targetClass] = cleanText;
-                previewRoot.resolvedIconPaths = updatedPaths;
+                if (!cleanText || cleanText === "{}") return;
+                try {
+                    let parsed = JSON.parse(cleanText);
+                    let updatedPaths = Object.assign({}, previewRoot.resolvedIconPaths);
+                    for (let cls in parsed) {
+                        updatedPaths[cls] = parsed[cls];
+                    }
+                    previewRoot.resolvedIconPaths = updatedPaths;
+                } catch(e) {}
             }
         }
     }
@@ -481,14 +485,21 @@ print("image://icon/" + resolved_icon)
         }
     }
 
-    function triggerIconLookups() {
+    function getUnresolvedClasses() {
         let windows = viewportFrame ? viewportFrame.workspaceWindows : [];
+        let list = [];
         for (let i = 0; i < windows.length; i++) {
             let cls = (windows[i] && windows[i].lastIpcObject) ? (windows[i].lastIpcObject.class || "") : "";
-            if (cls && !previewRoot.resolvedIconPaths[cls]) {
-                iconFinderProcess.targetClass = cls;
-                iconFinderProcess.running = true;
+            if (cls && !previewRoot.resolvedIconPaths[cls] && !list.includes(cls)) {
+                list.push(cls);
             }
+        }
+        return list;
+    }
+
+    function triggerIconLookups() {
+        if (getUnresolvedClasses().length > 0 && !iconFinderProcess.running) {
+            iconFinderProcess.running = true;
         }
     }
 }
