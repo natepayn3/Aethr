@@ -6,6 +6,8 @@ Column {
     id: weatherRoot
     spacing: 4
 
+    property string zipCode: "84040"
+
     property string weatherTemp: "--"
     property string weatherFeelsLike: "--"
     property string weatherDesc: "Loading..."
@@ -50,7 +52,6 @@ Column {
         font.family: fc.mainFont
         font.weight: Font.Bold
         font.pixelSize: 12
-        // Dynamically tints the custom color picker choice down to 50% opacity
         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
@@ -60,7 +61,6 @@ Column {
         text: "Feels like " + weatherRoot.weatherFeelsLike
         font.family: fc.mainFont
         font.pixelSize: 12
-        // Dynamically tints the custom color picker choice down to 50% opacity
         color: Qt.rgba(shellConfig.themeText.r, shellConfig.themeText.g, shellConfig.themeText.b, 0.5)
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
@@ -68,7 +68,12 @@ Column {
 
     Process {
         id: weatherFetcher
-        command: ["curl", "-s", "https://wttr.is/?format=j1"]
+        command: {
+            const baseUrl = "https://wttr.in/";
+            const query = "?format=j1";
+            const targetUrl = weatherRoot.zipCode !== "" ? (baseUrl + weatherRoot.zipCode + query) : (baseUrl + query);
+            return ["curl", "-s", targetUrl];
+        }
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
