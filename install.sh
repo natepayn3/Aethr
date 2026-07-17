@@ -21,6 +21,7 @@ sudo pacman -S --needed --noconfirm \
     pipewire-pulse \
     pipewire-alsa \
     qt6-multimedia \
+    qt6-5compat \
     playerctl \
     base-devel \
     git \
