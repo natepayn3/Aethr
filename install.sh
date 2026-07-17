@@ -26,6 +26,7 @@ sudo pacman -S --needed --noconfirm \
     base-devel \
     git \
     fish \
+    cava \
     showmethekey
 
 # 🧬 2. Force bootstrap yay if missing
