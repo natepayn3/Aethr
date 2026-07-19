@@ -438,46 +438,27 @@ PanelWindow {
         Keys.onEscapePressed: audioPopupWindow.animateActive = false
     }
 
-    // --- Backend Audio Pipeline Drivers ---
-    Process {
-        id: audioEventStream
-        command: [
-            "sh", "-c",
-            "pactl subscribe | grep --line-buffered \"Event 'change' on sink\" | while read -r _; do wpctl get-volume @DEFAULT_AUDIO_SINK@; done"
-        ]
-        running: true
-        stdout: SplitParser {
-            onRead: data => {
-                let cleaned = data.trim();
-                let match = cleaned.match(/Volume:\s+([0-9.]+)/);
-                if (match && !volumeSlider.pressed) {
-                    let volVal = parseFloat(match[1]);
-                    if (!isNaN(volVal)) {
-                        audioPopupWindow.systemVolume = Math.round(volVal * 100);
-                        audioPopupWindow.isMuted = cleaned.includes("[MUTED]");
-                    }
-                }
-            }
+    // Unified debounce timer to prevent wpctl fork-bombing
+    Timer {
+        id: debounceAudioTimer
+        interval: 150 
+        running: false
+        onTriggered: {
+            volumeReadProc.running = true;
+            micReadProc.running = true;
         }
     }
 
+    // Single subscription stream to catch all sink/source events
     Process {
-        id: micEventStream
-        command: [
-            "sh", "-c",
-            "pactl subscribe | grep --line-buffered \"Event 'change' on source\" | while read -r _; do wpctl get-volume @DEFAULT_AUDIO_SOURCE@; done"
-        ]
+        id: pulseEventStream
+        command: ["stdbuf", "-oL", "pactl", "subscribe"]
         running: true
         stdout: SplitParser {
             onRead: data => {
-                let cleaned = data.trim();
-                let match = cleaned.match(/Volume:\s+([0-9.]+)/);
-                if (match && !micSlider.pressed) {
-                    let volVal = parseFloat(match[1]);
-                    if (!isNaN(volVal)) {
-                        audioPopupWindow.inputVolume = Math.round(volVal * 100);
-                        audioPopupWindow.isInputMuted = cleaned.includes("[MUTED]");
-                    }
+                // Restart the timer on relevant audio server events
+                if (data.includes("sink") || data.includes("source")) {
+                    debounceAudioTimer.restart();
                 }
             }
         }
